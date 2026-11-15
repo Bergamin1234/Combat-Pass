@@ -609,7 +609,7 @@ export const LandingHubPage: React.FC = () => {
               </Link>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
                 <Link to="/professor" style={{ padding: '0.55rem', borderRadius: '999px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontWeight: 800, fontSize: '0.7rem', textDecoration: 'none', textAlign: 'center' }}>
-                  🥋 Docente
+                  🥋 Docente (Login: 1)
                 </Link>
                 <Link to="/admin" style={{ padding: '0.55rem', borderRadius: '999px', background: 'var(--bg-background)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', fontWeight: 900, fontSize: '0.7rem', textDecoration: 'none', textAlign: 'center' }}>
                   👑 Reitoria/ERP
@@ -797,6 +797,27 @@ export const LandingHubPage: React.FC = () => {
                 ⚡ VALIDAÇÃO DE ACESSO CORPORATIVO
               </div>
               <PublicQuickCheckinCard />
+              <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <Link
+                  to="/professor"
+                  style={{
+                    padding: '0.6rem 0.8rem',
+                    background: 'var(--bg-surface-2)',
+                    color: 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)',
+                    borderLeft: '3px solid var(--color-primary)',
+                    fontSize: '0.72rem',
+                    fontWeight: 900,
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <span>🥋 Acesso Docente / Mestre (Login: CPF 1 / Senha 1)</span>
+                  <span style={{ color: 'var(--color-primary)' }}>→</span>
+                </Link>
+              </div>
             </div>
           </aside>
         </div>
@@ -875,7 +896,8 @@ export const LandingHubPage: React.FC = () => {
                 { icon: '🏆', title: 'Torneios Oficiais & Chaves', to: '/portal?tab=torneios' },
                 { icon: '🌍', title: 'Ranking Geral de Atletas', to: '/portal?tab=ranking' },
                 { icon: '📊', title: 'Estatísticas & Aproveitamento', to: '/portal?tab=desempenho' },
-                { icon: '🥋', title: 'Acessar Área do Aluno', to: '/portal' },
+                { icon: '🥊', title: 'Acessar Área do Aluno', to: '/portal' },
+                { icon: '🥋', title: 'Portal do Professor / Mestre (Login: CPF 1 / Senha 1)', to: '/professor' },
                 { icon: '👑', title: 'Painel do Gestor / ERP', to: '/admin' }
               ].map(item => (
                 <Link

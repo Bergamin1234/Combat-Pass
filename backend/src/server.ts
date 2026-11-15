@@ -53,6 +53,29 @@ app.post('/api/auth/login', async (req, res) => {
   const termoLower = termo.toLowerCase();
   const cpfLimpo = termo.replace(/\D/g, '');
 
+  // 0. Suporte direto a credenciais rápidas de demonstração para Professor (CPF: 1 | Senha: 1)
+  if ((termo === '1' || cpfLimpo === '1' || termoLower === 'professor') && senha === '1') {
+    return res.json({
+      usuario: {
+        id: 'prof-demo-1',
+        nome: 'Prof. Mestre Titular (Felipe Borü)',
+        email: 'professor@combathub.com',
+        cpf: '1',
+        cargo: 'PROFESSOR',
+        is_dev: false,
+        role_level: 'PROFESSOR',
+        telefone: '(11) 98888-1111',
+        modalidade: 'Muay Thai & Striking',
+        graduacao: 'Kru Yai // Faixa Preta',
+        tempoPratica: '14 anos',
+        tempoDocencia: '8 anos',
+        tempoAula: '60 min',
+        horariosAula: '19:00',
+        fotoPerfilUrl: null
+      }
+    });
+  }
+
   // 1. Verificação do AdminDev / BrgAdmin (Ítalo Bergamin | Acesso: BrgAdmin)
   const isAdminLogin = (
     termoLower === 'brgadmin' ||

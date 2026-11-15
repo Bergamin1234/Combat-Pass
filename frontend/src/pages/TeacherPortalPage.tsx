@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   useLayoutEngine,
-  JourneyLayoutToolbar
+  JourneyLayoutToolbar,
+  TeacherPresetId
 } from '../config/layoutEngine';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import { InteractiveCombatCalendar } from '../components/InteractiveCombatCalendar';
@@ -28,8 +29,26 @@ interface RosterStudent {
 }
 
 export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded = false }) => {
-  const { preferences } = useLayoutEngine();
+  const { preferences, setJourneyPreset } = useLayoutEngine();
   const activePreset = preferences.layoutPreset.teacher;
+
+  // Controle de Autenticação Obrigatória do Professor (CPF: 1 | Senha: 1)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return Boolean(sessionStorage.getItem('combat_hub_teacher_auth'));
+  });
+  const [teacherUser, setTeacherUser] = useState<any>(() => {
+    try {
+      const saved = sessionStorage.getItem('combat_hub_teacher_auth');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [loginCpf, setLoginCpf] = useState('1');
+  const [loginSenha, setLoginSenha] = useState('1');
+  const [loginErro, setLoginErro] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const [activeNavTab, setActiveNavTab] = useState<string>(
     preferences.defaultTabByJourney.teacher || 'aula_atual'
@@ -103,6 +122,82 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
 
   const totalConfirmadosOuAgendados = roster.filter(r => r.statusChamada !== 'FALTA').length;
 
+  // Lógica de Login do Professor (suporte oficial a CPF 1 / Senha 1 ou API)
+  const handleTeacherLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setLoginErro('');
+    const cpfVal = loginCpf.trim();
+    const senhaVal = loginSenha.trim();
+
+    if (!cpfVal || !senhaVal) {
+      setLoginErro('Por favor preencha seu CPF e Senha de Docente.');
+      return;
+    }
+
+    // Suporte prioritário às credenciais de teste solicitadas: CPF 1 / SENHA 1
+    if (cpfVal === '1' && senhaVal === '1') {
+      const user = {
+        id: 'prof-1',
+        nome: 'Prof. Mestre Felipe Borü',
+        cpf: '1',
+        cargo: 'PROFESSOR',
+        modalidade: 'Muay Thai & Striking',
+        graduacao: 'Kru Yai // Faixa Preta',
+        unidade: 'CT Borü Matriz (Credenciada)'
+      };
+      sessionStorage.setItem('combat_hub_teacher_auth', JSON.stringify(user));
+      setTeacherUser(user);
+      setIsLoggedIn(true);
+      setFeedbackMsg('🥋 Seja bem-vindo, Prof. Mestre Felipe Borü! Acesso liberado ao tatame.');
+      return;
+    }
+
+    setLoginLoading(true);
+    try {
+      const res = await adminApi.login({
+        emailOuUsuario: cpfVal,
+        senha: senhaVal
+      });
+      const user = res.data?.usuario || {
+        id: 'prof-api',
+        nome: res.data?.usuario?.nome || 'Professor Credenciado',
+        cpf: cpfVal,
+        cargo: 'PROFESSOR'
+      };
+      sessionStorage.setItem('combat_hub_teacher_auth', JSON.stringify(user));
+      setTeacherUser(user);
+      setIsLoggedIn(true);
+      setFeedbackMsg(`🥋 Acesso autenticado com sucesso! Docente: ${user.nome}`);
+    } catch (err: any) {
+      // Se a API recusar, mas o usuário digitou 1 e 1
+      if (cpfVal === '1' && senhaVal === '1') {
+        const fallbackUser = {
+          id: 'prof-1',
+          nome: 'Prof. Mestre Titular',
+          cpf: '1',
+          cargo: 'PROFESSOR'
+        };
+        sessionStorage.setItem('combat_hub_teacher_auth', JSON.stringify(fallbackUser));
+        setTeacherUser(fallbackUser);
+        setIsLoggedIn(true);
+      } else {
+        setLoginErro(
+          err.response?.data?.erro ||
+          'Credenciais não localizadas. Dica de teste rápido: use CPF: 1 e Senha: 1.'
+        );
+      }
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleTeacherLogout = () => {
+    sessionStorage.removeItem('combat_hub_teacher_auth');
+    setIsLoggedIn(false);
+    setTeacherUser(null);
+    setFeedbackMsg('Sessão de docente encerrada com sucesso.');
+  };
+
   const handleMarcarStatus = (studentId: string, novoStatus: 'PRESENTE' | 'FALTA') => {
     setRoster(prev =>
       prev.map(s => {
@@ -173,6 +268,235 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
     setFeedbackMsg(`⚡ +${points} XP concedidos para ${target?.nome}! (${motivo})`);
   };
 
+  // =========================================================================
+  // SE O PROFESSOR NÃO ESTIVER AUTENTICADO: RENDERIZA A TELA DE LOGIN DO PROFESSOR
+  // =========================================================================
+  if (!isLoggedIn) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--bg-background)',
+          color: 'var(--text-foreground)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem 1rem',
+          boxSizing: 'border-box'
+        }}
+      >
+        <div style={{ width: '100%', maxWidth: '480px', margin: '0 auto' }}>
+          {/* Header Superior da Tela de Login */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <Link
+              to="/"
+              style={{
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                color: 'var(--text-muted-foreground)',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem'
+              }}
+            >
+              ← Voltar ao Hub Principal
+            </Link>
+            <ThemeSwitcher compact />
+          </div>
+
+          {/* Card Principal de Autenticação */}
+          <div
+            style={{
+              padding: '2rem',
+              borderRadius: '24px',
+              background: 'var(--bg-surface-1)',
+              border: '2px solid var(--border-subtle)',
+              boxShadow: 'var(--shadow-card)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem'
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'var(--color-primary)',
+                  color: 'var(--text-primary-foreground)',
+                  margin: '0 auto 0.75rem auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.8rem',
+                  fontWeight: 900,
+                  boxShadow: 'var(--shadow-glow)'
+                }}
+              >
+                🥋
+              </div>
+              <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                ACESSO RESTRITO · CORPO DOCENTE
+              </div>
+              <h1 style={{ margin: '0.35rem 0 0.25rem 0', fontSize: '1.5rem', fontWeight: 900 }}>
+                Portal do Professor
+              </h1>
+              <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted-foreground)' }}>
+                Informe seu CPF e senha de mestre para acessar a chamada, grade e comissões.
+              </p>
+            </div>
+
+            {/* Destaque das Credenciais de Teste Solicitadas */}
+            <div
+              style={{
+                padding: '0.85rem 1rem',
+                borderRadius: '14px',
+                background: 'var(--bg-surface-2)',
+                border: '1px solid var(--color-primary)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                  🔑 CREDENCIAIS DE ACESSO RÁPIDO:
+                </span>
+                <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem', borderRadius: '4px', background: 'var(--status-available-bg)', color: 'var(--status-available)', fontWeight: 800 }}>
+                  HOMOLOGADO
+                </span>
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-foreground)', fontWeight: 800 }}>
+                CPF: <strong style={{ color: 'var(--color-primary)' }}>1</strong> &nbsp;·&nbsp; Senha: <strong style={{ color: 'var(--color-primary)' }}>1</strong>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginCpf('1');
+                  setLoginSenha('1');
+                  handleTeacherLogin();
+                }}
+                style={{
+                  marginTop: '0.2rem',
+                  padding: '0.45rem 0.75rem',
+                  borderRadius: '8px',
+                  background: 'var(--color-primary)',
+                  color: 'var(--text-primary-foreground)',
+                  border: 'none',
+                  fontSize: '0.72rem',
+                  fontWeight: 900,
+                  cursor: 'pointer'
+                }}
+              >
+                ⚡ Preencher e Entrar Agora com 1 Clique
+              </button>
+            </div>
+
+            {loginErro && (
+              <div
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  background: 'var(--status-full-bg)',
+                  border: '1px solid var(--status-full-border)',
+                  color: 'var(--status-full)',
+                  fontSize: '0.78rem',
+                  fontWeight: 800
+                }}
+              >
+                {loginErro}
+              </div>
+            )}
+
+            <form onSubmit={handleTeacherLogin} style={{ display: 'grid', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 900, color: 'var(--text-muted-foreground)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                  CPF do Professor
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={loginCpf}
+                  onChange={e => setLoginCpf(e.target.value)}
+                  placeholder="Digite seu CPF ou 1"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '12px',
+                    background: 'var(--bg-background)',
+                    color: 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)',
+                    fontSize: '0.9rem',
+                    boxSizing: 'border-box',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 900, color: 'var(--text-muted-foreground)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                  Senha de Acesso
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={loginSenha}
+                  onChange={e => setLoginSenha(e.target.value)}
+                  placeholder="Digite sua senha ou 1"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '12px',
+                    background: 'var(--bg-background)',
+                    color: 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)',
+                    fontSize: '0.9rem',
+                    boxSizing: 'border-box',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loginLoading}
+                style={{
+                  marginTop: '0.5rem',
+                  padding: '0.9rem 1.25rem',
+                  borderRadius: '12px',
+                  background: 'var(--color-primary)',
+                  color: 'var(--text-primary-foreground)',
+                  border: 'none',
+                  fontSize: '0.88rem',
+                  fontWeight: 900,
+                  cursor: loginLoading ? 'wait' : 'pointer',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  boxShadow: 'var(--shadow-card)'
+                }}
+              >
+                {loginLoading ? 'Validando Acesso...' : '🥋 Entrar no Tatame como Professor'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // QUANDO O PROFESSOR ESTÁ AUTENTICADO: RENDERIZA O PORTAL COM OS 4 LAYOUTS
+  // =========================================================================
+  const teacherLayoutOptions: Array<{ id: TeacherPresetId; icon: string; name: string; tag: string }> = [
+    { id: 'tatame_fast', icon: '🎓', name: 'Layout 1: Diário Escolar', tag: 'Aba Lateral Fixa' },
+    { id: 'technical_perf', icon: '📊', name: 'Layout 2: Mesa Técnica', tag: 'Split-Screen 50/50' },
+    { id: 'partner_portal', icon: '🏛️', name: 'Layout 3: Dossiê Executivo B2B', tag: 'Matriz 0px' },
+    { id: 'classic_teacher', icon: '⚡', name: 'Layout 4: Tatame Touch-First', tag: 'Abas Clássicas' }
+  ];
+
   return (
     <div
       style={{
@@ -231,13 +555,7 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
                   PORTAL DO PROFESSOR & MESTRE <span style={{ color: 'var(--color-primary)' }}>COMBAT-PASS</span>
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
-                  {activePreset === 'tatame_fast'
-                    ? '🎓 Modo 1: Diário Escolar do Docente (Aba Lateral & Caderneta de Chamada)'
-                    : activePreset === 'technical_perf'
-                    ? '📊 Modo 2: Mesa Técnica & Avaliação de Desempenho (Split-Screen com Radar de Notas)'
-                    : activePreset === 'partner_portal'
-                    ? '🏛️ Modo 3: Painel Executivo B2B & Repasses (Dossiê Financeiro & Tabela de Turmas)'
-                    : '⚡ Modo 4: Tatame Touch-First Clássico (Cards Grandes em Abas Rápidas)'}
+                  Autenticado como: <strong style={{ color: 'var(--color-primary)' }}>{teacherUser?.nome || 'Prof. Mestre Titular'} (CPF: {teacherUser?.cpf || '1'})</strong>
                 </div>
               </div>
             </div>
@@ -274,11 +592,95 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
               >
                 👑 ERP Admin
               </Link>
+              <button
+                type="button"
+                onClick={handleTeacherLogout}
+                style={{
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: activePreset === 'partner_portal' ? '0px' : '10px',
+                  background: 'var(--status-full-bg)',
+                  color: 'var(--status-full)',
+                  border: '1px solid var(--status-full-border)',
+                  fontSize: '0.75rem',
+                  fontWeight: 900,
+                  cursor: 'pointer'
+                }}
+                title="Sair e voltar para a tela de Login do Professor"
+              >
+                🚪 Sair
+              </button>
             </div>
           </header>
         )}
 
-        {/* Toolbar de Seleção dos 4 Layouts Completamente Diferentes */}
+        {/* =========================================================================
+            BARRA DE ATALHOS DIRETOS PARA TROCAR E VISUALIZAR OS 4 LAYOUTS INSTANTANEAMENTE
+            ========================================================================= */}
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '0.85rem 1rem',
+            borderRadius: activePreset === 'partner_portal' ? '0px' : '16px',
+            background: 'var(--bg-surface-1)',
+            border: '2px solid var(--color-primary)',
+            boxShadow: 'var(--shadow-card)'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              👁️ SELETOR DIRETO DE VISUALIZAÇÃO: CLIQUE PARA VER CADA UM DOS 4 MODELOS DO PROFESSOR
+            </span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted-foreground)', fontWeight: 800 }}>
+              Modelo Ativo: <strong>{activePreset.toUpperCase()}</strong>
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.65rem' }}>
+            {teacherLayoutOptions.map(opt => {
+              const isCurrent = activePreset === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    setJourneyPreset('teacher', opt.id);
+                    setFeedbackMsg(`✓ Visualizando agora: ${opt.name} (${opt.tag})`);
+                  }}
+                  style={{
+                    padding: '0.75rem 0.9rem',
+                    borderRadius: activePreset === 'partner_portal' ? '0px' : '12px',
+                    border: isCurrent ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                    background: isCurrent ? 'var(--color-primary)' : 'var(--bg-surface-2)',
+                    color: isCurrent ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.5rem',
+                    textAlign: 'left',
+                    boxShadow: isCurrent ? 'var(--shadow-glow)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.2rem' }}>{opt.icon}</span>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 900 }}>{opt.name}</div>
+                      <div style={{ fontSize: '0.65rem', opacity: 0.85 }}>{opt.tag}</div>
+                    </div>
+                  </div>
+                  {isCurrent && (
+                    <span style={{ fontSize: '0.65rem', fontWeight: 900, background: 'rgba(0,0,0,0.25)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                      ATIVO
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Toolbar de Configuração Completa & Ordenador */}
         <JourneyLayoutToolbar journey="teacher" />
 
         {feedbackMsg && (
@@ -343,7 +745,7 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
                   CADERNETA ESCOLAR DO MESTRE
                 </div>
                 <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-foreground)', marginTop: '0.2rem' }}>
-                  Prof. Mestre Titular
+                  {teacherUser?.nome || 'Prof. Mestre Titular'}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)', marginTop: '0.1rem' }}>
                   Turma: <strong style={{ color: 'var(--color-primary)' }}>{selectedHorario} ({selectedModalidade})</strong>
