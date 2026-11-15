@@ -52,6 +52,7 @@ interface InteractiveCombatCalendarProps {
   usuarioProfessor?: any;
   onCheckinChanged?: () => void;
   onRefreshExternal?: () => void;
+  defaultViewMode?: 'grid' | 'agenda';
 }
 
 export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps> = ({
@@ -59,36 +60,36 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
   alunoId,
   alunoLogado,
   onCheckinChanged,
-  onRefreshExternal
+  onRefreshExternal,
+  defaultViewMode = 'grid'
 }) => {
   const effectiveAlunoId = alunoId || alunoLogado?.id;
   const notifyRefresh = () => {
     onCheckinChanged?.();
     onRefreshExternal?.();
   };
+
   const [mesAtual, setMesAtual] = useState(new Date().getMonth() + 1);
   const [anoAtual, setAnoAtual] = useState(new Date().getFullYear());
   const [academiaFiltro, setAcademiaFiltro] = useState<string>('TODAS');
   const [modalidadeFiltro, setModalidadeFiltro] = useState<string>('TODAS');
+  const [viewMode, setViewMode] = useState<'grid' | 'agenda'>(defaultViewMode);
   const [academiasDisponiveis, setAcademiasDisponiveis] = useState<any[]>([]);
   const [aulasPorDia, setAulasPorDia] = useState<Record<string, ClassScheduleItem[]>>({});
   const [loading, setLoading] = useState(true);
 
-  // Modal / Gaveta do Dia Selecionado
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
-
-  // Ações em andamento
   const [processandoAcao, setProcessandoAcao] = useState(false);
   const [sucessoMsg, setSucessoMsg] = useState('');
   const [erroMsg, setErroMsg] = useState('');
 
-  // Motivo de cancelamento pelo professor
   const [motivoCancelamento, setMotivoCancelamento] = useState('');
   const [showModalCancelarAula, setShowModalCancelarAula] = useState(false);
   const [aulaParaCancelar, setAulaParaCancelar] = useState<ClassScheduleItem | null>(null);
 
   useEffect(() => {
-    studentApi.getAcademies()
+    studentApi
+      .getAcademies()
       .then(res => {
         if (Array.isArray(res.data)) setAcademiasDisponiveis(res.data);
       })
@@ -120,7 +121,6 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
     carregarCalendario();
   }, [mesAtual, anoAtual, effectiveAlunoId, academiaFiltro, modalidadeFiltro]);
 
-  // Ação: Aluno realiza Check-in no Horário Específico
   const handleFazerCheckin = async (aula: ClassScheduleItem) => {
     if (!effectiveAlunoId) return;
     setProcessandoAcao(true);
@@ -142,10 +142,9 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
     }
   };
 
-  // Ação: Aluno cancela Check-in (se ainda não aceito pelo professor)
   const handleCancelarCheckin = async (checkinId: string) => {
     if (!effectiveAlunoId) return;
-    if (!confirm('Deseja realmente cancelar seu check-in nesta aula? Sua vaga e crédito do Combat-Pass serão liberados.')) return;
+    if (!confirm('Deseja realmente cancelar seu check-in nesta aula? Sua vaga e crédito serão liberados.')) return;
 
     setProcessandoAcao(true);
     setErroMsg('');
@@ -166,7 +165,6 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
     }
   };
 
-  // Ação: Professor/Admin cancela aula (fica riscada para todos)
   const handleConfirmarCancelarAula = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!aulaParaCancelar) return;
@@ -187,7 +185,6 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
     }
   };
 
-  // Ação: Professor/Admin reativa aula
   const handleReativarAula = async (aulaId: string) => {
     setProcessandoAcao(true);
     try {
@@ -202,7 +199,6 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
     }
   };
 
-  // Ação: Professor/Admin marca presença de aluno no horário
   const handleMarcarPresencaAluno = async (eventoId: string, targetAlunoId: string, status: string) => {
     setProcessandoAcao(true);
     try {
@@ -231,84 +227,219 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
 
   const aulasDoDiaSelecionado = diaSelecionado ? aulasPorDia[diaSelecionado] || [] : [];
 
+  // Dias com aulas para o modo Agenda Horizontal
+  const diasComAulas = Object.entries(aulasPorDia)
+    .filter(([_, lista]) => Array.isArray(lista) && lista.length > 0)
+    .sort(([a], [b]) => a.localeCompare(b));
+
   return (
-    <div className="space-y-4">
-      {/* CABEÇALHO DO CALENDÁRIO COM SELETOR DE MÊS & FILTROS MULTI-ACADEMIA COMBAT-PASS */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%' }}>
+      {/* BARRA DE CONTROLE DO CALENDÁRIO (TOTALMENTE RESPONSIVA E SEM QUEBRAS) */}
       <div
-        style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)' }}
-        className="border rounded-2xl p-4 sm:p-5 space-y-4 shadow-xl"
+        style={{
+          background: 'var(--bg-surface-1)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '14px',
+          padding: '1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.85rem'
+        }}
       >
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.75rem'
+          }}
+        >
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                <span>📅</span>
-                <span>Grade Oficial Multi-Academias & Calendário Combat-Pass</span>
-              </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.98rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
+                📅 Grade Oficial Multi-Academias & Lotação ao Vivo
+              </span>
               <span
-                style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)', borderColor: 'var(--color-primary-border)' }}
-                className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border"
+                style={{
+                  padding: '0.18rem 0.55rem',
+                  borderRadius: '999px',
+                  background: 'var(--color-primary-light)',
+                  color: 'var(--color-primary)',
+                  border: '1px solid var(--color-primary-border)',
+                  fontSize: '0.64rem',
+                  fontWeight: 900,
+                  textTransform: 'uppercase'
+                }}
               >
-                {userRole === 'ALUNO' ? 'Passe Unificado do Atleta' : 'Gestão CT Parceiro / Hub'}
+                {userRole === 'ALUNO' ? 'Passe Unificado' : 'Gestão CT'}
               </span>
             </div>
-            <p className="text-xs text-zinc-400 mt-1">
-              {userRole === 'ALUNO'
-                ? 'Filtre por Centro de Treinamento ou Modalidade, escolha o horário da aula para dar check-in e cancele enquanto pendente.'
-                : 'Gerencie horários da rede, confirme presenças de alunos agendados e cancele aulas quando necessário (aparece riscado).'}
-            </p>
+            <div style={{ fontSize: '0.73rem', color: 'var(--text-muted-foreground)', marginTop: '0.15rem' }}>
+              Clique em qualquer dia para ver os horários detalhados, dar check-in ou verificar vagas.
+            </div>
           </div>
 
-          {/* Seletor Mês & Ano */}
-          <div className="flex items-center gap-2 bg-[#1A1A1E] border border-zinc-700/80 rounded-xl p-1 shrink-0">
-            <button
-              onClick={() => {
-                if (mesAtual === 1) {
-                  setMesAtual(12);
-                  setAnoAtual(a => a - 1);
-                } else {
-                  setMesAtual(m => m - 1);
-                }
+          {/* Controles de Mês + Alternador Grade/Lista */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                background: 'var(--bg-background)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '10px',
+                padding: '0.22rem'
               }}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-300 hover:text-white hover:bg-zinc-800 transition"
             >
-              ← Anterior
-            </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                style={{
+                  padding: '0.35rem 0.65rem',
+                  borderRadius: '7px',
+                  border: 'none',
+                  background: viewMode === 'grid' ? 'var(--color-primary)' : 'transparent',
+                  color: viewMode === 'grid' ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                  fontSize: '0.7rem',
+                  fontWeight: 900,
+                  cursor: 'pointer'
+                }}
+              >
+                🗓️ Grade 7 Dias
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('agenda')}
+                style={{
+                  padding: '0.35rem 0.65rem',
+                  borderRadius: '7px',
+                  border: 'none',
+                  background: viewMode === 'agenda' ? 'var(--color-primary)' : 'transparent',
+                  color: viewMode === 'agenda' ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                  fontSize: '0.7rem',
+                  fontWeight: 900,
+                  cursor: 'pointer'
+                }}
+              >
+                📋 Lista Compacta
+              </button>
+            </div>
 
-            <span className="px-3 py-1 text-xs font-black text-white uppercase tracking-wider">
-              {mesesNomes[mesAtual - 1]} / {anoAtual}
-            </span>
-
-            <button
-              onClick={() => {
-                if (mesAtual === 12) {
-                  setMesAtual(1);
-                  setAnoAtual(a => a + 1);
-                } else {
-                  setMesAtual(m => m + 1);
-                }
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                background: 'var(--bg-background)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '10px',
+                padding: '0.25rem 0.4rem'
               }}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-300 hover:text-white hover:bg-zinc-800 transition"
             >
-              Próximo →
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (mesAtual === 1) {
+                    setMesAtual(12);
+                    setAnoAtual(a => a - 1);
+                  } else {
+                    setMesAtual(m => m - 1);
+                  }
+                }}
+                style={{
+                  padding: '0.3rem 0.55rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: 'var(--bg-surface-1)',
+                  color: 'var(--text-foreground)',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                ◀
+              </button>
+              <span
+                style={{
+                  padding: '0 0.5rem',
+                  fontSize: '0.76rem',
+                  fontWeight: 900,
+                  color: 'var(--text-foreground)',
+                  textTransform: 'uppercase',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {mesesNomes[mesAtual - 1]} / {anoAtual}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (mesAtual === 12) {
+                    setMesAtual(1);
+                    setAnoAtual(a => a + 1);
+                  } else {
+                    setMesAtual(m => m + 1);
+                  }
+                }}
+                style={{
+                  padding: '0.3rem 0.55rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: 'var(--bg-surface-1)',
+                  color: 'var(--text-foreground)',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                ▶
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* BARRA DE FILTROS: CT CREDENCIADO E MODALIDADE */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-zinc-800/80">
+        {/* FILTROS DE ACADEMIA E MODALIDADE */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '0.65rem',
+            paddingTop: '0.65rem',
+            borderTop: '1px solid var(--border-subtle)'
+          }}
+        >
           <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-1">
-              🏟️ Filtrar por Centro de Treinamento (CT Parceiro):
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.64rem',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                color: 'var(--text-muted-foreground)',
+                marginBottom: '0.25rem'
+              }}
+            >
+              🏟️ Filtrar Unidade / CT Credenciado:
             </label>
             <select
               value={academiaFiltro}
-              onChange={(e) => setAcademiaFiltro(e.target.value)}
-              className="w-full bg-[#121215] border border-zinc-700/80 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none focus:border-red-500"
+              onChange={e => setAcademiaFiltro(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.7rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-background)',
+                color: 'var(--text-foreground)',
+                fontSize: '0.75rem',
+                fontWeight: 700
+              }}
             >
-              <option value="TODAS">🌐 Todas as Academias Credenciadas Combat-Pass</option>
+              <option value="TODAS">🌐 Todas as Unidades Credenciadas</option>
               {academiasDisponiveis.length > 0 ? (
-                academiasDisponiveis.map((ac) => (
+                academiasDisponiveis.map(ac => (
                   <option key={ac.id || ac.slug} value={ac.slug || ac.nome}>
                     🥋 {ac.nome} ({ac.bairro || ac.cidade})
                   </option>
@@ -325,13 +456,31 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
           </div>
 
           <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-1">
-              🥊 Filtrar por Modalidade Marcial:
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.64rem',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                color: 'var(--text-muted-foreground)',
+                marginBottom: '0.25rem'
+              }}
+            >
+              🥊 Filtrar Modalidade Marcial:
             </label>
             <select
               value={modalidadeFiltro}
-              onChange={(e) => setModalidadeFiltro(e.target.value)}
-              className="w-full bg-[#121215] border border-zinc-700/80 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none focus:border-red-500"
+              onChange={e => setModalidadeFiltro(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.7rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-background)',
+                color: 'var(--text-foreground)',
+                fontSize: '0.75rem',
+                fontWeight: 700
+              }}
             >
               <option value="TODAS">🔥 Todas as Modalidades (Muay Thai, BJJ, Boxe, MMA)</option>
               <option value="Muay Thai">🇹🇭 Muay Thai & Muay Thai Kids</option>
@@ -344,511 +493,685 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
       </div>
 
       {sucessoMsg && (
-        <div className="p-3 bg-emerald-950/40 border border-emerald-500/40 rounded-xl text-xs text-emerald-300 font-bold flex items-center gap-2">
-          <span>✓</span>
-          <span>{sucessoMsg}</span>
+        <div
+          style={{
+            padding: '0.65rem 0.9rem',
+            borderRadius: '10px',
+            background: 'var(--status-available-bg)',
+            border: '1px solid var(--status-available-border)',
+            color: 'var(--status-available)',
+            fontSize: '0.76rem',
+            fontWeight: 800
+          }}
+        >
+          ✓ {sucessoMsg}
         </div>
       )}
 
       {erroMsg && (
-        <div className="p-3 bg-red-950/50 border border-red-500/40 rounded-xl text-xs text-red-400 font-bold flex items-center gap-2">
-          <span>⚠️</span>
-          <span>{erroMsg}</span>
+        <div
+          style={{
+            padding: '0.65rem 0.9rem',
+            borderRadius: '10px',
+            background: 'var(--status-full-bg)',
+            border: '1px solid var(--status-full-border)',
+            color: 'var(--status-full)',
+            fontSize: '0.76rem',
+            fontWeight: 800
+          }}
+        >
+          ⚠️ {erroMsg}
         </div>
       )}
 
-      {/* GRADE DO CALENDÁRIO */}
+      {/* CORPO DO CALENDÁRIO */}
       <div
-        style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)' }}
-        className="border rounded-2xl p-3 sm:p-5 shadow-2xl space-y-3"
+        style={{
+          background: 'var(--bg-surface-1)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '14px',
+          padding: '0.9rem',
+          overflowX: 'auto'
+        }}
       >
-        {/* Dias da Semana (Header) */}
-        <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs font-black text-zinc-400 uppercase tracking-wider">
-          <div style={{ color: 'var(--color-primary)' }}>Dom</div>
-          <div>Seg</div>
-          <div>Ter</div>
-          <div>Qua</div>
-          <div>Qui</div>
-          <div>Sex</div>
-          <div>Sáb</div>
-        </div>
-
         {loading ? (
-          <div className="py-24 text-center text-zinc-500 text-xs">
-            Carregando grade multi-academias do Combat-Pass...
+          <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted-foreground)', fontSize: '0.8rem' }}>
+            Carregando grade oficial de horários do mês...
           </div>
-        ) : (
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">
-            {/* Células vazias antes do primeiro dia */}
-            {Array.from({ length: primeiroDiaSemana }).map((_, idx) => (
-              <div
-                key={`empty-${idx}`}
-                className="min-h-[115px] sm:min-h-[145px] rounded-xl bg-zinc-900/20 border border-zinc-900/40"
-              />
-            ))}
-
-            {/* Células de cada dia do mês */}
-            {Array.from({ length: totalDiasNoMes }).map((_, idx) => {
-              const diaNum = idx + 1;
-              const dataIso = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(diaNum).padStart(2, '0')}`;
-              const aulasDoDia = aulasPorDia[dataIso] || [];
+        ) : viewMode === 'agenda' ? (
+          /* VISÃO EM LISTA HORIZONTAL / AGENDA COMPACTA (NUNCA ESPREME) */
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.75rem' }}>
+            {diasComAulas.slice(0, 12).map(([dataIso, lista]) => {
               const ehHoje = dataIso === hojeIso;
-              const estaSelecionado = diaSelecionado === dataIso;
-
-              const meuCheckinNoDia = aulasDoDia.find(a => Boolean(a.meuCheckin));
-              const totalAlunosDia = aulasDoDia.reduce((acc, a) => acc + a.totalAgendados, 0);
-              const totalLeadsDia = aulasDoDia.reduce((acc, a) => acc + a.totalAulasExp, 0);
-
               return (
                 <div
-                  key={`day-${diaNum}`}
-                  onClick={() => {
-                    setDiaSelecionado(dataIso);
+                  key={dataIso}
+                  onClick={() => setDiaSelecionado(dataIso)}
+                  style={{
+                    cursor: 'pointer',
+                    padding: '0.85rem',
+                    borderRadius: '10px',
+                    background: 'var(--bg-background)',
+                    border: ehHoje ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.45rem'
                   }}
-                  className={`min-h-[120px] sm:min-h-[160px] p-1.5 sm:p-2 rounded-xl border text-left flex flex-col justify-between transition group relative cursor-pointer overflow-hidden ${
-                    estaSelecionado
-                      ? 'bg-red-950/40 border-red-500 shadow-lg shadow-red-950/40 ring-1 ring-red-500'
-                      : meuCheckinNoDia
-                      ? 'bg-[#18181E] border-amber-500/50 hover:border-amber-400'
-                      : ehHoje
-                      ? 'bg-[#1C1C22] border-red-500/80 hover:border-red-400'
-                      : aulasDoDia.length > 0
-                      ? 'bg-[#141416] border-zinc-800/80 hover:border-zinc-700'
-                      : 'bg-zinc-900/30 border-zinc-900 text-zinc-600'
-                  }`}
                 >
-                  {/* Topo da Célula: Dia & Badges */}
-                  <div className="flex items-center justify-between w-full">
-                    <span
-                      className={`text-xs sm:text-sm font-black ${
-                        estaSelecionado ? 'text-white' : ehHoje ? 'text-red-400' : 'text-zinc-300'
-                      }`}
-                    >
-                      {diaNum}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 900, color: ehHoje ? 'var(--color-primary)' : 'var(--text-foreground)' }}>
+                      📆 Dia {dataIso.split('-')[2]}/{dataIso.split('-')[1]}
                     </span>
-
-                    <div className="flex items-center gap-1">
-                      {ehHoje && (
-                        <span
-                          style={{ backgroundColor: 'var(--color-primary)' }}
-                          className="text-[8px] font-black uppercase text-white px-1 py-0.2 rounded"
-                        >
-                          Hoje
-                        </span>
-                      )}
-                      {meuCheckinNoDia && (
-                        <span
-                          className={`text-[8px] font-black uppercase px-1 py-0.2 rounded ${
-                            meuCheckinNoDia.meuCheckin?.status === 'PRESENTE'
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                          }`}
-                        >
-                          {meuCheckinNoDia.meuCheckin?.status === 'PRESENTE' ? '✓ OK' : '⏳ Pend.'}
-                        </span>
-                      )}
-                    </div>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted-foreground)' }}>
+                      {lista.length} turmas
+                    </span>
                   </div>
-
-                  {/* Miolo da Célula: Horários de aula compactos */}
-                  <div className="my-1 space-y-1 w-full overflow-hidden">
-                    {aulasDoDia.slice(0, 4).map(aula => {
-                      const temMeuCheckin = Boolean(aula.meuCheckin);
-                      return (
-                        <div
-                          key={aula.id}
-                          className={`text-[9px] sm:text-[10px] leading-tight px-1 py-0.5 rounded truncate font-bold flex items-center justify-between ${
-                            aula.cancelada
-                              ? 'line-through text-zinc-500 bg-zinc-900/60'
-                              : temMeuCheckin
-                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                              : 'bg-zinc-900/80 text-zinc-300 hover:text-white'
-                          }`}
-                          title={`${aula.horarioFormatado} • ${aula.modalidade} (${aula.academiaNome || 'CT Borü'}) - ${
-                            aula.cancelada
-                              ? `Cancelada: ${aula.motivoCancelamento || 'Pelo professor'}`
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                    {lista.slice(0, 4).map(aula => (
+                      <div
+                        key={aula.id}
+                        style={{
+                          padding: '0.35rem 0.5rem',
+                          borderRadius: '6px',
+                          background: 'var(--bg-surface-1)',
+                          border: '1px solid var(--border-subtle)',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          fontSize: '0.7rem'
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: 800,
+                            color: aula.cancelada ? 'var(--text-muted-foreground)' : 'var(--text-foreground)',
+                            textDecoration: aula.cancelada ? 'line-through' : 'none',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {aula.horarioCurto} · {aula.modalidade}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.6rem',
+                            fontWeight: 900,
+                            color: aula.cancelada
+                              ? 'var(--status-full)'
                               : aula.lotado
-                              ? 'Turma Lotada'
-                              : 'Há Vagas'
-                          }`}
+                              ? 'var(--status-full)'
+                              : 'var(--status-available)'
+                          }}
                         >
-                          <span className={`truncate ${aula.cancelada ? 'line-through text-zinc-500' : ''}`}>
-                            {aula.horarioCurto} {aula.modalidade.slice(0, 4)} • {aula.professorNome.split(' ')[0]}
-                          </span>
-
-                          {aula.cancelada ? (
-                            <span className="text-[7px] text-red-400 no-underline font-normal uppercase shrink-0 ml-1">
-                              Canc.
-                            </span>
-                          ) : aula.lotado ? (
-                            <span className="text-[7px] text-red-400 font-normal shrink-0 ml-1">Lotado</span>
-                          ) : (
-                            <span className="text-[7px] text-emerald-400 font-normal shrink-0 ml-1">Vagas</span>
-                          )}
-                        </div>
-                      );
-                    })}
-
-                    {aulasDoDia.length > 4 && (
-                      <span className="text-[8px] text-zinc-400 block text-right font-bold">
-                        +{aulasDoDia.length - 4} horário(s)
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Rodapé da Célula: Contadores de Alunos Agendados & Aulas Exp */}
-                  <div className="pt-1 border-t border-zinc-800/60 flex items-center justify-between text-[8px] sm:text-[9px] text-zinc-400">
-                    <span title="Alunos agendados / presentes neste dia">
-                      👥 {totalAlunosDia}
-                    </span>
-                    {totalLeadsDia > 0 && (
-                      <span className="text-amber-400 font-bold" title="Aulas experimentais agendadas">
-                        🎯 {totalLeadsDia}
-                      </span>
-                    )}
+                          {aula.cancelada ? 'CANC.' : aula.lotado ? '[LOTADO]' : '[VAGAS]'}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               );
             })}
           </div>
+        ) : (
+          /* VISÃO GRADE MENSAL DE 7 COLUNAS COM LARGURA MÍNIMA GARANTIDA (NUNCA AMASSA) */
+          <div style={{ minWidth: '680px' }}>
+            {/* Cabeçalho dos 7 Dias da Semana */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, minmax(92px, 1fr))',
+                gap: '0.4rem',
+                marginBottom: '0.45rem',
+                textAlign: 'center',
+                fontSize: '0.68rem',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                color: 'var(--text-muted-foreground)'
+              }}
+            >
+              <div style={{ color: 'var(--color-primary)' }}>Dom</div>
+              <div>Seg</div>
+              <div>Ter</div>
+              <div>Qua</div>
+              <div>Qui</div>
+              <div>Sex</div>
+              <div>Sáb</div>
+            </div>
+
+            {/* Células do Mês */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, minmax(92px, 1fr))',
+                gap: '0.4rem'
+              }}
+            >
+              {Array.from({ length: primeiroDiaSemana }).map((_, idx) => (
+                <div
+                  key={`empty-${idx}`}
+                  style={{
+                    minHeight: '88px',
+                    borderRadius: '8px',
+                    background: 'var(--bg-background)',
+                    opacity: 0.35,
+                    border: '1px dashed var(--border-subtle)'
+                  }}
+                />
+              ))}
+
+              {Array.from({ length: totalDiasNoMes }).map((_, idx) => {
+                const diaNum = idx + 1;
+                const dataIso = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(diaNum).padStart(2, '0')}`;
+                const aulasDoDia = aulasPorDia[dataIso] || [];
+                const ehHoje = dataIso === hojeIso;
+                const estaSelecionado = diaSelecionado === dataIso;
+                const meuCheckinNoDia = aulasDoDia.find(a => Boolean(a.meuCheckin));
+                const totalAlunosDia = aulasDoDia.reduce((acc, a) => acc + a.totalAgendados, 0);
+
+                return (
+                  <div
+                    key={`day-${diaNum}`}
+                    onClick={() => setDiaSelecionado(dataIso)}
+                    style={{
+                      minHeight: '92px',
+                      padding: '0.4rem',
+                      borderRadius: '9px',
+                      background: estaSelecionado ? 'var(--bg-surface-2)' : 'var(--bg-background)',
+                      border: estaSelecionado
+                        ? '2px solid var(--color-primary)'
+                        : ehHoje
+                        ? '2px solid var(--color-primary)'
+                        : '1px solid var(--border-subtle)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '0.25rem',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {/* Topo do Dia */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span
+                        style={{
+                          fontSize: '0.76rem',
+                          fontWeight: 900,
+                          color: ehHoje || estaSelecionado ? 'var(--color-primary)' : 'var(--text-foreground)'
+                        }}
+                      >
+                        {diaNum}
+                      </span>
+                      {ehHoje && (
+                        <span
+                          style={{
+                            fontSize: '0.55rem',
+                            fontWeight: 900,
+                            padding: '0.08rem 0.3rem',
+                            borderRadius: '4px',
+                            background: 'var(--color-primary)',
+                            color: 'var(--text-primary-foreground)',
+                            textTransform: 'uppercase'
+                          }}
+                        >
+                          Hoje
+                        </span>
+                      )}
+                      {meuCheckinNoDia && !ehHoje && (
+                        <span
+                          style={{
+                            fontSize: '0.55rem',
+                            fontWeight: 900,
+                            padding: '0.08rem 0.3rem',
+                            borderRadius: '4px',
+                            background: 'var(--status-available-bg)',
+                            color: 'var(--status-available)'
+                          }}
+                        >
+                          ✓ Check
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Lista compacta de até 3 horários */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.18rem' }}>
+                      {aulasDoDia.slice(0, 3).map(aula => (
+                        <div
+                          key={aula.id}
+                          style={{
+                            fontSize: '0.6rem',
+                            padding: '0.12rem 0.28rem',
+                            borderRadius: '4px',
+                            background: 'var(--bg-surface-1)',
+                            border: '1px solid var(--border-subtle)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '0.2rem',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          <span
+                            style={{
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              fontWeight: 700,
+                              color: aula.cancelada ? 'var(--text-muted-foreground)' : 'var(--text-foreground)',
+                              textDecoration: aula.cancelada ? 'line-through' : 'none'
+                            }}
+                          >
+                            {aula.horarioCurto} {aula.modalidade.slice(0, 5)}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '0.54rem',
+                              fontWeight: 900,
+                              color: aula.cancelada || aula.lotado ? 'var(--status-full)' : 'var(--status-available)'
+                            }}
+                          >
+                            {aula.cancelada ? '✕' : aula.lotado ? 'LOT' : 'OK'}
+                          </span>
+                        </div>
+                      ))}
+                      {aulasDoDia.length > 3 && (
+                        <span style={{ fontSize: '0.56rem', color: 'var(--text-muted-foreground)', fontWeight: 800, textAlign: 'right' }}>
+                          +{aulasDoDia.length - 3} mais
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Rodapé da célula */}
+                    <div
+                      style={{
+                        fontSize: '0.58rem',
+                        color: 'var(--text-muted-foreground)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        borderTop: '1px solid var(--border-subtle)',
+                        paddingTop: '0.15rem'
+                      }}
+                    >
+                      <span>👥 {totalAlunosDia}</span>
+                      <span>{aulasDoDia.length}h</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
-        {/* LEGENDA DO CALENDÁRIO */}
-        <div className="flex flex-wrap items-center gap-3 sm:gap-5 pt-3 border-t border-zinc-800 text-[11px] text-zinc-400">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-            <span>[HÁ VAGAS] Vagas Abertas</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-            <span>[LOTADO] Capacidade Máxima</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="line-through text-zinc-500 font-bold">18h Felipe</span>
-            <span>Aula Cancelada pelo Professor / CT</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <span>Seu Check-in Pendente / Agendado</span>
-          </span>
+        {/* Legenda */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            marginTop: '0.75rem',
+            paddingTop: '0.65rem',
+            borderTop: '1px solid var(--border-subtle)',
+            fontSize: '0.68rem',
+            color: 'var(--text-muted-foreground)'
+          }}
+        >
+          <span>🟢 <strong style={{ color: 'var(--status-available)' }}>[OK / HÁ VAGAS]</strong> Turma com vagas</span>
+          <span>🔴 <strong style={{ color: 'var(--status-full)' }}>[LOT / LOTADO]</strong> Capacidade máxima</span>
+          <span>🚫 <span style={{ textDecoration: 'line-through' }}>18h Muay</span> Aula cancelada pelo professor</span>
         </div>
       </div>
 
-      {/* ======================================================== */}
-      {/* DRAWER / MODAL DO DIA SELECIONADO                        */}
-      {/* ======================================================== */}
+      {/* MODAL DETALHADO DO DIA SELECIONADO */}
       {diaSelecionado && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fadeIn">
-          <div className="bg-[#141416] border border-zinc-700 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-            {/* Header Modal */}
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-[#18181B] via-[#141416] to-[#121214] border-b border-zinc-800 flex items-center justify-between">
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10020,
+            background: 'rgba(0,0,0,0.82)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+          onClick={() => setDiaSelecionado(null)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '720px',
+              maxHeight: '88vh',
+              overflowY: 'auto',
+              borderRadius: '20px',
+              background: 'var(--bg-surface-1)',
+              border: '2px solid var(--color-primary)',
+              padding: '1.5rem',
+              color: 'var(--text-foreground)',
+              boxShadow: 'var(--shadow-card)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
               <div>
-                <span style={{ color: 'var(--color-primary)' }} className="text-[10px] font-black uppercase tracking-wider">
-                  Grade Combat-Pass • Check-in & Presenças
+                <span style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                  GRADE OFICIAL COMBAT-PASS · CHECK-IN POR HORÁRIO
                 </span>
-                <h3 className="text-lg font-black text-white">
-                  Dia {new Date(`${diaSelecionado}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                <h3 style={{ margin: '0.2rem 0 0 0', fontSize: '1.15rem', fontWeight: 900 }}>
+                  Horários do Dia {diaSelecionado}
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setDiaSelecionado(null)}
-                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center"
+                style={{
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-surface-2)',
+                  color: 'var(--text-foreground)',
+                  fontWeight: 900,
+                  cursor: 'pointer'
+                }}
               >
-                ✕
+                ✕ Fechar
               </button>
             </div>
 
-            {/* Conteúdo: Lista de aulas do dia */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
-              {aulasDoDiaSelecionado.length === 0 ? (
-                <div className="py-12 text-center text-zinc-500 text-xs bg-zinc-900/30 rounded-2xl border border-zinc-800">
-                  Nenhuma aula programada para este filtro/dia.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {aulasDoDiaSelecionado.map(aula => {
-                    const isMinhaAula = Boolean(aula.meuCheckin);
-                    const pendenteAceite = aula.meuCheckin?.status === 'AGENDADO';
-                    const presencaAceita = aula.meuCheckin?.status === 'PRESENTE';
+            {aulasDoDiaSelecionado.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted-foreground)', fontSize: '0.82rem' }}>
+                Nenhuma aula programada para este dia/filtro.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {aulasDoDiaSelecionado.map(aula => {
+                  const isMinhaAula = Boolean(aula.meuCheckin);
+                  const pendenteAceite = aula.meuCheckin?.status === 'AGENDADO';
+                  const presencaAceita = aula.meuCheckin?.status === 'PRESENTE';
 
-                    return (
-                      <div
-                        key={aula.id}
-                        className={`border rounded-2xl p-4 sm:p-5 space-y-3 transition shadow-lg ${
-                          aula.cancelada
-                            ? 'bg-zinc-950/60 border-zinc-800/60 opacity-60'
-                            : isMinhaAula
-                            ? 'bg-gradient-to-r from-amber-950/20 via-[#1A1A1E] to-[#141416] border-amber-500/50'
-                            : 'bg-[#1A1A1E]/80 border-zinc-800 hover:border-zinc-700'
-                        }`}
-                      >
-                        {/* Topo do Card da Aula */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <div className="space-y-0.5">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span
-                                className={`text-base font-black ${
-                                  aula.cancelada ? 'line-through text-zinc-500' : 'text-white'
-                                }`}
-                              >
-                                ⏰ {aula.horario} • {aula.titulo}
-                              </span>
-
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-800 text-zinc-300 border border-zinc-700">
-                                🏟️ {aula.academiaNome || 'CT Borü (Matriz)'}
-                              </span>
-
-                              {aula.cancelada ? (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-red-950/80 text-red-400 border border-red-500/40">
-                                  Aula Cancelada
-                                </span>
-                              ) : aula.lotado ? (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-red-950 text-red-400 border border-red-500/40">
-                                  [LOTADO]
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-950 text-emerald-400 border border-emerald-500/40">
-                                  [HÁ VAGAS]
-                                </span>
-                              )}
-                            </div>
-
-                            <span className="text-xs text-zinc-400 block">
-                              Mestre: <strong className="text-zinc-200">{aula.professorNome}</strong> • Modalidade: <strong className="text-zinc-200">{aula.modalidade}</strong> • Lotação: {aula.totalAgendados}/{aula.capacidade} alunos
+                  return (
+                    <div
+                      key={aula.id}
+                      style={{
+                        padding: '1rem',
+                        borderRadius: '14px',
+                        background: 'var(--bg-background)',
+                        border: isMinhaAula ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                        opacity: aula.cancelada ? 0.65 : 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.65rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span
+                              style={{
+                                fontSize: '0.95rem',
+                                fontWeight: 900,
+                                textDecoration: aula.cancelada ? 'line-through' : 'none'
+                              }}
+                            >
+                              ⏰ {aula.horario} · {aula.titulo}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '0.64rem',
+                                fontWeight: 900,
+                                padding: '0.18rem 0.5rem',
+                                borderRadius: '4px',
+                                background: aula.cancelada || aula.lotado ? 'var(--status-full-bg)' : 'var(--status-available-bg)',
+                                color: aula.cancelada || aula.lotado ? 'var(--status-full)' : 'var(--status-available)'
+                              }}
+                            >
+                              {aula.cancelada ? 'AULA CANCELADA' : aula.lotado ? '[LOTADO]' : '[HÁ VAGAS]'}
                             </span>
                           </div>
-
-                          {/* Se for Professor/Admin: Botão de Cancelar Aula */}
-                          {(userRole === 'ADMIN' || userRole === 'PROFESSOR') && (
-                            <div className="flex items-center gap-2 self-start sm:self-auto">
-                              {aula.cancelada ? (
-                                <button
-                                  onClick={() => handleReativarAula(aula.id)}
-                                  disabled={processandoAcao}
-                                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1"
-                                >
-                                  <span>🔄 Reativar Aula</span>
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => {
-                                    setAulaParaCancelar(aula);
-                                    setShowModalCancelarAula(true);
-                                  }}
-                                  className="px-3 py-1.5 rounded-xl bg-red-950/60 hover:bg-red-900 border border-red-500/40 text-red-400 hover:text-white text-xs font-bold transition flex items-center gap-1"
-                                >
-                                  <span>🚫 Cancelar Aula (Riscar)</span>
-                                </button>
-                              )}
-                            </div>
-                          )}
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted-foreground)', marginTop: '0.2rem' }}>
+                            Mestre: <strong style={{ color: 'var(--text-foreground)' }}>{aula.professorNome}</strong> · Modalidade: <strong style={{ color: 'var(--text-foreground)' }}>{aula.modalidade}</strong> · Lotação: {aula.totalAgendados}/{aula.capacidade}
+                          </div>
                         </div>
 
-                        {aula.cancelada && aula.motivoCancelamento && (
-                          <div className="p-2.5 bg-red-950/30 border border-red-500/30 rounded-xl text-xs text-red-300 italic">
-                            Aviso do CT: "{aula.motivoCancelamento}"
-                          </div>
-                        )}
-
-                        {/* Seção ALUNO: Ações de Check-in e Cancelar Check-in */}
-                        {userRole === 'ALUNO' && !aula.cancelada && (
-                          <div className="pt-2 border-t border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            {isMinhaAula ? (
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span
-                                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase flex items-center gap-1.5 ${
-                                    presencaAceita
-                                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
-                                  }`}
-                                >
-                                  <span>{presencaAceita ? '✓' : '⏳'}</span>
-                                  <span>
-                                    {presencaAceita
-                                      ? 'Presença Confirmada pelo Professor no Tatame!'
-                                      : 'Check-in Realizado (Aguardando Professor)'}
-                                  </span>
-                                </span>
-
-                                {pendenteAceite && aula.meuCheckin && (
-                                  <button
-                                    onClick={() => handleCancelarCheckin(aula.meuCheckin!.id)}
-                                    disabled={processandoAcao}
-                                    className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-red-900/60 text-zinc-300 hover:text-red-300 border border-zinc-700 hover:border-red-500/50 text-xs font-bold transition flex items-center gap-1 disabled:opacity-50"
-                                  >
-                                    <span>❌</span>
-                                    <span>Cancelar meu Check-in</span>
-                                  </button>
-                                )}
-                              </div>
+                        {(userRole === 'ADMIN' || userRole === 'PROFESSOR') && (
+                          <div>
+                            {aula.cancelada ? (
+                              <button
+                                type="button"
+                                onClick={() => handleReativarAula(aula.id)}
+                                disabled={processandoAcao}
+                                style={{
+                                  padding: '0.4rem 0.75rem',
+                                  borderRadius: '8px',
+                                  border: 'none',
+                                  background: 'var(--status-available)',
+                                  color: '#fff',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 800,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                🔄 Reativar Aula
+                              </button>
                             ) : (
                               <button
-                                onClick={() => handleFazerCheckin(aula)}
-                                disabled={processandoAcao || aula.lotado}
-                                style={!aula.lotado ? { backgroundColor: 'var(--color-primary)' } : undefined}
-                                className={`py-2.5 px-5 rounded-xl text-xs font-black uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg ${
-                                  aula.lotado
-                                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                                    : 'hover:opacity-90 text-white'
-                                }`}
+                                type="button"
+                                onClick={() => {
+                                  setAulaParaCancelar(aula);
+                                  setShowModalCancelarAula(true);
+                                }}
+                                style={{
+                                  padding: '0.4rem 0.75rem',
+                                  borderRadius: '8px',
+                                  border: '1px solid var(--status-full)',
+                                  background: 'var(--status-full-bg)',
+                                  color: 'var(--status-full)',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 800,
+                                  cursor: 'pointer'
+                                }}
                               >
-                                <span>🥊</span>
-                                <span>
-                                  {aula.lotado ? 'Turma Lotada' : `Dar Check-in às ${aula.horarioCurto} (${aula.modalidade})`}
-                                </span>
+                                🚫 Cancelar Aula (Riscar)
                               </button>
-                            )}
-
-                            <span className="text-[11px] text-zinc-400">
-                              Capacidade: <strong>{aula.totalAgendados} de {aula.capacidade} alunos</strong>
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Seção PROFESSOR/ADMIN: Lista de Alunos Agendados & Aulas Exp */}
-                        {(userRole === 'ADMIN' || userRole === 'PROFESSOR') && (
-                          <div className="space-y-3 pt-2 border-t border-zinc-800">
-                            <div>
-                              <div className="flex items-center justify-between text-xs font-bold text-zinc-300 mb-2">
-                                <span>👥 Alunos que deram Check-in ({aula.alunosAgendados.length}):</span>
-                                <span className="text-[11px] text-zinc-500">Clique para validar presença e repasse</span>
-                              </div>
-
-                              {aula.alunosAgendados.length === 0 ? (
-                                <p className="text-xs text-zinc-500 italic">Nenhum aluno agendado ainda.</p>
-                              ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {aula.alunosAgendados.map(al => (
-                                    <div
-                                      key={al.id}
-                                      className="bg-black/40 border border-zinc-800 rounded-xl p-2.5 flex items-center justify-between gap-2"
-                                    >
-                                      <div>
-                                        <div className="text-xs font-bold text-white">{al.nome}</div>
-                                        <span className="text-[10px] text-zinc-400">
-                                          {al.prajied || 'Iniciante'} • Passe {al.tierPasse || 'GOLD'}
-                                        </span>
-                                      </div>
-
-                                      <div className="flex items-center gap-1">
-                                        <button
-                                          onClick={() => handleMarcarPresencaAluno(aula.id, al.id, 'PRESENTE')}
-                                          disabled={processandoAcao}
-                                          className={`px-2 py-1 rounded text-[10px] font-black transition ${
-                                            al.status === 'PRESENTE'
-                                              ? 'bg-emerald-600 text-white'
-                                              : 'bg-emerald-950/60 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30'
-                                          }`}
-                                        >
-                                          ✓ Presente
-                                        </button>
-
-                                        <button
-                                          onClick={() => handleMarcarPresencaAluno(aula.id, al.id, 'FALTA')}
-                                          disabled={processandoAcao}
-                                          className={`px-2 py-1 rounded text-[10px] font-black transition ${
-                                            al.status === 'FALTA'
-                                              ? 'bg-red-600 text-white'
-                                              : 'bg-red-950/60 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30'
-                                          }`}
-                                        >
-                                          ✗ Falta
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-
-                            {aula.leadsExp.length > 0 && (
-                              <div className="pt-2 border-t border-zinc-800/80">
-                                <span className="text-xs font-bold text-amber-400 block mb-2">
-                                  🎯 Aulas Experimentais Agendadas ({aula.leadsExp.length}):
-                                </span>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {aula.leadsExp.map(lead => (
-                                    <div
-                                      key={lead.id}
-                                      className="bg-amber-950/20 border border-amber-500/30 rounded-xl p-2.5 flex items-center justify-between"
-                                    >
-                                      <div>
-                                        <div className="text-xs font-bold text-white">{lead.nome}</div>
-                                        <span className="text-[10px] text-amber-400/80 font-mono">
-                                          {lead.telefone}
-                                        </span>
-                                      </div>
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">
-                                        Experimental
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
                             )}
                           </div>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+
+                      {userRole === 'ALUNO' && !aula.cancelada && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-subtle)' }}>
+                          {isMinhaAula ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.74rem', fontWeight: 900, color: 'var(--status-available)' }}>
+                                {presencaAceita ? '✓ Presença Confirmada pelo Professor!' : '⏳ Check-in Agendado (Aguardando Professor)'}
+                              </span>
+                              {pendenteAceite && aula.meuCheckin && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCancelarCheckin(aula.meuCheckin!.id)}
+                                  disabled={processandoAcao}
+                                  style={{
+                                    padding: '0.35rem 0.7rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--status-full)',
+                                    background: 'transparent',
+                                    color: 'var(--status-full)',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 800,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ❌ Cancelar Meu Check-in
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleFazerCheckin(aula)}
+                              disabled={processandoAcao || aula.lotado}
+                              style={{
+                                padding: '0.5rem 0.95rem',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: aula.lotado ? 'var(--bg-surface-2)' : 'var(--color-primary)',
+                                color: aula.lotado ? 'var(--text-muted-foreground)' : 'var(--text-primary-foreground)',
+                                fontSize: '0.74rem',
+                                fontWeight: 900,
+                                cursor: aula.lotado ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              {aula.lotado ? 'Turma Lotada' : `🥊 Dar Check-in às ${aula.horarioCurto}`}
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {(userRole === 'ADMIN' || userRole === 'PROFESSOR') && aula.alunosAgendados.length > 0 && (
+                        <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--border-subtle)', display: 'grid', gap: '0.4rem' }}>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted-foreground)' }}>
+                            Alunos Agendados ({aula.alunosAgendados.length}):
+                          </div>
+                          {aula.alunosAgendados.map(al => (
+                            <div
+                              key={al.id}
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '0.4rem 0.6rem',
+                                borderRadius: '8px',
+                                background: 'var(--bg-surface-1)',
+                                border: '1px solid var(--border-subtle)'
+                              }}
+                            >
+                              <span style={{ fontSize: '0.74rem', fontWeight: 800 }}>{al.nome}</span>
+                              <div style={{ display: 'flex', gap: '0.35rem' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMarcarPresencaAluno(aula.id, al.id, 'PRESENTE')}
+                                  style={{
+                                    padding: '0.25rem 0.55rem',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: 'var(--status-available)',
+                                    color: '#fff',
+                                    fontSize: '0.66rem',
+                                    fontWeight: 900,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ✓ Presente
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMarcarPresencaAluno(aula.id, al.id, 'FALTA')}
+                                  style={{
+                                    padding: '0.25rem 0.55rem',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: 'var(--status-full)',
+                                    color: '#fff',
+                                    fontSize: '0.66rem',
+                                    fontWeight: 900,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ✗ Falta
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* MODAL PARA O PROFESSOR CANCELAR AULA (RISCAR) */}
+      {/* MODAL CANCELAR AULA */}
       {showModalCancelarAula && aulaParaCancelar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10025,
+            background: 'rgba(0,0,0,0.82)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
           <form
             onSubmit={handleConfirmarCancelarAula}
-            className="bg-[#141416] border border-red-500/50 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl"
+            style={{
+              width: '100%',
+              maxWidth: '440px',
+              borderRadius: '18px',
+              background: 'var(--bg-surface-1)',
+              border: '2px solid var(--status-full)',
+              padding: '1.35rem',
+              color: 'var(--text-foreground)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem'
+            }}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-              <h4 className="text-base font-black text-white flex items-center gap-2">
-                <span>🚫 Cancelar Aula do Tatame</span>
-              </h4>
+            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900 }}>
+              🚫 Cancelar Aula ({aulaParaCancelar.horarioFormatado})
+            </h4>
+            <input
+              type="text"
+              value={motivoCancelamento}
+              onChange={e => setMotivoCancelamento(e.target.value)}
+              placeholder="Motivo do cancelamento..."
+              style={{
+                width: '100%',
+                padding: '0.6rem 0.8rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-background)',
+                color: 'var(--text-foreground)',
+                fontSize: '0.78rem'
+              }}
+            />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 type="button"
                 onClick={() => setShowModalCancelarAula(false)}
-                className="text-zinc-500 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-zinc-300">
-              Ao cancelar o treino de <strong>{aulaParaCancelar.horarioFormatado}</strong> ({aulaParaCancelar.academiaNome || 'CT'}) em {aulaParaCancelar.dataIso}, ele aparecerá <strong className="line-through text-red-400">riscado</strong> no calendário de todos os alunos.
-            </p>
-
-            <div>
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
-                Motivo do Cancelamento (Opcional)
-              </label>
-              <input
-                type="text"
-                value={motivoCancelamento}
-                onChange={e => setMotivoCancelamento(e.target.value)}
-                placeholder="Ex: Manutenção do tatame ou seminário externo."
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2 text-xs font-bold text-white focus:outline-none focus:border-red-500"
-              />
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowModalCancelarAula(false)}
-                className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
+                style={{
+                  flex: 1,
+                  padding: '0.55rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-surface-2)',
+                  color: 'var(--text-foreground)',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
               >
                 Voltar
               </button>
               <button
                 type="submit"
                 disabled={processandoAcao}
-                className="flex-1 py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-wider bg-red-600 hover:bg-red-500 text-white transition shadow-lg shadow-red-950/40 disabled:opacity-50"
+                style={{
+                  flex: 1,
+                  padding: '0.55rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'var(--status-full)',
+                  color: '#fff',
+                  fontWeight: 900,
+                  cursor: 'pointer'
+                }}
               >
-                {processandoAcao ? 'Cancelando...' : 'Confirmar Cancelamento'}
+                Confirmar
               </button>
             </div>
           </form>

@@ -79,19 +79,14 @@ const FALLBACK_REWARDS = [
 ];
 
 const SCHOOL_SIDEBAR_SECTIONS = [
-  { id: 'ALL', icon: '📚', label: 'Visão Completa (Todos os 12 Módulos)', badge: '100%' },
-  { id: 'o_que_e_ct', icon: '🛡️', label: 'O Que É o CT & Academias', badge: 'Rede' },
-  { id: 'competitivo', icon: '🏆', label: 'Torneios, Ranking & Stats', badge: 'Ao Vivo' },
-  { id: 'modalidades', icon: '🥋', label: '8 Modalidades de Luta', badge: '8 Cursos' },
-  { id: 'horarios', icon: '📅', label: 'Grade Semanal & Check-in', badge: 'Vagas' },
-  { id: 'planos', icon: '🎫', label: 'Planos & Passes Unificados', badge: '4 Planos' },
-  { id: 'estrutura', icon: '🏛️', label: 'Estrutura & Instalações', badge: '6 Áreas' },
-  { id: 'professores', icon: '👨‍🏫', label: 'Corpo Docente & Mestres', badge: '4 Mestres' },
-  { id: 'gamificacao', icon: '🥇', label: 'Pódio, 30 Medalhas & Loja', badge: 'XP' },
-  { id: 'ecossistema', icon: '⚙️', label: 'Ecossistema de Módulos', badge: '6 Sistemas' },
-  { id: 'galeria', icon: '📸', label: 'Galeria do Tatame', badge: '6 Fotos' },
-  { id: 'faq', icon: '❓', label: 'Dúvidas Frequentes (FAQ)', badge: '6 Respostas' },
-  { id: 'localizacao', icon: '📍', label: 'Localização, Mapa & Parceria', badge: 'GPS' }
+  { id: 'ALL', icon: '📚', label: 'Quadro Geral (Todos os Módulos)', badge: '100%' },
+  { id: 'modalidades', icon: '🎓', label: 'Grade Curricular (8 Disciplinas)', badge: 'Tabela' },
+  { id: 'horarios', icon: '📅', label: 'Calendário Escolar & Chamada', badge: 'Ao Vivo' },
+  { id: 'professores', icon: '👨‍🏫', label: 'Colegiado & Corpo Docente', badge: '4 Mestres' },
+  { id: 'planos', icon: '💳', label: 'Secretaria: Guias de Matrícula', badge: '4 Bolsas' },
+  { id: 'o_que_e_ct', icon: '📘', label: 'Regimento & Campus Credenciados', badge: 'Rede' },
+  { id: 'estrutura', icon: '🏛️', label: 'Laboratórios & Quadro de Honra', badge: '6 Labs' },
+  { id: 'faq', icon: '❓', label: 'Manual do Calouro (FAQ & Mapa)', badge: '6 Itens' }
 ];
 
 export const LandingHubPage: React.FC = () => {
@@ -142,7 +137,6 @@ export const LandingHubPage: React.FC = () => {
     };
   }, []);
 
-  // Controla a visibilidade do HTML original quando o Layout 4 ("classic") está ativo
   useEffect(() => {
     const origRoot = document.getElementById('original-landing-root');
     if (origRoot) {
@@ -167,7 +161,7 @@ export const LandingHubPage: React.FC = () => {
   const handleSelectLayout = (presetId: LandingPresetId, label: string) => {
     setJourneyPreset('landing', presetId);
     setShowExperienceLauncher(false);
-    triggerLoadingDemo(`Ativando ${label}...`, undefined, 500);
+    triggerLoadingDemo(`Ativando ${label}...`, undefined, 450);
   };
 
   // ============================================================================
@@ -187,16 +181,15 @@ export const LandingHubPage: React.FC = () => {
     >
       <div
         style={{
-          maxWidth: '1480px',
+          maxWidth: '1540px',
           margin: '0 auto',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '0.6rem'
+          gap: '0.55rem'
         }}
       >
-        {/* Seletor Rápido dos 4 Layouts Completos */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
           <button
             type="button"
@@ -212,8 +205,7 @@ export const LandingHubPage: React.FC = () => {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.35rem',
-              boxShadow: 'var(--shadow-card)'
+              gap: '0.35rem'
             }}
           >
             <span>🎛️</span>
@@ -222,9 +214,9 @@ export const LandingHubPage: React.FC = () => {
 
           {(
             [
-              { id: 'marketplace', icon: '🎓', short: '1. Sistema Escolar (Aba Lateral)' },
-              { id: 'corporate', icon: '🏛️', short: '2. Editorial & B2B' },
-              { id: 'tatame', icon: '⚡', short: '3. Arena HUD 3 Colunas' },
+              { id: 'marketplace', icon: '🎓', short: '1. Sistema Escolar (Menu Esquerdo + Tabelas)' },
+              { id: 'corporate', icon: '🏛️', short: '2. Editorial B2B (Índice Direito + Matriz)' },
+              { id: 'tatame', icon: '⚡', short: '3. Arena Fighter HUD (Polígonos + Stats RPG)' },
               { id: 'classic', icon: '📜', short: '4. Clássico Original' }
             ] as Array<{ id: LandingPresetId; icon: string; short: string }>
           ).map(item => {
@@ -236,7 +228,7 @@ export const LandingHubPage: React.FC = () => {
                 onClick={() => handleSelectLayout(item.id, item.short)}
                 style={{
                   padding: '0.4rem 0.72rem',
-                  borderRadius: '9px',
+                  borderRadius: item.id === 'corporate' ? '0px' : '9px',
                   border: isActive ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
                   background: isActive ? 'var(--bg-surface-2)' : 'var(--bg-background)',
                   color: isActive ? 'var(--color-primary)' : 'var(--text-foreground)',
@@ -255,111 +247,29 @@ export const LandingHubPage: React.FC = () => {
           })}
         </div>
 
-        {/* Todos os Acessos Diretos (Torneios, Ranking, Stats, Aluno, Professor, Admin, Cores) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-          <Link
-            to="/portal?tab=torneios"
-            style={{
-              padding: '0.36rem 0.6rem',
-              borderRadius: '8px',
-              background: 'var(--bg-background)',
-              color: 'var(--text-foreground)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              textDecoration: 'none'
-            }}
-          >
+          <Link to="/portal?tab=torneios" style={{ padding: '0.36rem 0.6rem', borderRadius: '8px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
             🏆 Torneios
           </Link>
-          <Link
-            to="/portal?tab=ranking"
-            style={{
-              padding: '0.36rem 0.6rem',
-              borderRadius: '8px',
-              background: 'var(--bg-background)',
-              color: 'var(--text-foreground)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              textDecoration: 'none'
-            }}
-          >
+          <Link to="/portal?tab=ranking" style={{ padding: '0.36rem 0.6rem', borderRadius: '8px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
             🌍 Ranking
           </Link>
-          <Link
-            to="/portal?tab=desempenho"
-            style={{
-              padding: '0.36rem 0.6rem',
-              borderRadius: '8px',
-              background: 'var(--bg-background)',
-              color: 'var(--text-foreground)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              textDecoration: 'none'
-            }}
-          >
+          <Link to="/portal?tab=desempenho" style={{ padding: '0.36rem 0.6rem', borderRadius: '8px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
             📊 Stats
           </Link>
-          <Link
-            to="/portal"
-            style={{
-              padding: '0.36rem 0.65rem',
-              borderRadius: '8px',
-              background: 'var(--bg-surface-2)',
-              color: 'var(--text-foreground)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              textDecoration: 'none'
-            }}
-          >
+          <Link to="/portal" style={{ padding: '0.36rem 0.65rem', borderRadius: '8px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
             🥊 Área do Aluno
           </Link>
-          <Link
-            to="/professor"
-            style={{
-              padding: '0.36rem 0.65rem',
-              borderRadius: '8px',
-              background: 'var(--bg-surface-2)',
-              color: 'var(--text-foreground)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              textDecoration: 'none'
-            }}
-          >
+          <Link to="/professor" style={{ padding: '0.36rem 0.65rem', borderRadius: '8px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
             🥋 Professor
           </Link>
-          <Link
-            to="/admin"
-            style={{
-              padding: '0.36rem 0.65rem',
-              borderRadius: '8px',
-              background: 'var(--bg-surface-2)',
-              color: 'var(--color-primary)',
-              border: '1px solid var(--color-primary)',
-              fontSize: '0.7rem',
-              fontWeight: 900,
-              textDecoration: 'none'
-            }}
-          >
+          <Link to="/admin" style={{ padding: '0.36rem 0.65rem', borderRadius: '8px', background: 'var(--bg-surface-2)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', fontSize: '0.7rem', fontWeight: 900, textDecoration: 'none' }}>
             👑 Admin
           </Link>
           <button
             type="button"
             onClick={() => setShowOrderModal(true)}
-            style={{
-              padding: '0.36rem 0.6rem',
-              borderRadius: '8px',
-              background: 'var(--bg-background)',
-              color: 'var(--text-foreground)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              cursor: 'pointer'
-            }}
+            style={{ padding: '0.36rem 0.6rem', borderRadius: '8px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}
           >
             🔀 Ordenar
           </button>
@@ -378,7 +288,7 @@ export const LandingHubPage: React.FC = () => {
         position: 'fixed',
         inset: 0,
         zIndex: 10005,
-        background: 'rgba(0,0,0,0.82)',
+        background: 'rgba(0,0,0,0.84)',
         backdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
@@ -391,7 +301,7 @@ export const LandingHubPage: React.FC = () => {
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '1180px',
+          maxWidth: '1220px',
           maxHeight: '90vh',
           overflowY: 'auto',
           borderRadius: '24px',
@@ -405,226 +315,88 @@ export const LandingHubPage: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
           <div>
             <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              🎛️ CENTRAL DE ARQUITETURAS VISUAIS · TODAS AS FUNÇÕES EM DIFERENTES LAYOUTS
+              🎛️ VITRINE DE ARQUITETURAS RADICALMENTE DIFERENTES
             </span>
-            <h2 style={{ margin: '0.25rem 0', fontSize: '1.65rem', fontWeight: 900 }}>
-              Escolha o Layout do Site Principal ou Acesse os Portais (Aluno, Professor, Admin)
+            <h2 style={{ margin: '0.25rem 0', fontSize: '1.6rem', fontWeight: 900 }}>
+              4 Formas Completamente Diferentes de Apresentar o Sistema
             </h2>
-            <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-muted-foreground)' }}>
-              Todos os 4 layouts possuem <strong>100% das informações e funções do 4º layout</strong> (8 Modalidades, Grade de Horários, Check-in, 4 Planos, 4 Professores, 6 Estruturas, Pódio/30 Conquistas, Ecossistema, Galeria, FAQ e Mapa), porém organizados em arquiteturas totalmente diferentes.
+            <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted-foreground)' }}>
+              Cada opção muda <strong>o lado do menu, o formato dos blocos (tabelas, círculos, matrizes retas ou polígonos chanfrados), as imagens e os textos</strong>, mantendo 100% das informações e funções.
             </p>
           </div>
           <button
             type="button"
             onClick={() => setShowExperienceLauncher(false)}
-            style={{
-              padding: '0.5rem 0.9rem',
-              borderRadius: '10px',
-              border: '1px solid var(--border-subtle)',
-              background: 'var(--bg-surface-2)',
-              color: 'var(--text-foreground)',
-              fontWeight: 900,
-              cursor: 'pointer'
-            }}
+            style={{ padding: '0.5rem 0.9rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', fontWeight: 900, cursor: 'pointer' }}
           >
             ✕ Fechar
           </button>
         </div>
 
-        {/* 4 CARDS COM DESENHO ESTRUTURAL (MINI-WIREFRAME) DE CADA LAYOUT */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(255px, 1fr))',
-            gap: '1rem',
-            marginBottom: '1.5rem'
-          }}
-        >
-          {/* Card 1: Sistema Escolar (Aba Lateral) */}
-          <div
-            onClick={() => handleSelectLayout('marketplace', 'Layout 1: Sistema Escolar com Aba Lateral')}
-            style={{
-              cursor: 'pointer',
-              padding: '1.15rem',
-              borderRadius: '18px',
-              background: activePreset === 'marketplace' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
-              border: activePreset === 'marketplace' ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: '0.85rem'
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)' }}>
-                  ABA LATERAL / SISTEMA ESCOLAR
-                </span>
-                {activePreset === 'marketplace' && <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)' }}>● ATIVO</span>}
-              </div>
-              <div style={{ height: '78px', borderRadius: '10px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)', padding: '0.45rem', display: 'grid', gridTemplateColumns: '0.9fr 2.1fr', gap: '0.35rem', marginBottom: '0.75rem' }}>
-                <div style={{ background: 'var(--color-primary)', opacity: 0.35, borderRadius: '6px' }} />
-                <div style={{ display: 'grid', gap: '0.25rem' }}>
-                  <div style={{ height: '14px', borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem' }}>
-                    <div style={{ borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
-                    <div style={{ borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
-                  </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          {[
+            {
+              id: 'marketplace' as LandingPresetId,
+              tag: 'MENU ESQUERDO · TABELAS & CÍRCULOS',
+              title: '🎓 1. Sistema Escolar / LMS Acadêmico',
+              desc: 'Aba lateral esquerda estilo universidade + Grade Curricular das 8 lutas em tabela + retratos redondos dos mestres + boletos horizontais de matrícula.'
+            },
+            {
+              id: 'corporate' as LandingPresetId,
+              tag: 'ÍNDICE DIREITO · ZIG-ZAG & MATRIZ 0PX',
+              title: '🏛️ 2. Revista Editorial & B2B',
+              desc: 'Índice fixo no LADO DIREITO + blocos em Zig-Zag (Esquerda/Direita) + Dossiê Master-Detail das 8 modalidades + Tabela Comparativa completa de Planos.'
+            },
+            {
+              id: 'tatame' as LandingPresetId,
+              tag: 'POLÍGONOS CORTADOS · STATS RPG & BENTO',
+              title: '⚡ 3. Arena Fighter HUD (Game Select)',
+              desc: 'Calendário Largo 2/3 no topo + Seleção de Estilo de Luta com barras de Força/Velocidade/Cardio + Planos como Battle Pass Tiers e cards poligonais.'
+            },
+            {
+              id: 'classic' as LandingPresetId,
+              tag: 'LANDING PAGE CLÁSSICA ORIGINAL',
+              title: '📜 4. Site Clássico Original',
+              desc: 'O site institucional original completo de cima a baixo (Hero, Torneios, Ranking, Planos, Grade, Estrutura, Mestres, 8 Modalidades, Galeria, FAQ e Mapa).'
+            }
+          ].map(card => {
+            const active = activePreset === card.id;
+            return (
+              <div
+                key={card.id}
+                onClick={() => handleSelectLayout(card.id, card.title)}
+                style={{
+                  cursor: 'pointer',
+                  padding: '1.2rem',
+                  borderRadius: card.id === 'corporate' ? '0px' : '18px',
+                  background: active ? 'var(--bg-surface-2)' : 'var(--bg-background)',
+                  border: active ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '0.85rem'
+                }}
+              >
+                <div>
+                  <span style={{ fontSize: '0.62rem', fontWeight: 900, padding: '0.2rem 0.55rem', borderRadius: '4px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)' }}>
+                    {card.tag}
+                  </span>
+                  <h3 style={{ margin: '0.65rem 0 0.35rem 0', fontSize: '1.05rem', fontWeight: 900 }}>{card.title}</h3>
+                  <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>{card.desc}</p>
+                </div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
+                  {active ? '● Layout Ativo Agora' : 'Ativar Esta Arquitetura →'}
                 </div>
               </div>
-              <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.02rem', fontWeight: 900 }}>
-                🎓 1. Sistema de Escola / Aba Lateral
-              </h3>
-              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
-                Menu vertical fixo na esquerda (estilo sistema escolar/acadêmico) com filtro instantâneo por módulo ou visão completa de todas as 12 seções.
-              </p>
-            </div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-              Ativar Arquitetura Escolar →
-            </div>
-          </div>
-
-          {/* Card 2: Corporativo & Editorial B2B */}
-          <div
-            onClick={() => handleSelectLayout('corporate', 'Layout 2: Editorial & Corporativo B2B')}
-            style={{
-              cursor: 'pointer',
-              padding: '1.15rem',
-              borderRadius: '18px',
-              background: activePreset === 'corporate' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
-              border: activePreset === 'corporate' ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: '0.85rem'
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)' }}>
-                  EDITORIAL / FORMAL B2B
-                </span>
-                {activePreset === 'corporate' && <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)' }}>● ATIVO</span>}
-              </div>
-              <div style={{ height: '78px', borderRadius: '4px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)', padding: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '0.3rem', height: '34px' }}>
-                  <div style={{ background: 'var(--bg-surface-2)' }} />
-                  <div style={{ background: 'var(--color-primary)', opacity: 0.25 }} />
-                </div>
-                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.25rem' }}>
-                  <div style={{ background: 'var(--bg-surface-2)' }} />
-                  <div style={{ background: 'var(--bg-surface-2)' }} />
-                  <div style={{ background: 'var(--bg-surface-2)' }} />
-                  <div style={{ background: 'var(--bg-surface-2)' }} />
-                </div>
-              </div>
-              <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.02rem', fontWeight: 900 }}>
-                🏛️ 2. Editorial & Corporativo B2B
-              </h3>
-              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
-                Geometria ortogonal com bordas retas, abas executivas, matriz comparativa em tabela formal e todos os 12 módulos em estilo editorial.
-              </p>
-            </div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-              Ativar Arquitetura Editorial →
-            </div>
-          </div>
-
-          {/* Card 3: Arena Tatame HUD */}
-          <div
-            onClick={() => handleSelectLayout('tatame', 'Layout 3: Arena Tatame HUD')}
-            style={{
-              cursor: 'pointer',
-              padding: '1.15rem',
-              borderRadius: '18px',
-              background: activePreset === 'tatame' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
-              border: activePreset === 'tatame' ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: '0.85rem'
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)' }}>
-                  HUD 3 COLUNAS / TATAME
-                </span>
-                {activePreset === 'tatame' && <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)' }}>● ATIVO</span>}
-              </div>
-              <div style={{ height: '78px', borderRadius: '10px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)', padding: '0.45rem', display: 'grid', gridTemplateColumns: '1fr 1.6fr 1fr', gap: '0.3rem', marginBottom: '0.75rem' }}>
-                <div style={{ borderRadius: '5px', background: 'var(--color-primary)', opacity: 0.3 }} />
-                <div style={{ borderRadius: '5px', background: 'var(--bg-surface-2)' }} />
-                <div style={{ borderRadius: '5px', background: 'var(--bg-surface-2)' }} />
-              </div>
-              <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.02rem', fontWeight: 900 }}>
-                ⚡ 3. Arena Tatame HUD
-              </h3>
-              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
-                Placar eletrônico ao vivo no topo + 3 colunas operacionais (Check-in Expresso + Grade ao Vivo + Competitivo) + todas as 12 seções em HUD.
-              </p>
-            </div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-              Ativar Arquitetura HUD →
-            </div>
-          </div>
-
-          {/* Card 4: Site Clássico Original */}
-          <div
-            onClick={() => handleSelectLayout('classic', 'Layout 4: Site Clássico Original')}
-            style={{
-              cursor: 'pointer',
-              padding: '1.15rem',
-              borderRadius: '18px',
-              background: activePreset === 'classic' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
-              border: activePreset === 'classic' ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: '0.85rem'
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)' }}>
-                  CLÁSSICO ORIGINAL (4º)
-                </span>
-                {activePreset === 'classic' && <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)' }}>● ATIVO</span>}
-              </div>
-              <div style={{ height: '78px', borderRadius: '10px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)', padding: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.75rem' }}>
-                <div style={{ height: '32px', borderRadius: '5px', background: 'var(--color-primary)', opacity: 0.25 }} />
-                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.3rem' }}>
-                  <div style={{ borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
-                  <div style={{ borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
-                  <div style={{ borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
-                </div>
-              </div>
-              <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.02rem', fontWeight: 900 }}>
-                📜 4. Site Clássico Original
-              </h3>
-              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
-                O site institucional original completo (Hero, Torneios, Ranking, Planos, Grade, Estrutura, Mestres, 8 Modalidades, Galeria, FAQ e Mapa).
-              </p>
-            </div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-              Ativar Site Clássico →
-            </div>
-          </div>
+            );
+          })}
         </div>
 
-        {/* ACESSO DIRETO AOS PORTAIS (QUE TAMBÉM TÊM SEUS PRÓPRIOS LAYOUTS COM ABA LATERAL ESCOLAR, HUD, SPLIT-VIEW E ABAS) */}
-        <div
-          style={{
-            padding: '1.15rem',
-            borderRadius: '16px',
-            background: 'var(--bg-background)',
-            border: '1px solid var(--border-subtle)'
-          }}
-        >
-          <div style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
-            🚀 PORTAIS DO SISTEMA (CADA PORTAL TAMBÉM POSSUI LAYOUT ESCOLAR COM ABA LATERAL, HUD, EXECUTIVO E CLÁSSICO)
+        <div style={{ padding: '1.1rem', borderRadius: '16px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.65rem' }}>
+            🚀 ACESSO DIRETO AOS PORTAIS (TAMBÉM COM 4 ARQUITETURAS DIFERENTES EM CADA PORTAL)
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: '0.65rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: '0.6rem' }}>
             {[
               { icon: '🥊', label: 'Portal do Aluno (4 Layouts)', to: '/portal' },
               { icon: '🥋', label: 'Portal do Professor (4 Layouts)', to: '/professor' },
@@ -638,20 +410,20 @@ export const LandingHubPage: React.FC = () => {
                 key={link.label}
                 to={link.to}
                 style={{
-                  padding: '0.7rem 0.85rem',
-                  borderRadius: '12px',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: '10px',
                   background: 'var(--bg-surface-1)',
                   border: '1px solid var(--border-subtle)',
                   color: 'var(--text-foreground)',
                   textDecoration: 'none',
-                  fontSize: '0.78rem',
+                  fontSize: '0.76rem',
                   fontWeight: 800,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.45rem'
                 }}
               >
-                <span style={{ fontSize: '1.1rem' }}>{link.icon}</span>
+                <span>{link.icon}</span>
                 <span>{link.label}</span>
               </Link>
             ))}
@@ -661,9 +433,6 @@ export const LandingHubPage: React.FC = () => {
     </div>
   );
 
-  // ============================================================================
-  // MODAL DO ORDENADOR DE PÁGINAS & BLOCOS
-  // ============================================================================
   const OrderBuilderModal = showOrderModal && (
     <div
       style={{
@@ -694,14 +463,9 @@ export const LandingHubPage: React.FC = () => {
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900 }}>
-              🔀 Ordenador Dinâmico de Páginas, Menus e Telas de Carregamento
-            </h3>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted-foreground)' }}>
-              Defina a ordem dos itens de menu e o estilo de loading da plataforma.
-            </p>
-          </div>
+          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900 }}>
+            🔀 Ordenador Dinâmico de Páginas, Menus e Telas de Carregamento
+          </h3>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <select
               value={preferences.loadingStyle}
@@ -729,15 +493,7 @@ export const LandingHubPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowOrderModal(false)}
-              style={{
-                padding: '0.45rem 0.85rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--bg-surface-2)',
-                color: 'var(--text-foreground)',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
+              style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', fontWeight: 800, cursor: 'pointer' }}
             >
               ✕ Fechar
             </button>
@@ -762,8 +518,7 @@ export const LandingHubPage: React.FC = () => {
   }
 
   // ============================================================================
-  // LAYOUT 1: ARQUITETURA SISTEMA ESCOLAR / ACADÊMICO COM ABA LATERAL FIXA
-  // (Possui 100% das informações do 4º layout organizadas em um Portal Escolar com Sidebar)
+  // LAYOUT 1: SISTEMA DE ESCOLA / UNIVERSIDADE MARCIAL (ABA LATERAL ESQUERDA + TABELAS ESCOLARES + ELEMENTOS REDONDOS)
   // ============================================================================
   if (activePreset === 'marketplace') {
     return (
@@ -772,97 +527,69 @@ export const LandingHubPage: React.FC = () => {
         {ExperienceShowroomModal}
         {OrderBuilderModal}
 
-        {/* CORPO EM 2 COLUNAS: ABA LATERAL ESCOLAR FIXA (ESQUERDA) + ÁREA ACADÊMICA COMPLETA (DIREITA) */}
         <div
           style={{
-            maxWidth: '1520px',
+            maxWidth: '1540px',
             width: '100%',
             margin: '0 auto',
             padding: '1rem',
             display: 'grid',
-            gridTemplateColumns: 'minmax(260px, 295px) 1fr',
-            gap: '1.25rem',
+            gridTemplateColumns: 'minmax(270px, 305px) 1fr',
+            gap: '1.35rem',
             alignItems: 'start',
             flex: 1
           }}
         >
-          {/* ABA LATERAL FIXA (ESTILO SISTEMA DE ESCOLA / UNIVERSIDADE / LMS MARCIAL) */}
+          {/* ABA LATERAL ESQUERDA FIXA (ESTILO SISTEMA ESCOLAR / UNIVERSITÁRIO) */}
           <aside
             style={{
               position: 'sticky',
-              top: '68px',
-              maxHeight: 'calc(100vh - 84px)',
+              top: '64px',
+              maxHeight: 'calc(100vh - 80px)',
               overflowY: 'auto',
-              borderRadius: '20px',
+              borderRadius: '26px',
               background: 'var(--bg-surface-1)',
               border: '2px solid var(--border-subtle)',
-              padding: '1.15rem',
+              padding: '1.2rem',
               boxShadow: 'var(--shadow-card)',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.9rem'
             }}
           >
-            {/* Identificação da Escola / Centro de Treinamento */}
-            <div
-              style={{
-                padding: '0.9rem',
-                borderRadius: '14px',
-                background: 'var(--bg-surface-2)',
-                border: '1px solid var(--color-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem'
-              }}
-            >
+            <div style={{ padding: '1rem', borderRadius: '20px', background: 'var(--bg-surface-2)', border: '1px solid var(--color-primary)', textAlign: 'center' }}>
               <img
                 src={ACADEMY_CONFIG.logoUrl}
-                alt="Logo"
+                alt="Brasão Escolar"
                 style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '12px',
-                  border: '2px solid var(--color-primary)',
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  border: '3px solid var(--color-primary)',
                   objectFit: 'contain',
                   background: 'var(--bg-background)',
-                  padding: '2px'
+                  padding: '4px',
+                  margin: '0 auto 0.5rem auto',
+                  display: 'block'
                 }}
               />
-              <div>
-                <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  🎓 PORTAL ACADÊMICO MARCIAL
-                </div>
-                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
-                  CENTRO DE COMBATE
-                </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--status-available)', fontWeight: 800 }}>
-                  ● Período Letivo & Tatames Abertos
-                </div>
+              <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                🎓 SISTEMA ACADÊMICO MARCIAL
+              </div>
+              <div style={{ fontSize: '1rem', fontWeight: 900, margin: '0.15rem 0' }}>
+                ACADEMIA & ESCOLA DE LUTAS
+              </div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--status-available)', fontWeight: 800 }}>
+                ● Semestre Letivo 2026 · Matrículas Abertas
               </div>
             </div>
 
-            {/* Resumo Rápido de Indicadores da Escola */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.4rem', textAlign: 'center' }}>
-              <div style={{ padding: '0.5rem 0.25rem', borderRadius: '10px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--color-primary)' }}>+500</div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>Alunos</div>
-              </div>
-              <div style={{ padding: '0.5rem 0.25rem', borderRadius: '10px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-foreground)' }}>8</div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>Cursos/Lutas</div>
-              </div>
-              <div style={{ padding: '0.5rem 0.25rem', borderRadius: '10px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--color-accent)' }}>180m²</div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>Tatame</div>
-              </div>
-            </div>
-
-            {/* Menu Vertical de Módulos (Estilo Sistema de Escola) */}
+            {/* Menu Escolar de Cadernos / Cátedras */}
             <div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.45rem', paddingLeft: '0.3rem' }}>
-                📂 Menu Curricular & Módulos do CT
+              <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.45rem', paddingLeft: '0.35rem' }}>
+                📂 Cadernos & Módulos Escolares
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 {SCHOOL_SIDEBAR_SECTIONS.map(sec => {
                   const active = schoolSectionFilter === sec.id;
                   return (
@@ -875,13 +602,12 @@ export const LandingHubPage: React.FC = () => {
                       }}
                       style={{
                         width: '100%',
-                        padding: '0.62rem 0.75rem',
-                        borderRadius: '10px',
-                        border: active ? '1px solid var(--color-primary)' : '1px solid transparent',
-                        borderLeft: active ? '4px solid var(--color-primary)' : '4px solid transparent',
-                        background: active ? 'var(--color-primary-light)' : 'transparent',
-                        color: active ? 'var(--color-primary)' : 'var(--text-foreground)',
-                        fontSize: '0.76rem',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '999px',
+                        border: active ? '2px solid var(--color-primary)' : '1px solid transparent',
+                        background: active ? 'var(--color-primary)' : 'var(--bg-background)',
+                        color: active ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                        fontSize: '0.75rem',
                         fontWeight: active ? 900 : 700,
                         textAlign: 'left',
                         cursor: 'pointer',
@@ -897,13 +623,12 @@ export const LandingHubPage: React.FC = () => {
                       </span>
                       <span
                         style={{
-                          fontSize: '0.6rem',
+                          fontSize: '0.58rem',
                           fontWeight: 900,
-                          padding: '0.12rem 0.4rem',
+                          padding: '0.12rem 0.45rem',
                           borderRadius: '999px',
-                          background: active ? 'var(--color-primary)' : 'var(--bg-background)',
-                          color: active ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
-                          border: '1px solid var(--border-subtle)'
+                          background: active ? 'var(--bg-background)' : 'var(--bg-surface-2)',
+                          color: active ? 'var(--color-primary)' : 'var(--text-muted-foreground)'
                         }}
                       >
                         {sec.badge}
@@ -914,159 +639,68 @@ export const LandingHubPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Acesso Rápido à Secretaria / Portais */}
+            {/* Chamada Digital na Própria Barra Escolar */}
             <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', display: 'grid', gap: '0.45rem' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                🔐 Secretaria & Portais Logados
+              <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase' }}>
+                🔐 Secretaria & Portais Acadêmicos
               </div>
-              <Link
-                to="/portal"
-                style={{
-                  padding: '0.65rem 0.85rem',
-                  borderRadius: '10px',
-                  background: 'var(--color-primary)',
-                  color: 'var(--text-primary-foreground)',
-                  fontWeight: 900,
-                  fontSize: '0.76rem',
-                  textDecoration: 'none',
-                  textAlign: 'center'
-                }}
-              >
-                🥊 Entrar no Portal do Aluno
+              <Link to="/portal" style={{ padding: '0.65rem', borderRadius: '999px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', fontWeight: 900, fontSize: '0.75rem', textDecoration: 'none', textAlign: 'center' }}>
+                🥊 Portal do Aluno (Boletim & XP)
               </Link>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
-                <Link
-                  to="/professor"
-                  style={{
-                    padding: '0.55rem',
-                    borderRadius: '8px',
-                    background: 'var(--bg-background)',
-                    color: 'var(--text-foreground)',
-                    border: '1px solid var(--border-subtle)',
-                    fontWeight: 800,
-                    fontSize: '0.7rem',
-                    textDecoration: 'none',
-                    textAlign: 'center'
-                  }}
-                >
+                <Link to="/professor" style={{ padding: '0.55rem', borderRadius: '999px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontWeight: 800, fontSize: '0.7rem', textDecoration: 'none', textAlign: 'center' }}>
                   🥋 Docente
                 </Link>
-                <Link
-                  to="/admin"
-                  style={{
-                    padding: '0.55rem',
-                    borderRadius: '8px',
-                    background: 'var(--bg-background)',
-                    color: 'var(--color-primary)',
-                    border: '1px solid var(--color-primary)',
-                    fontWeight: 900,
-                    fontSize: '0.7rem',
-                    textDecoration: 'none',
-                    textAlign: 'center'
-                  }}
-                >
-                  👑 Diretoria
+                <Link to="/admin" style={{ padding: '0.55rem', borderRadius: '999px', background: 'var(--bg-background)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', fontWeight: 900, fontSize: '0.7rem', textDecoration: 'none', textAlign: 'center' }}>
+                  👑 Reitoria/ERP
                 </Link>
               </div>
-              <Link
-                to="/agendar"
-                style={{
-                  padding: '0.6rem 0.85rem',
-                  borderRadius: '10px',
-                  background: 'var(--bg-surface-2)',
-                  color: 'var(--text-foreground)',
-                  border: '1px solid var(--border-subtle)',
-                  fontWeight: 900,
-                  fontSize: '0.74rem',
-                  textDecoration: 'none',
-                  textAlign: 'center'
-                }}
-              >
-                🔥 Agendar Aula Experimental
-              </Link>
             </div>
           </aside>
 
-          {/* PAINEL PRINCIPAL DIREITO (CONTEÚDO ACADÊMICO COMPLETO) */}
+          {/* ÁREA ACADÊMICA DIREITA */}
           <main style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: 0 }}>
-            {/* Banner Superior Acadêmico */}
+            {/* Cabeçalho Escolar Redondo com Imagem na Direita e Chamada Expresso */}
             <div
               style={{
-                padding: '1.75rem',
-                borderRadius: '20px',
-                background: 'linear-gradient(135deg, var(--bg-surface-1) 0%, var(--bg-surface-2) 100%)',
-                border: '1px solid var(--border-subtle)',
-                boxShadow: 'var(--shadow-card)',
+                padding: '1.65rem',
+                borderRadius: '26px',
+                background: 'var(--bg-surface-1)',
+                border: '2px solid var(--border-subtle)',
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
                 gap: '1.5rem',
                 alignItems: 'center'
               }}
             >
               <div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.28rem 0.75rem', borderRadius: '999px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase' }}>
-                  🎓 LAYOUT 1 · SISTEMA ESCOLAR / PORTAL ACADÊMICO COM ABA LATERAL
-                </div>
-                <h1 style={{ margin: '0.65rem 0', fontSize: 'clamp(1.65rem, 3vw, 2.55rem)', fontWeight: 900, lineHeight: 1.08, textTransform: 'uppercase' }}>
-                  Mais Que Um Treino, <span style={{ color: 'var(--color-primary)' }}>Uma Transformação</span>.
+                <span style={{ padding: '0.28rem 0.85rem', borderRadius: '999px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontSize: '0.68rem', fontWeight: 900 }}>
+                  🎓 ARQUITETURA 1 · SISTEMA ESCOLAR / UNIVERSIDADE DE ARTES MARCIAIS
+                </span>
+                <h1 style={{ margin: '0.6rem 0', fontSize: 'clamp(1.55rem, 2.8vw, 2.35rem)', fontWeight: 900, lineHeight: 1.12 }}>
+                  Formação Marcial por <span style={{ color: 'var(--color-primary)' }}>Cátedras, Graus e Créditos Semanais</span>.
                 </h1>
-                <p style={{ margin: '0 0 1.1rem 0', fontSize: '0.88rem', color: 'var(--text-muted-foreground)', lineHeight: 1.55 }}>
-                  Navegue pela aba lateral esquerda como em um sistema acadêmico ou visualize abaixo <strong>todas as 12 seções completas do Centro de Combate</strong>: 8 Modalidades, Grade de Horários, Check-in Expresso, 4 Planos, 4 Mestres, 6 Estruturas, Pódio/Conquistas, Galeria, FAQ e Mapa.
+                <p style={{ margin: '0 0 1rem 0', fontSize: '0.84rem', color: 'var(--text-muted-foreground)', lineHeight: 1.55 }}>
+                  Neste layout escolar, as 8 modalidades são apresentadas como uma <strong>Tabela de Grade Curricular com Ementas</strong>, os professores em <strong>Colegiado de Retratos Redondos</strong> e os planos como <strong>Guias de Matrícula Horizontais</strong>.
                 </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
-                  <Link
-                    to="/agendar"
-                    style={{
-                      padding: '0.8rem 1.35rem',
-                      borderRadius: '12px',
-                      background: 'var(--color-primary)',
-                      color: 'var(--text-primary-foreground)',
-                      fontWeight: 900,
-                      fontSize: '0.8rem',
-                      textDecoration: 'none',
-                      textTransform: 'uppercase'
-                    }}
-                  >
-                    🔥 Agendar Aula Gratuita
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <Link to="/agendar" style={{ padding: '0.7rem 1.35rem', borderRadius: '999px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', fontWeight: 900, fontSize: '0.78rem', textDecoration: 'none' }}>
+                    📝 Solicitar Matrícula / Aula Experimental
                   </Link>
-                  {schoolSectionFilter !== 'ALL' && (
-                    <button
-                      type="button"
-                      onClick={() => setSchoolSectionFilter('ALL')}
-                      style={{
-                        padding: '0.8rem 1.2rem',
-                        borderRadius: '12px',
-                        background: 'var(--bg-background)',
-                        color: 'var(--color-primary)',
-                        border: '1px solid var(--color-primary)',
-                        fontWeight: 900,
-                        fontSize: '0.8rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      📚 Mostrar Todos os 12 Módulos Juntos
-                    </button>
-                  )}
+                  <Link to="/portal?tab=torneios" style={{ padding: '0.7rem 1.15rem', borderRadius: '999px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontWeight: 800, fontSize: '0.78rem', textDecoration: 'none' }}>
+                    🏆 Olimpíadas & Torneios
+                  </Link>
                 </div>
               </div>
 
-              {/* Card de Matrícula & Check-in Rápido */}
-              <div
-                style={{
-                  padding: '1.15rem',
-                  borderRadius: '16px',
-                  background: 'var(--bg-background)',
-                  border: '1px solid var(--border-subtle)'
-                }}
-              >
-                <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
-                  ⚡ SECRETARIA DIGITAL · CHECK-IN EXPRESSO POR HORÁRIO
+              <div style={{ padding: '1.1rem', borderRadius: '22px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '0.66rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                  📋 SECRETARIA ESCOLAR · REGISTRO DE PRESENÇA POR CPF
                 </div>
                 <PublicQuickCheckinCard />
               </div>
             </div>
 
-            {/* TODOS OS 12 MÓDULOS COMPLETOS DO CENTRO DE COMBATE */}
             <CompleteSiteModules
               variant="school_sidebar"
               academies={academies}
@@ -1080,8 +714,7 @@ export const LandingHubPage: React.FC = () => {
   }
 
   // ============================================================================
-  // LAYOUT 2: ARQUITETURA CORPORATIVA & EDITORIAL B2B (ESTILO STRIPE / ENTERPRISE)
-  // (Geometria ortogonal, tabelas formais + TODOS os 12 módulos completos)
+  // LAYOUT 2: REVISTA EDITORIAL & DOSSIÊ B2B (CONTEÚDO À ESQUERDA + ÍNDICE FIXO À DIREITA + BORDAS RETAS 0PX)
   // ============================================================================
   if (activePreset === 'corporate') {
     return (
@@ -1090,350 +723,255 @@ export const LandingHubPage: React.FC = () => {
         {ExperienceShowroomModal}
         {OrderBuilderModal}
 
-        {/* CABEÇALHO EXECUTIVO EM DUAS FAIXAS ORTOGONAIS */}
-        <header style={{ background: 'var(--bg-surface-1)', borderBottom: '1px solid var(--border-subtle)' }}>
-          <div
-            style={{
-              maxWidth: '1400px',
-              margin: '0 auto',
-              padding: '0.9rem 1.5rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1rem'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '4px',
-                  background: 'var(--color-primary)',
-                  color: 'var(--text-primary-foreground)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 900
-                }}
-              >
-                CP
+        {/* TOPO EDITORIAL DE REVISTA EXECUTIVA */}
+        <header style={{ background: 'var(--bg-surface-1)', borderBottom: '2px solid var(--text-foreground)' }}>
+          <div style={{ maxWidth: '1540px', margin: '0 auto', padding: '1.1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <div style={{ fontSize: '0.62rem', fontWeight: 900, letterSpacing: '0.2em', color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                EDIÇÃO EXECUTIVA Nº 2026 · DOSSIÊ INSTITUCIONAL & B2B
               </div>
-              <div>
-                <div style={{ fontSize: '0.98rem', fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  CENTRO DE COMBATE · CORPORATE & INSTITUCIONAL
-                </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)' }}>
-                  Infraestrutura Unificada de Artes Marciais, Benefícios Corporativos, Graduações e ERP
-                </div>
+              <div style={{ fontSize: '1.45rem', fontWeight: 900, letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
+                THE COMBAT JOURNAL · INFRAESTRUTURA DE ALTA PERFORMANCE
               </div>
             </div>
-
-            <div style={{ display: 'flex', gap: '1.15rem', alignItems: 'center', flexWrap: 'wrap', fontSize: '0.76rem', fontWeight: 800 }}>
-              <a href="#o-que-e-o-ct-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>01. O CT & Rede</a>
-              <a href="#modalidades-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>02. 8 Modalidades</a>
-              <a href="#horarios-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>03. Horários</a>
-              <a href="#planos-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>04. Planos</a>
-              <a href="#professores-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>05. Mestres</a>
-              <a href="#faq-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>06. FAQ</a>
-              <Link
-                to="/agendar"
-                style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '4px',
-                  background: 'var(--color-primary)',
-                  color: 'var(--text-primary-foreground)',
-                  textDecoration: 'none',
-                  fontWeight: 900
-                }}
-              >
-                AGENDAR VISITA / AULA →
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <Link to="/agendar" style={{ padding: '0.6rem 1.2rem', borderRadius: '0px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', fontWeight: 900, fontSize: '0.75rem', textDecoration: 'none', textTransform: 'uppercase' }}>
+                AGENDAR VISITA EXECUTIVA →
               </Link>
             </div>
           </div>
         </header>
 
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '2.25rem' }}>
-          {/* MANIFESTO ASSIMÉTRICO + ABAS EXECUTIVAS */}
-          <section
+        {/* CORPO ASSIMÉTRICO INVERTIDO: CONTEÚDO EDITORIAL NA ESQUERDA (1FR) + ÍNDICE FIXO NA DIREITA (300PX)! */}
+        <div
+          style={{
+            maxWidth: '1540px',
+            width: '100%',
+            margin: '0 auto',
+            padding: '1.5rem',
+            display: 'grid',
+            gridTemplateColumns: '1fr minmax(270px, 320px)',
+            gap: '1.75rem',
+            alignItems: 'start'
+          }}
+        >
+          {/* COLUNA PRINCIPAL ESQUERDA: DOSSIÊS EM ZIG-ZAG E TABELAS MATRICIAIS */}
+          <main style={{ display: 'flex', flexDirection: 'column', gap: '2.25rem', minWidth: 0 }}>
+            <CompleteSiteModules
+              variant="corporate_editorial"
+              academies={academies}
+              rewardsCatalog={rewardsCatalog}
+            />
+          </main>
+
+          {/* COLUNA FIXA NA DIREITA (ÍNDICE EXECUTIVO + CHECK-IN TERMINAL NA DIREITA!) */}
+          <aside
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+              position: 'sticky',
+              top: '64px',
+              maxHeight: 'calc(100vh - 80px)',
+              overflowY: 'auto',
+              background: 'var(--bg-surface-1)',
               border: '1px solid var(--border-subtle)',
-              background: 'var(--bg-surface-1)'
+              borderTop: '4px solid var(--color-primary)',
+              padding: '1.25rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.15rem'
             }}
           >
-            <div style={{ padding: '2.25rem', borderRight: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '0.68rem', fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-primary)', marginBottom: '0.75rem' }}>
-                ARQUITETURA 02 · EDITORIAL & CORPORATIVO B2B
+            <div>
+              <div style={{ fontSize: '0.62rem', fontWeight: 900, letterSpacing: '0.15em', color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                ÍNDICE LATERAL DIREITO · SUMÁRIO
               </div>
-              <h1 style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.75rem)', fontWeight: 900, lineHeight: 1.08, margin: '0 0 1rem 0', textTransform: 'uppercase' }}>
-                Mais Que Um Treino, Uma Transformação Institucional.
-              </h1>
-              <p style={{ fontSize: '0.92rem', color: 'var(--text-muted-foreground)', lineHeight: 1.65, marginBottom: '1.5rem' }}>
-                Todas as informações oficiais do Centro de Combate — 8 Modalidades, Corpo Docente, Grade de Horários, Planos, Estrutura Olímpica, Gamificação e ERP — apresentadas em layout executivo de alta precisão.
-              </p>
+              <h3 style={{ margin: '0.2rem 0 0.75rem 0', fontSize: '1.05rem', fontWeight: 900, textTransform: 'uppercase' }}>
+                Capítulos do Dossiê
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid var(--border-subtle)' }}>
+                {[
+                  { href: '#o-que-e-o-ct-react', num: 'I', label: 'Tese Institucional & Rede' },
+                  { href: '#modalidades-react', num: 'II', label: 'Portfólio Técnico (8 Lutas)' },
+                  { href: '#planos-react', num: 'III', label: 'Matriz Comparativa Financeira' },
+                  { href: '#horarios-react', num: 'IV', label: 'Cronograma & Lotação' },
+                  { href: '#professores-react', num: 'V', label: 'Conselho de Mestres' },
+                  { href: '#faq-react', num: 'VI', label: 'Infraestrutura & Governança' }
+                ].map(item => (
+                  <a
+                    key={item.num}
+                    href={item.href}
+                    style={{
+                      padding: '0.65rem 0.25rem',
+                      borderBottom: '1px solid var(--border-subtle)',
+                      color: 'var(--text-foreground)',
+                      textDecoration: 'none',
+                      fontSize: '0.76rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <span><strong style={{ color: 'var(--color-primary)', fontFamily: 'monospace', marginRight: '0.4rem' }}>{item.num}.</strong> {item.label}</span>
+                    <span>↓</span>
+                  </a>
+                ))}
+              </div>
+            </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderTop: '1px solid var(--border-subtle)', paddingTop: '1.15rem', gap: '0.75rem' }}>
-                <div>
-                  <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--color-primary)' }}>+500</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>ALUNOS ATIVOS</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '1.45rem', fontWeight: 900 }}>100%</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>MESTRES GRADUADOS</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '1.45rem', fontWeight: 900 }}>180m²</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>TATAME CLIMATIZADO</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--status-available)' }}>8</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>MODALIDADES</div>
-                </div>
+            {/* Indicadores Auditados na Direita */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', border: '1px solid var(--border-subtle)', background: 'var(--bg-background)' }}>
+              <div style={{ padding: '0.75rem', borderRight: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-primary)' }}>+500</div>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted-foreground)', fontWeight: 800 }}>MEMBROS ATIVOS</div>
+              </div>
+              <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900 }}>180m²</div>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted-foreground)', fontWeight: 800 }}>ÁREA OLÍMPICA</div>
+              </div>
+              <div style={{ padding: '0.75rem', borderRight: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900 }}>8</div>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted-foreground)', fontWeight: 800 }}>MODALIDADES</div>
+              </div>
+              <div style={{ padding: '0.75rem' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--status-available)' }}>100%</div>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted-foreground)', fontWeight: 800 }}>CLIMATIZADO</div>
               </div>
             </div>
 
-            <div style={{ padding: '2.25rem', background: 'var(--bg-background)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.25rem' }}>
-                  {(
-                    [
-                      { id: 'empresas', label: '01. EMPRESAS & RH' },
-                      { id: 'academias', label: '02. REDE DE CTS' },
-                      { id: 'atletas', label: '03. PRATICANTES' }
-                    ] as const
-                  ).map(tab => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setCorporateTab(tab.id)}
-                      style={{
-                        flex: 1,
-                        padding: '0.75rem 0.5rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderBottom: corporateTab === tab.id ? '3px solid var(--color-primary)' : '3px solid transparent',
-                        color: corporateTab === tab.id ? 'var(--color-primary)' : 'var(--text-muted-foreground)',
-                        fontWeight: 900,
-                        fontSize: '0.72rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-
-                {corporateTab === 'empresas' && (
-                  <div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: 900 }}>
-                      Saúde Corporativa, Redução de Estresse e Alta Performance
-                    </h3>
-                    <p style={{ fontSize: '0.84rem', color: 'var(--text-muted-foreground)', lineHeight: 1.6 }}>
-                      Planos corporativos e aceitação integral de Wellhub (Gympass), TotalPass e Combat-Pass com relatórios de frequência auditáveis.
-                    </p>
-                  </div>
-                )}
-                {corporateTab === 'academias' && (
-                  <div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: 900 }}>
-                      ERP Multi-Academias, Caixa Diário (PDV) & Comissões
-                    </h3>
-                    <p style={{ fontSize: '0.84rem', color: 'var(--text-muted-foreground)', lineHeight: 1.6 }}>
-                      Controle de lotação por horário, contratos com assinatura eletrônica, fechamento de caixa e repasse automático por check-in.
-                    </p>
-                  </div>
-                )}
-                {corporateTab === 'atletas' && (
-                  <div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: 900 }}>
-                      Do Iniciante Zero ao Atleta de Competição
-                    </h3>
-                    <p style={{ fontSize: '0.84rem', color: 'var(--text-muted-foreground)', lineHeight: 1.6 }}>
-                      Metodologia gradual sem machucados, 8 artes marciais, trilha de 30 conquistas e Loja de Recompensas por Combat Points.
-                    </p>
-                  </div>
-                )}
+            {/* Check-in Terminal posicionado na Coluna Direita */}
+            <div style={{ padding: '0.9rem', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
+                ⚡ VALIDAÇÃO DE ACESSO CORPORATIVO
               </div>
-
-              <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', marginTop: '1.25rem' }}>
-                <Link to="/portal" style={{ padding: '0.7rem 1.15rem', borderRadius: '4px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', fontWeight: 900, fontSize: '0.76rem', textDecoration: 'none' }}>
-                  ACESSAR PORTAL DO ALUNO →
-                </Link>
-                <Link to="/admin" style={{ padding: '0.7rem 1.15rem', borderRadius: '4px', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontWeight: 800, fontSize: '0.76rem', textDecoration: 'none' }}>
-                  ABRIR ERP ADMINISTRATIVO →
-                </Link>
-              </div>
+              <PublicQuickCheckinCard />
             </div>
-          </section>
-
-          {/* TODOS OS 12 MÓDULOS COMPLETOS EM ESTILO EDITORIAL ORTOGONAL */}
-          <CompleteSiteModules
-            variant="corporate_editorial"
-            academies={academies}
-            rewardsCatalog={rewardsCatalog}
-          />
+          </aside>
         </div>
       </div>
     );
   }
 
   // ============================================================================
-  // LAYOUT 3: ARENA TATAME HUD / COMMAND CENTER (3 COLUNAS + TODOS OS 12 MÓDULOS)
+  // LAYOUT 3: ARENA FIGHTER HUD / OCTÓGONO CYBERPUNK (CALENDÁRIO LARGO 2/3 ESQUERDA + CHECK-IN 1/3 DIREITA + POLÍGONOS)
   // ============================================================================
+  const hudClip = 'polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px))';
+
   return (
     <div style={{ minHeight: '100vh', color: 'var(--text-foreground)', paddingBottom: '3rem' }}>
       {GlobalExperienceDock}
       {ExperienceShowroomModal}
       {OrderBuilderModal}
 
-      {/* PLACAR ELETRÔNICO DE ARENA AO VIVO */}
-      <div
-        style={{
-          background: 'var(--bg-surface-2)',
-          borderBottom: '1px solid var(--border-subtle)',
-          padding: '0.65rem 1.25rem'
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '1480px',
-            margin: '0 auto',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '0.75rem'
-          }}
-        >
+      {/* PLACAR ELETRÔNICO DE OCTÓGONO AO VIVO */}
+      <div style={{ background: 'var(--bg-surface-2)', borderBottom: '2px solid var(--color-primary)', padding: '0.65rem 1.25rem' }}>
+        <div style={{ maxWidth: '1540px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span
-              style={{
-                padding: '0.25rem 0.65rem',
-                borderRadius: '6px',
-                background: 'var(--color-primary)',
-                color: 'var(--text-primary-foreground)',
-                fontSize: '0.7rem',
-                fontWeight: 900,
-                letterSpacing: '0.08em'
-              }}
-            >
-              🔴 LIVE TATAME HUD · COMMAND CENTER
+            <span style={{ padding: '0.25rem 0.75rem', clipPath: 'polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', fontSize: '0.7rem', fontWeight: 900, fontFamily: 'monospace' }}>
+              🔴 OCTAGON HUD // LIVE TELEMETRY
             </span>
             <span style={{ fontSize: '0.84rem', fontWeight: 900, fontFamily: 'monospace' }}>
               ⏱️ {currentTime.toLocaleTimeString('pt-BR')}
             </span>
           </div>
-
           <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', fontSize: '0.74rem', fontWeight: 900 }}>
-            <span style={{ padding: '0.25rem 0.65rem', borderRadius: '6px', background: 'var(--status-available-bg)', color: 'var(--status-available)', border: '1px solid var(--status-available-border)' }}>
-              🟢 +500 Alunos · 8 Modalidades · 180m² Tatame
+            <span style={{ padding: '0.25rem 0.65rem', background: 'var(--status-available-bg)', color: 'var(--status-available)', border: '1px solid var(--status-available-border)', fontFamily: 'monospace' }}>
+              [STATUS: TATAMES OPERACIONAIS · +500 LUTADORES]
             </span>
-            <Link to="/agendar" style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', textDecoration: 'none' }}>
-              🔥 Agendar Aula Experimental
-            </Link>
           </div>
         </div>
       </div>
 
-      {/* DECK OPERACIONAL EM 3 COLUNAS SIMULTÂNEAS NO TOPO */}
-      <div
-        style={{
-          maxWidth: '1480px',
-          margin: '1.15rem auto',
-          padding: '0 1rem',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '1rem',
-          alignItems: 'start'
-        }}
-      >
-        {/* Coluna 1: Check-in Expresso */}
+      <div style={{ maxWidth: '1540px', margin: '1.25rem auto', padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        {/* DECK SUPERIOR ASSIMÉTRICO 2/3 + 1/3: CALENDÁRIO LARGO NA ESQUERDA (NUNCA QUEBRA!) + CHECK-IN & TELEMETRIA NA DIREITA */}
         <div
           style={{
-            padding: '1.15rem',
-            borderRadius: '14px',
-            background: 'var(--bg-surface-1)',
-            border: '2px solid var(--color-primary)',
-            boxShadow: 'var(--shadow-card)'
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))',
+            gap: '1.25rem',
+            alignItems: 'start'
           }}
         >
-          <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-            ⚡ TERMINAL DE ENTRADA · BATER PONTO DE PRESENÇA
+          {/* Lado Esquerdo Largo: Calendário Ao Vivo */}
+          <div
+            style={{
+              gridColumn: 'span 2',
+              padding: '1.35rem',
+              clipPath: hudClip,
+              background: 'var(--bg-surface-1)',
+              border: '2px solid var(--color-primary)',
+              boxShadow: 'var(--shadow-card)',
+              minWidth: 0
+            }}
+          >
+            <div style={{ fontFamily: 'monospace', fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+              📅 RADAR DE TURMAS EM TEMPO REAL // GRADE 7 DIAS & LISTA COMPACTA
+            </div>
+            <InteractiveCombatCalendar userRole="ALUNO" defaultViewMode="grid" />
           </div>
-          <PublicQuickCheckinCard />
-        </div>
 
-        {/* Coluna 2: Calendário Ao Vivo */}
-        <div
-          style={{
-            padding: '1.15rem',
-            borderRadius: '14px',
-            background: 'var(--bg-surface-1)',
-            border: '1px solid var(--border-subtle)',
-            boxShadow: 'var(--shadow-card)'
-          }}
-        >
-          <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-            📅 GRADE INTERATIVA EM TEMPO REAL ([HÁ VAGAS] / [LOTADO])
-          </div>
-          <InteractiveCombatCalendar userRole="ALUNO" />
-        </div>
-
-        {/* Coluna 3: Atalhos Competitivos & Portais */}
-        <div
-          style={{
-            padding: '1.15rem',
-            borderRadius: '14px',
-            background: 'var(--bg-surface-1)',
-            border: '1px solid var(--border-subtle)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.65rem'
-          }}
-        >
-          <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-            🏆 TELEMETRIA & ACESSO RÁPIDO AOS MÓDULOS
-          </div>
-          {[
-            { icon: '🏆', title: 'Próximos Torneios & Brackets', sub: 'Chaves oficiais abertas', to: '/portal?tab=torneios' },
-            { icon: '🌍', title: 'Ranking Global de Atletas', sub: 'Leaderboard MMR ao vivo', to: '/portal?tab=ranking' },
-            { icon: '📊', title: 'Estatísticas de Lutador', sub: 'Frequência & aproveitamento', to: '/portal?tab=desempenho' },
-            { icon: '🥊', title: 'Portal Completo do Aluno', sub: 'Check-in, Contratos e 30 Conquistas', to: '/portal' },
-            { icon: '🥋', title: 'Acesso do Professor', sub: 'Chamada de Tatame & Comissões', to: '/professor' },
-            { icon: '👑', title: 'ERP Admin & Layout Studio', sub: 'Gestão 360, Caixa e Customizer', to: '/admin' }
-          ].map(card => (
-            <Link
-              key={card.title}
-              to={card.to}
+          {/* Lado Direito: Check-in Expresso + Atalhos de Arena */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div
               style={{
-                padding: '0.7rem 0.85rem',
-                borderRadius: '10px',
-                background: 'var(--bg-background)',
-                border: '1px solid var(--border-subtle)',
-                textDecoration: 'none',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                padding: '1.25rem',
+                clipPath: hudClip,
+                background: 'var(--bg-surface-1)',
+                border: '2px solid var(--color-primary)',
+                boxShadow: 'var(--shadow-card)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                <span style={{ fontSize: '1.25rem' }}>{card.icon}</span>
-                <div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--text-foreground)' }}>{card.title}</div>
-                  <div style={{ fontSize: '0.66rem', color: 'var(--text-muted-foreground)' }}>{card.sub}</div>
-                </div>
+              <div style={{ fontFamily: 'monospace', fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                ⚡ TERMINAL DE ENTRADA // BATER PONTO NO TATAME
               </div>
-              <span style={{ color: 'var(--color-primary)', fontWeight: 900 }}>→</span>
-            </Link>
-          ))}
-        </div>
-      </div>
+              <PublicQuickCheckinCard />
+            </div>
 
-      {/* TODOS OS 12 MÓDULOS COMPLETOS ABAIXO EM ESTILO ARENA HUD */}
-      <div style={{ maxWidth: '1480px', margin: '0 auto', padding: '0 1rem' }}>
+            <div
+              style={{
+                padding: '1.25rem',
+                clipPath: hudClip,
+                background: 'var(--bg-surface-1)',
+                border: '1px solid var(--border-subtle)',
+                display: 'grid',
+                gap: '0.55rem'
+              }}
+            >
+              <div style={{ fontFamily: 'monospace', fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)' }}>
+                🎮 COMBAT SHORTCUTS // ACESSO DIRETO
+              </div>
+              {[
+                { icon: '🏆', title: 'CHAVES DE TORNEIOS & BRACKETS', to: '/portal?tab=torneios' },
+                { icon: '🌍', title: 'LEADERBOARD GLOBAL MMR', to: '/portal?tab=ranking' },
+                { icon: '📊', title: 'TELEMETRIA & STATS DO LUTADOR', to: '/portal?tab=desempenho' },
+                { icon: '🥊', title: 'ENTRAR NO PORTAL DO ALUNO', to: '/portal' },
+                { icon: '👑', title: 'COMANDO ADMIN & ERP', to: '/admin' }
+              ].map(item => (
+                <Link
+                  key={item.title}
+                  to={item.to}
+                  style={{
+                    padding: '0.65rem 0.85rem',
+                    clipPath: 'polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)',
+                    background: 'var(--bg-background)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-foreground)',
+                    textDecoration: 'none',
+                    fontFamily: 'monospace',
+                    fontSize: '0.72rem',
+                    fontWeight: 900,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <span>{item.icon} {item.title}</span>
+                  <span style={{ color: 'var(--color-primary)' }}>▶</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* MÓDULOS DE COMBATE EM ESTILO GAME SELECT & BATTLE PASS */}
         <CompleteSiteModules
           variant="arena_hud"
           academies={academies}
