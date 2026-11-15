@@ -52,7 +52,7 @@ interface InteractiveCombatCalendarProps {
   usuarioProfessor?: any;
   onCheckinChanged?: () => void;
   onRefreshExternal?: () => void;
-  defaultViewMode?: 'grid' | 'agenda';
+  defaultViewMode?: 'grid' | 'agenda' | 'semana';
 }
 
 export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps> = ({
@@ -60,8 +60,7 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
   alunoId,
   alunoLogado,
   onCheckinChanged,
-  onRefreshExternal,
-  defaultViewMode = 'grid'
+  onRefreshExternal
 }) => {
   const effectiveAlunoId = alunoId || alunoLogado?.id;
   const notifyRefresh = () => {
@@ -69,16 +68,19 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
     onRefreshExternal?.();
   };
 
-  const [mesAtual, setMesAtual] = useState(new Date().getMonth() + 1);
-  const [anoAtual, setAnoAtual] = useState(new Date().getFullYear());
+  const hoje = new Date();
+  const [mesAtual, setMesAtual] = useState(hoje.getMonth() + 1);
+  const [anoAtual, setAnoAtual] = useState(hoje.getFullYear());
   const [academiaFiltro, setAcademiaFiltro] = useState<string>('TODAS');
   const [modalidadeFiltro, setModalidadeFiltro] = useState<string>('TODAS');
-  const [viewMode, setViewMode] = useState<'grid' | 'agenda'>(defaultViewMode);
   const [academiasDisponiveis, setAcademiasDisponiveis] = useState<any[]>([]);
   const [aulasPorDia, setAulasPorDia] = useState<Record<string, ClassScheduleItem[]>>({});
   const [loading, setLoading] = useState(true);
 
-  const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
+  // Inicializa com a data de hoje formatada YYYY-MM-DD
+  const hojeIso = hoje.toISOString().split('T')[0];
+  const [diaSelecionado, setDiaSelecionado] = useState<string>(hojeIso);
+
   const [processandoAcao, setProcessandoAcao] = useState(false);
   const [sucessoMsg, setSucessoMsg] = useState('');
   const [erroMsg, setErroMsg] = useState('');
@@ -221,44 +223,49 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
-  const hojeIso = new Date().toISOString().split('T')[0];
-  const primeiroDiaSemana = new Date(anoAtual, mesAtual - 1, 1).getDay();
+  const diasSemanaNomes = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   const totalDiasNoMes = new Date(anoAtual, mesAtual, 0).getDate();
 
-  const aulasDoDiaSelecionado = diaSelecionado ? aulasPorDia[diaSelecionado] || [] : [];
+  // Array ordenado de todos os dias do mês para a fita horizontal
+  const diasDoMes = Array.from({ length: totalDiasNoMes }, (_, i) => {
+    const diaNum = i + 1;
+    const dataIso = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(diaNum).padStart(2, '0')}`;
+    const dateObj = new Date(anoAtual, mesAtual - 1, diaNum);
+    const diaSemana = diasSemanaNomes[dateObj.getDay()];
+    const aulas = aulasPorDia[dataIso] || [];
+    return {
+      diaNum,
+      dataIso,
+      diaSemana,
+      totalAulas: aulas.length,
+      aulas,
+      temVagas: aulas.some(a => !a.cancelada && !a.lotado),
+      temCheckin: aulas.some(a => Boolean(a.meuCheckin))
+    };
+  });
 
-  // Dias com aulas para o modo Agenda Horizontal
-  const diasComAulas = Object.entries(aulasPorDia)
-    .filter(([_, lista]) => Array.isArray(lista) && lista.length > 0)
-    .sort(([a], [b]) => a.localeCompare(b));
+  const aulasDoDiaAtivo = aulasPorDia[diaSelecionado] || [];
+  const diaSelecionadoObj = diasDoMes.find(d => d.dataIso === diaSelecionado);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%' }}>
-      {/* BARRA DE CONTROLE DO CALENDÁRIO (TOTALMENTE RESPONSIVA E SEM QUEBRAS) */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+      {/* 1. TOPO DE CONTROLE E FILTROS */}
       <div
         style={{
           background: 'var(--bg-surface-1)',
           border: '1px solid var(--border-subtle)',
-          borderRadius: '14px',
-          padding: '1rem',
+          borderRadius: '16px',
+          padding: '1rem 1.25rem',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.85rem'
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '0.75rem'
-          }}
-        >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.98rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
-                📅 Grade Oficial Multi-Academias & Lotação ao Vivo
+              <span style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
+                📅 Grade Oficial de Aulas & Check-in ao Vivo
               </span>
               <span
                 style={{
@@ -272,220 +279,138 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
                   textTransform: 'uppercase'
                 }}
               >
-                {userRole === 'ALUNO' ? 'Passe Unificado' : 'Gestão CT'}
+                {userRole === 'ALUNO' ? 'Passe Unificado' : 'Gestão de Turmas'}
               </span>
             </div>
-            <div style={{ fontSize: '0.73rem', color: 'var(--text-muted-foreground)', marginTop: '0.15rem' }}>
-              Clique em qualquer dia para ver os horários detalhados, dar check-in ou verificar vagas.
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted-foreground)', marginTop: '0.2rem' }}>
+              Selecione o dia na fita interativa para ver todas as turmas, disponibilidade de vagas e bater presença.
             </div>
           </div>
 
-          {/* Controles de Mês + Alternador Grade/Lista */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <div
+          {/* Navegador de Mês */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              background: 'var(--bg-background)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '10px',
+              padding: '0.25rem 0.4rem'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                if (mesAtual === 1) {
+                  setMesAtual(12);
+                  setAnoAtual(a => a - 1);
+                } else {
+                  setMesAtual(m => m - 1);
+                }
+              }}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                background: 'var(--bg-background)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '10px',
-                padding: '0.22rem'
+                padding: '0.35rem 0.65rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: 'var(--bg-surface-1)',
+                color: 'var(--text-foreground)',
+                fontSize: '0.75rem',
+                fontWeight: 900,
+                cursor: 'pointer'
               }}
             >
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                style={{
-                  padding: '0.35rem 0.65rem',
-                  borderRadius: '7px',
-                  border: 'none',
-                  background: viewMode === 'grid' ? 'var(--color-primary)' : 'transparent',
-                  color: viewMode === 'grid' ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
-                  fontSize: '0.7rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
-                }}
-              >
-                🗓️ Grade 7 Dias
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('agenda')}
-                style={{
-                  padding: '0.35rem 0.65rem',
-                  borderRadius: '7px',
-                  border: 'none',
-                  background: viewMode === 'agenda' ? 'var(--color-primary)' : 'transparent',
-                  color: viewMode === 'agenda' ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
-                  fontSize: '0.7rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
-                }}
-              >
-                📋 Lista Compacta
-              </button>
-            </div>
-
-            <div
+              ◀
+            </button>
+            <span
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: 'var(--bg-background)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '10px',
-                padding: '0.25rem 0.4rem'
+                padding: '0 0.65rem',
+                fontSize: '0.8rem',
+                fontWeight: 900,
+                color: 'var(--text-foreground)',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap'
               }}
             >
-              <button
-                type="button"
-                onClick={() => {
-                  if (mesAtual === 1) {
-                    setMesAtual(12);
-                    setAnoAtual(a => a - 1);
-                  } else {
-                    setMesAtual(m => m - 1);
-                  }
-                }}
-                style={{
-                  padding: '0.3rem 0.55rem',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: 'var(--bg-surface-1)',
-                  color: 'var(--text-foreground)',
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  cursor: 'pointer'
-                }}
-              >
-                ◀
-              </button>
-              <span
-                style={{
-                  padding: '0 0.5rem',
-                  fontSize: '0.76rem',
-                  fontWeight: 900,
-                  color: 'var(--text-foreground)',
-                  textTransform: 'uppercase',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {mesesNomes[mesAtual - 1]} / {anoAtual}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (mesAtual === 12) {
-                    setMesAtual(1);
-                    setAnoAtual(a => a + 1);
-                  } else {
-                    setMesAtual(m => m + 1);
-                  }
-                }}
-                style={{
-                  padding: '0.3rem 0.55rem',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: 'var(--bg-surface-1)',
-                  color: 'var(--text-foreground)',
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  cursor: 'pointer'
-                }}
-              >
-                ▶
-              </button>
-            </div>
+              {mesesNomes[mesAtual - 1]} / {anoAtual}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (mesAtual === 12) {
+                  setMesAtual(1);
+                  setAnoAtual(a => a + 1);
+                } else {
+                  setMesAtual(m => m + 1);
+                }
+              }}
+              style={{
+                padding: '0.35rem 0.65rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: 'var(--bg-surface-1)',
+                color: 'var(--text-foreground)',
+                fontSize: '0.75rem',
+                fontWeight: 900,
+                cursor: 'pointer'
+              }}
+            >
+              ▶
+            </button>
           </div>
         </div>
 
-        {/* FILTROS DE ACADEMIA E MODALIDADE */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '0.65rem',
-            paddingTop: '0.65rem',
-            borderTop: '1px solid var(--border-subtle)'
-          }}
-        >
+        {/* Filtros em Linha */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
           <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.64rem',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                color: 'var(--text-muted-foreground)',
-                marginBottom: '0.25rem'
-              }}
-            >
-              🏟️ Filtrar Unidade / CT Credenciado:
+            <label style={{ display: 'block', fontSize: '0.66rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-muted-foreground)', marginBottom: '0.25rem' }}>
+              🏟️ Unidade / Centro de Treinamento:
             </label>
             <select
               value={academiaFiltro}
               onChange={e => setAcademiaFiltro(e.target.value)}
               style={{
                 width: '100%',
-                padding: '0.5rem 0.7rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
                 border: '1px solid var(--border-subtle)',
                 background: 'var(--bg-background)',
                 color: 'var(--text-foreground)',
-                fontSize: '0.75rem',
+                fontSize: '0.76rem',
                 fontWeight: 700
               }}
             >
               <option value="TODAS">🌐 Todas as Unidades Credenciadas</option>
-              {academiasDisponiveis.length > 0 ? (
-                academiasDisponiveis.map(ac => (
-                  <option key={ac.id || ac.slug} value={ac.slug || ac.nome}>
-                    🥋 {ac.nome} ({ac.bairro || ac.cidade})
-                  </option>
-                ))
-              ) : (
-                <>
-                  <option value="ct-boru-matriz">🥋 CT Borü (Matriz) — Zona Central</option>
-                  <option value="tatame-sul-bjj">🥋 Alliance / Tatame Sul BJJ — Zona Sul</option>
-                  <option value="arena-nobre-arte">🥊 Arena Nobre Arte Boxing — Embratel</option>
-                  <option value="iron-cage-mma">🏆 Iron Cage MMA & Wrestling — Rio Madeira</option>
-                </>
-              )}
+              {academiasDisponiveis.map(ac => (
+                <option key={ac.id || ac.slug} value={ac.slug || ac.nome}>
+                  🥋 {ac.nome} ({ac.bairro || ac.cidade})
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.64rem',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                color: 'var(--text-muted-foreground)',
-                marginBottom: '0.25rem'
-              }}
-            >
-              🥊 Filtrar Modalidade Marcial:
+            <label style={{ display: 'block', fontSize: '0.66rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-muted-foreground)', marginBottom: '0.25rem' }}>
+              🥊 Modalidade Marcial:
             </label>
             <select
               value={modalidadeFiltro}
               onChange={e => setModalidadeFiltro(e.target.value)}
               style={{
                 width: '100%',
-                padding: '0.5rem 0.7rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
                 border: '1px solid var(--border-subtle)',
                 background: 'var(--bg-background)',
                 color: 'var(--text-foreground)',
-                fontSize: '0.75rem',
+                fontSize: '0.76rem',
                 fontWeight: 700
               }}
             >
               <option value="TODAS">🔥 Todas as Modalidades (Muay Thai, BJJ, Boxe, MMA)</option>
               <option value="Muay Thai">🇹🇭 Muay Thai & Muay Thai Kids</option>
               <option value="Jiu-Jitsu">🥋 Jiu-Jitsu (Gi & No-Gi)</option>
-              <option value="Boxe">🥊 Boxe Olímpico & Sparring</option>
+              <option value="Boxe">🥊 Boxe Clássico & Sparring</option>
               <option value="MMA">⛓️ MMA & Wrestling</option>
             </select>
           </div>
@@ -493,683 +418,351 @@ export const InteractiveCombatCalendar: React.FC<InteractiveCombatCalendarProps>
       </div>
 
       {sucessoMsg && (
-        <div
-          style={{
-            padding: '0.65rem 0.9rem',
-            borderRadius: '10px',
-            background: 'var(--status-available-bg)',
-            border: '1px solid var(--status-available-border)',
-            color: 'var(--status-available)',
-            fontSize: '0.76rem',
-            fontWeight: 800
-          }}
-        >
+        <div style={{ padding: '0.65rem 1rem', borderRadius: '10px', background: 'var(--status-available-bg)', border: '1px solid var(--status-available-border)', color: 'var(--status-available)', fontSize: '0.78rem', fontWeight: 900 }}>
           ✓ {sucessoMsg}
         </div>
       )}
 
       {erroMsg && (
-        <div
-          style={{
-            padding: '0.65rem 0.9rem',
-            borderRadius: '10px',
-            background: 'var(--status-full-bg)',
-            border: '1px solid var(--status-full-border)',
-            color: 'var(--status-full)',
-            fontSize: '0.76rem',
-            fontWeight: 800
-          }}
-        >
+        <div style={{ padding: '0.65rem 1rem', borderRadius: '10px', background: 'var(--status-full-bg)', border: '1px solid var(--status-full-border)', color: 'var(--status-full)', fontSize: '0.78rem', fontWeight: 900 }}>
           ⚠️ {erroMsg}
         </div>
       )}
 
-      {/* CORPO DO CALENDÁRIO */}
+      {/* 2. FITA INTERATIVA HORIZONTAL DE DIAS DO MÊS (SELETOR NÍTIDO, MODERNO E SEM AMASSAR) */}
       <div
         style={{
           background: 'var(--bg-surface-1)',
           border: '1px solid var(--border-subtle)',
-          borderRadius: '14px',
-          padding: '0.9rem',
-          overflowX: 'auto'
+          borderRadius: '16px',
+          padding: '0.85rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.65rem'
         }}
       >
-        {loading ? (
-          <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted-foreground)', fontSize: '0.8rem' }}>
-            Carregando grade oficial de horários do mês...
-          </div>
-        ) : viewMode === 'agenda' ? (
-          /* VISÃO EM LISTA HORIZONTAL / AGENDA COMPACTA (NUNCA ESPREME) */
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.75rem' }}>
-            {diasComAulas.slice(0, 12).map(([dataIso, lista]) => {
-              const ehHoje = dataIso === hojeIso;
-              return (
-                <div
-                  key={dataIso}
-                  onClick={() => setDiaSelecionado(dataIso)}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase' }}>
+          <span>👉 Escolha o dia no calendário horizontal:</span>
+          <span>● {totalDiasNoMes} Dias no Mês</span>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.5rem',
+            overflowX: 'auto',
+            paddingBottom: '0.5rem',
+            scrollbarWidth: 'thin'
+          }}
+        >
+          {diasDoMes.map(d => {
+            const isSelected = d.dataIso === diaSelecionado;
+            const isToday = d.dataIso === hojeIso;
+
+            return (
+              <button
+                key={d.dataIso}
+                type="button"
+                onClick={() => setDiaSelecionado(d.dataIso)}
+                style={{
+                  minWidth: '64px',
+                  padding: '0.65rem 0.4rem',
+                  borderRadius: '12px',
+                  border: isSelected ? '2px solid var(--color-primary)' : isToday ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                  background: isSelected ? 'var(--color-primary)' : isToday ? 'var(--color-primary-light)' : 'var(--bg-background)',
+                  color: isSelected ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.2rem',
+                  flexShrink: 0,
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span style={{ fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase', opacity: isSelected ? 0.9 : 0.6 }}>
+                  {d.diaSemana}
+                </span>
+                <span style={{ fontSize: '1.2rem', fontWeight: 900, lineHeight: 1 }}>
+                  {d.diaNum}
+                </span>
+                <span
                   style={{
-                    cursor: 'pointer',
-                    padding: '0.85rem',
-                    borderRadius: '10px',
-                    background: 'var(--bg-background)',
-                    border: ehHoje ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.45rem'
+                    fontSize: '0.58rem',
+                    fontWeight: 900,
+                    padding: '0.1rem 0.35rem',
+                    borderRadius: '999px',
+                    background: isSelected ? 'rgba(0,0,0,0.25)' : 'var(--bg-surface-2)',
+                    color: isSelected ? 'inherit' : d.totalAulas > 0 ? 'var(--color-primary)' : 'var(--text-muted-foreground)'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 900, color: ehHoje ? 'var(--color-primary)' : 'var(--text-foreground)' }}>
-                      📆 Dia {dataIso.split('-')[2]}/{dataIso.split('-')[1]}
-                    </span>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted-foreground)' }}>
-                      {lista.length} turmas
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                    {lista.slice(0, 4).map(aula => (
-                      <div
-                        key={aula.id}
+                  {d.totalAulas > 0 ? `${d.totalAulas} aulas` : 'Sem aula'}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. PAINEL DE AULAS DO DIA SELECIONADO (CARDS ESTRUTURADOS, LEGÍVEIS E ESPAÇOSOS) */}
+      <div
+        style={{
+          background: 'var(--bg-surface-1)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '16px',
+          padding: '1.25rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
+          <div>
+            <span style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+              HORÁRIOS & CHECK-IN CONFIRMADO
+            </span>
+            <h3 style={{ margin: '0.15rem 0 0 0', fontSize: '1.25rem', fontWeight: 900 }}>
+              Turmas do Dia {diaSelecionado.split('-')[2]} de {mesesNomes[Number(diaSelecionado.split('-')[1]) - 1]} ({diaSelecionadoObj?.diaSemana})
+            </h3>
+          </div>
+          <span style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-muted-foreground)' }}>
+            {aulasDoDiaAtivo.length} treino(s) agendado(s) neste dia
+          </span>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted-foreground)', fontSize: '0.82rem' }}>
+            Carregando horários do tatame...
+          </div>
+        ) : aulasDoDiaAtivo.length === 0 ? (
+          <div style={{ padding: '2.5rem', textAlign: 'center', borderRadius: '12px', background: 'var(--bg-background)', border: '1px dashed var(--border-subtle)' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '0.35rem' }}>🥋</div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
+              Nenhum treino programado para este dia com os filtros atuais.
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted-foreground)', marginTop: '0.2rem' }}>
+              Experimente selecionar outro dia na fita acima ou mudar o filtro de unidade/modalidade.
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '0.85rem' }}>
+            {aulasDoDiaAtivo.map(aula => {
+              const isMinhaAula = Boolean(aula.meuCheckin);
+              const pendenteAceite = aula.meuCheckin?.status === 'AGENDADO';
+              const presencaAceita = aula.meuCheckin?.status === 'PRESENTE';
+
+              return (
+                <div
+                  key={aula.id}
+                  style={{
+                    padding: '1.15rem',
+                    borderRadius: '14px',
+                    background: 'var(--bg-background)',
+                    border: isMinhaAula ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                    opacity: aula.cancelada ? 0.6 : 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '0.85rem'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.45rem' }}>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--color-primary)', fontFamily: 'monospace' }}>
+                        ⏰ {aula.horario}
+                      </div>
+                      <span
                         style={{
-                          padding: '0.35rem 0.5rem',
+                          fontSize: '0.62rem',
+                          fontWeight: 900,
+                          padding: '0.2rem 0.55rem',
                           borderRadius: '6px',
-                          background: 'var(--bg-surface-1)',
-                          border: '1px solid var(--border-subtle)',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          fontSize: '0.7rem'
+                          background: aula.cancelada
+                            ? 'var(--status-full-bg)'
+                            : aula.lotado
+                            ? 'var(--status-full-bg)'
+                            : 'var(--status-available-bg)',
+                          color: aula.cancelada
+                            ? 'var(--status-full)'
+                            : aula.lotado
+                            ? 'var(--status-full)'
+                            : 'var(--status-available)',
+                          border: '1px solid var(--border-subtle)'
                         }}
                       >
-                        <span
-                          style={{
-                            fontWeight: 800,
-                            color: aula.cancelada ? 'var(--text-muted-foreground)' : 'var(--text-foreground)',
-                            textDecoration: aula.cancelada ? 'line-through' : 'none',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          {aula.horarioCurto} · {aula.modalidade}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: '0.6rem',
-                            fontWeight: 900,
-                            color: aula.cancelada
-                              ? 'var(--status-full)'
-                              : aula.lotado
-                              ? 'var(--status-full)'
-                              : 'var(--status-available)'
-                          }}
-                        >
-                          {aula.cancelada ? 'CANC.' : aula.lotado ? '[LOTADO]' : '[VAGAS]'}
-                        </span>
+                        {aula.cancelada ? 'AULA CANCELADA' : aula.lotado ? '[LOTADO]' : '[HÁ VAGAS]'}
+                      </span>
+                    </div>
+
+                    <h4
+                      style={{
+                        margin: '0 0 0.35rem 0',
+                        fontSize: '1.02rem',
+                        fontWeight: 900,
+                        textDecoration: aula.cancelada ? 'line-through' : 'none'
+                      }}
+                    >
+                      {aula.titulo || aula.modalidade}
+                    </h4>
+
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted-foreground)', display: 'grid', gap: '0.2rem' }}>
+                      <div>
+                        🏛️ <strong>{aula.academiaNome || 'Centro de Combate'}</strong>
                       </div>
-                    ))}
+                      <div>
+                        🥋 Mestre: <strong style={{ color: 'var(--text-foreground)' }}>{aula.professorNome}</strong>
+                      </div>
+                      <div>
+                        👥 Lotação: <strong>{aula.totalAgendados} de {aula.capacidade} alunos</strong>
+                      </div>
+                    </div>
+
+                    {aula.cancelada && aula.motivoCancelamento && (
+                      <div style={{ marginTop: '0.5rem', padding: '0.45rem 0.65rem', borderRadius: '8px', background: 'var(--status-full-bg)', color: 'var(--status-full)', fontSize: '0.72rem', fontStyle: 'italic' }}>
+                        Aviso: "{aula.motivoCancelamento}"
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Ações de Check-in */}
+                  <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
+                    {userRole === 'ALUNO' && !aula.cancelada && (
+                      <div>
+                        {isMinhaAula ? (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
+                            <span style={{ fontSize: '0.74rem', fontWeight: 900, color: 'var(--status-available)' }}>
+                              {presencaAceita ? '✓ Presença Confirmada!' : '⏳ Check-in Agendado'}
+                            </span>
+                            {pendenteAceite && aula.meuCheckin && (
+                              <button
+                                type="button"
+                                onClick={() => handleCancelarCheckin(aula.meuCheckin!.id)}
+                                disabled={processandoAcao}
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--status-full)',
+                                  background: 'transparent',
+                                  color: 'var(--status-full)',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 800,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Cancelar Vaga
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleFazerCheckin(aula)}
+                            disabled={processandoAcao || aula.lotado}
+                            style={{
+                              width: '100%',
+                              padding: '0.65rem',
+                              borderRadius: '8px',
+                              border: 'none',
+                              background: aula.lotado ? 'var(--bg-surface-2)' : 'var(--color-primary)',
+                              color: aula.lotado ? 'var(--text-muted-foreground)' : 'var(--text-primary-foreground)',
+                              fontSize: '0.76rem',
+                              fontWeight: 900,
+                              cursor: aula.lotado ? 'not-allowed' : 'pointer',
+                              textTransform: 'uppercase'
+                            }}
+                          >
+                            {aula.lotado ? 'Turma Lotada' : '🥊 Bater Check-in Nesta Aula'}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {(userRole === 'ADMIN' || userRole === 'PROFESSOR') && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted-foreground)' }}>
+                          {aula.alunosAgendados.length} aluno(s) agendado(s)
+                        </span>
+                        {aula.cancelada ? (
+                          <button
+                            type="button"
+                            onClick={() => handleReativarAula(aula.id)}
+                            disabled={processandoAcao}
+                            style={{
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: '6px',
+                              border: 'none',
+                              background: 'var(--status-available)',
+                              color: '#fff',
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            🔄 Reativar
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAulaParaCancelar(aula);
+                              setShowModalCancelarAula(true);
+                            }}
+                            style={{
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: '6px',
+                              border: '1px solid var(--status-full)',
+                              background: 'var(--status-full-bg)',
+                              color: 'var(--status-full)',
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            🚫 Cancelar Aula
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
-        ) : (
-          /* VISÃO GRADE MENSAL DE 7 COLUNAS COM LARGURA MÍNIMA GARANTIDA (NUNCA AMASSA) */
-          <div style={{ minWidth: '680px' }}>
-            {/* Cabeçalho dos 7 Dias da Semana */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, minmax(92px, 1fr))',
-                gap: '0.4rem',
-                marginBottom: '0.45rem',
-                textAlign: 'center',
-                fontSize: '0.68rem',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                color: 'var(--text-muted-foreground)'
-              }}
-            >
-              <div style={{ color: 'var(--color-primary)' }}>Dom</div>
-              <div>Seg</div>
-              <div>Ter</div>
-              <div>Qua</div>
-              <div>Qui</div>
-              <div>Sex</div>
-              <div>Sáb</div>
-            </div>
-
-            {/* Células do Mês */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, minmax(92px, 1fr))',
-                gap: '0.4rem'
-              }}
-            >
-              {Array.from({ length: primeiroDiaSemana }).map((_, idx) => (
-                <div
-                  key={`empty-${idx}`}
-                  style={{
-                    minHeight: '88px',
-                    borderRadius: '8px',
-                    background: 'var(--bg-background)',
-                    opacity: 0.35,
-                    border: '1px dashed var(--border-subtle)'
-                  }}
-                />
-              ))}
-
-              {Array.from({ length: totalDiasNoMes }).map((_, idx) => {
-                const diaNum = idx + 1;
-                const dataIso = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(diaNum).padStart(2, '0')}`;
-                const aulasDoDia = aulasPorDia[dataIso] || [];
-                const ehHoje = dataIso === hojeIso;
-                const estaSelecionado = diaSelecionado === dataIso;
-                const meuCheckinNoDia = aulasDoDia.find(a => Boolean(a.meuCheckin));
-                const totalAlunosDia = aulasDoDia.reduce((acc, a) => acc + a.totalAgendados, 0);
-
-                return (
-                  <div
-                    key={`day-${diaNum}`}
-                    onClick={() => setDiaSelecionado(dataIso)}
-                    style={{
-                      minHeight: '92px',
-                      padding: '0.4rem',
-                      borderRadius: '9px',
-                      background: estaSelecionado ? 'var(--bg-surface-2)' : 'var(--bg-background)',
-                      border: estaSelecionado
-                        ? '2px solid var(--color-primary)'
-                        : ehHoje
-                        ? '2px solid var(--color-primary)'
-                        : '1px solid var(--border-subtle)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      gap: '0.25rem',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {/* Topo do Dia */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span
-                        style={{
-                          fontSize: '0.76rem',
-                          fontWeight: 900,
-                          color: ehHoje || estaSelecionado ? 'var(--color-primary)' : 'var(--text-foreground)'
-                        }}
-                      >
-                        {diaNum}
-                      </span>
-                      {ehHoje && (
-                        <span
-                          style={{
-                            fontSize: '0.55rem',
-                            fontWeight: 900,
-                            padding: '0.08rem 0.3rem',
-                            borderRadius: '4px',
-                            background: 'var(--color-primary)',
-                            color: 'var(--text-primary-foreground)',
-                            textTransform: 'uppercase'
-                          }}
-                        >
-                          Hoje
-                        </span>
-                      )}
-                      {meuCheckinNoDia && !ehHoje && (
-                        <span
-                          style={{
-                            fontSize: '0.55rem',
-                            fontWeight: 900,
-                            padding: '0.08rem 0.3rem',
-                            borderRadius: '4px',
-                            background: 'var(--status-available-bg)',
-                            color: 'var(--status-available)'
-                          }}
-                        >
-                          ✓ Check
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Lista compacta de até 3 horários */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.18rem' }}>
-                      {aulasDoDia.slice(0, 3).map(aula => (
-                        <div
-                          key={aula.id}
-                          style={{
-                            fontSize: '0.6rem',
-                            padding: '0.12rem 0.28rem',
-                            borderRadius: '4px',
-                            background: 'var(--bg-surface-1)',
-                            border: '1px solid var(--border-subtle)',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            gap: '0.2rem',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden'
-                          }}
-                        >
-                          <span
-                            style={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              fontWeight: 700,
-                              color: aula.cancelada ? 'var(--text-muted-foreground)' : 'var(--text-foreground)',
-                              textDecoration: aula.cancelada ? 'line-through' : 'none'
-                            }}
-                          >
-                            {aula.horarioCurto} {aula.modalidade.slice(0, 5)}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: '0.54rem',
-                              fontWeight: 900,
-                              color: aula.cancelada || aula.lotado ? 'var(--status-full)' : 'var(--status-available)'
-                            }}
-                          >
-                            {aula.cancelada ? '✕' : aula.lotado ? 'LOT' : 'OK'}
-                          </span>
-                        </div>
-                      ))}
-                      {aulasDoDia.length > 3 && (
-                        <span style={{ fontSize: '0.56rem', color: 'var(--text-muted-foreground)', fontWeight: 800, textAlign: 'right' }}>
-                          +{aulasDoDia.length - 3} mais
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Rodapé da célula */}
-                    <div
-                      style={{
-                        fontSize: '0.58rem',
-                        color: 'var(--text-muted-foreground)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        borderTop: '1px solid var(--border-subtle)',
-                        paddingTop: '0.15rem'
-                      }}
-                    >
-                      <span>👥 {totalAlunosDia}</span>
-                      <span>{aulasDoDia.length}h</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         )}
-
-        {/* Legenda */}
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            marginTop: '0.75rem',
-            paddingTop: '0.65rem',
-            borderTop: '1px solid var(--border-subtle)',
-            fontSize: '0.68rem',
-            color: 'var(--text-muted-foreground)'
-          }}
-        >
-          <span>🟢 <strong style={{ color: 'var(--status-available)' }}>[OK / HÁ VAGAS]</strong> Turma com vagas</span>
-          <span>🔴 <strong style={{ color: 'var(--status-full)' }}>[LOT / LOTADO]</strong> Capacidade máxima</span>
-          <span>🚫 <span style={{ textDecoration: 'line-through' }}>18h Muay</span> Aula cancelada pelo professor</span>
-        </div>
       </div>
-
-      {/* MODAL DETALHADO DO DIA SELECIONADO */}
-      {diaSelecionado && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 10020,
-            background: 'rgba(0,0,0,0.82)',
-            backdropFilter: 'blur(6px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem'
-          }}
-          onClick={() => setDiaSelecionado(null)}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              width: '100%',
-              maxWidth: '720px',
-              maxHeight: '88vh',
-              overflowY: 'auto',
-              borderRadius: '20px',
-              background: 'var(--bg-surface-1)',
-              border: '2px solid var(--color-primary)',
-              padding: '1.5rem',
-              color: 'var(--text-foreground)',
-              boxShadow: 'var(--shadow-card)'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
-              <div>
-                <span style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-                  GRADE OFICIAL COMBAT-PASS · CHECK-IN POR HORÁRIO
-                </span>
-                <h3 style={{ margin: '0.2rem 0 0 0', fontSize: '1.15rem', fontWeight: 900 }}>
-                  Horários do Dia {diaSelecionado}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDiaSelecionado(null)}
-                style={{
-                  padding: '0.4rem 0.75rem',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-subtle)',
-                  background: 'var(--bg-surface-2)',
-                  color: 'var(--text-foreground)',
-                  fontWeight: 900,
-                  cursor: 'pointer'
-                }}
-              >
-                ✕ Fechar
-              </button>
-            </div>
-
-            {aulasDoDiaSelecionado.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted-foreground)', fontSize: '0.82rem' }}>
-                Nenhuma aula programada para este dia/filtro.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {aulasDoDiaSelecionado.map(aula => {
-                  const isMinhaAula = Boolean(aula.meuCheckin);
-                  const pendenteAceite = aula.meuCheckin?.status === 'AGENDADO';
-                  const presencaAceita = aula.meuCheckin?.status === 'PRESENTE';
-
-                  return (
-                    <div
-                      key={aula.id}
-                      style={{
-                        padding: '1rem',
-                        borderRadius: '14px',
-                        background: 'var(--bg-background)',
-                        border: isMinhaAula ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
-                        opacity: aula.cancelada ? 0.65 : 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.65rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            <span
-                              style={{
-                                fontSize: '0.95rem',
-                                fontWeight: 900,
-                                textDecoration: aula.cancelada ? 'line-through' : 'none'
-                              }}
-                            >
-                              ⏰ {aula.horario} · {aula.titulo}
-                            </span>
-                            <span
-                              style={{
-                                fontSize: '0.64rem',
-                                fontWeight: 900,
-                                padding: '0.18rem 0.5rem',
-                                borderRadius: '4px',
-                                background: aula.cancelada || aula.lotado ? 'var(--status-full-bg)' : 'var(--status-available-bg)',
-                                color: aula.cancelada || aula.lotado ? 'var(--status-full)' : 'var(--status-available)'
-                              }}
-                            >
-                              {aula.cancelada ? 'AULA CANCELADA' : aula.lotado ? '[LOTADO]' : '[HÁ VAGAS]'}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted-foreground)', marginTop: '0.2rem' }}>
-                            Mestre: <strong style={{ color: 'var(--text-foreground)' }}>{aula.professorNome}</strong> · Modalidade: <strong style={{ color: 'var(--text-foreground)' }}>{aula.modalidade}</strong> · Lotação: {aula.totalAgendados}/{aula.capacidade}
-                          </div>
-                        </div>
-
-                        {(userRole === 'ADMIN' || userRole === 'PROFESSOR') && (
-                          <div>
-                            {aula.cancelada ? (
-                              <button
-                                type="button"
-                                onClick={() => handleReativarAula(aula.id)}
-                                disabled={processandoAcao}
-                                style={{
-                                  padding: '0.4rem 0.75rem',
-                                  borderRadius: '8px',
-                                  border: 'none',
-                                  background: 'var(--status-available)',
-                                  color: '#fff',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 800,
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                🔄 Reativar Aula
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setAulaParaCancelar(aula);
-                                  setShowModalCancelarAula(true);
-                                }}
-                                style={{
-                                  padding: '0.4rem 0.75rem',
-                                  borderRadius: '8px',
-                                  border: '1px solid var(--status-full)',
-                                  background: 'var(--status-full-bg)',
-                                  color: 'var(--status-full)',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 800,
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                🚫 Cancelar Aula (Riscar)
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {userRole === 'ALUNO' && !aula.cancelada && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-subtle)' }}>
-                          {isMinhaAula ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '0.74rem', fontWeight: 900, color: 'var(--status-available)' }}>
-                                {presencaAceita ? '✓ Presença Confirmada pelo Professor!' : '⏳ Check-in Agendado (Aguardando Professor)'}
-                              </span>
-                              {pendenteAceite && aula.meuCheckin && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleCancelarCheckin(aula.meuCheckin!.id)}
-                                  disabled={processandoAcao}
-                                  style={{
-                                    padding: '0.35rem 0.7rem',
-                                    borderRadius: '6px',
-                                    border: '1px solid var(--status-full)',
-                                    background: 'transparent',
-                                    color: 'var(--status-full)',
-                                    fontSize: '0.7rem',
-                                    fontWeight: 800,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  ❌ Cancelar Meu Check-in
-                                </button>
-                              )}
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleFazerCheckin(aula)}
-                              disabled={processandoAcao || aula.lotado}
-                              style={{
-                                padding: '0.5rem 0.95rem',
-                                borderRadius: '8px',
-                                border: 'none',
-                                background: aula.lotado ? 'var(--bg-surface-2)' : 'var(--color-primary)',
-                                color: aula.lotado ? 'var(--text-muted-foreground)' : 'var(--text-primary-foreground)',
-                                fontSize: '0.74rem',
-                                fontWeight: 900,
-                                cursor: aula.lotado ? 'not-allowed' : 'pointer'
-                              }}
-                            >
-                              {aula.lotado ? 'Turma Lotada' : `🥊 Dar Check-in às ${aula.horarioCurto}`}
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {(userRole === 'ADMIN' || userRole === 'PROFESSOR') && aula.alunosAgendados.length > 0 && (
-                        <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--border-subtle)', display: 'grid', gap: '0.4rem' }}>
-                          <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted-foreground)' }}>
-                            Alunos Agendados ({aula.alunosAgendados.length}):
-                          </div>
-                          {aula.alunosAgendados.map(al => (
-                            <div
-                              key={al.id}
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '0.4rem 0.6rem',
-                                borderRadius: '8px',
-                                background: 'var(--bg-surface-1)',
-                                border: '1px solid var(--border-subtle)'
-                              }}
-                            >
-                              <span style={{ fontSize: '0.74rem', fontWeight: 800 }}>{al.nome}</span>
-                              <div style={{ display: 'flex', gap: '0.35rem' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => handleMarcarPresencaAluno(aula.id, al.id, 'PRESENTE')}
-                                  style={{
-                                    padding: '0.25rem 0.55rem',
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    background: 'var(--status-available)',
-                                    color: '#fff',
-                                    fontSize: '0.66rem',
-                                    fontWeight: 900,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  ✓ Presente
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleMarcarPresencaAluno(aula.id, al.id, 'FALTA')}
-                                  style={{
-                                    padding: '0.25rem 0.55rem',
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    background: 'var(--status-full)',
-                                    color: '#fff',
-                                    fontSize: '0.66rem',
-                                    fontWeight: 900,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  ✗ Falta
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* MODAL CANCELAR AULA */}
       {showModalCancelarAula && aulaParaCancelar && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 10025,
-            background: 'rgba(0,0,0,0.82)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem'
-          }}
-        >
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10025, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <form
             onSubmit={handleConfirmarCancelarAula}
-            style={{
-              width: '100%',
-              maxWidth: '440px',
-              borderRadius: '18px',
-              background: 'var(--bg-surface-1)',
-              border: '2px solid var(--status-full)',
-              padding: '1.35rem',
-              color: 'var(--text-foreground)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.85rem'
-            }}
+            style={{ width: '100%', maxWidth: '440px', borderRadius: '16px', background: 'var(--bg-surface-1)', border: '2px solid var(--status-full)', padding: '1.35rem', color: 'var(--text-foreground)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}
           >
             <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900 }}>
               🚫 Cancelar Aula ({aulaParaCancelar.horarioFormatado})
             </h4>
+            <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)' }}>
+              Esta aula ficará riscada no calendário de todos os alunos da rede.
+            </p>
             <input
               type="text"
               value={motivoCancelamento}
               onChange={e => setMotivoCancelamento(e.target.value)}
-              placeholder="Motivo do cancelamento..."
-              style={{
-                width: '100%',
-                padding: '0.6rem 0.8rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--bg-background)',
-                color: 'var(--text-foreground)',
-                fontSize: '0.78rem'
-              }}
+              placeholder="Motivo (ex: manutenção ou seminário externo)..."
+              style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-background)', color: 'var(--text-foreground)', fontSize: '0.78rem' }}
             />
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 type="button"
                 onClick={() => setShowModalCancelarAula(false)}
-                style={{
-                  flex: 1,
-                  padding: '0.55rem',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-subtle)',
-                  background: 'var(--bg-surface-2)',
-                  color: 'var(--text-foreground)',
-                  fontWeight: 800,
-                  cursor: 'pointer'
-                }}
+                style={{ flex: 1, padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', fontWeight: 800, cursor: 'pointer' }}
               >
                 Voltar
               </button>
               <button
                 type="submit"
                 disabled={processandoAcao}
-                style={{
-                  flex: 1,
-                  padding: '0.55rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'var(--status-full)',
-                  color: '#fff',
-                  fontWeight: 900,
-                  cursor: 'pointer'
-                }}
+                style={{ flex: 1, padding: '0.55rem', borderRadius: '8px', border: 'none', background: 'var(--status-full)', color: '#fff', fontWeight: 900, cursor: 'pointer' }}
               >
                 Confirmar
               </button>

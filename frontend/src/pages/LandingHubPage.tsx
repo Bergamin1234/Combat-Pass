@@ -101,7 +101,6 @@ export const LandingHubPage: React.FC = () => {
 
   const [academies, setAcademies] = useState<any[]>(FALLBACK_ACADEMIES);
   const [rewardsCatalog, setRewardsCatalog] = useState<any[]>(FALLBACK_REWARDS);
-  const [corporateTab, setCorporateTab] = useState<'empresas' | 'academias' | 'atletas'>('empresas');
   const [schoolSectionFilter, setSchoolSectionFilter] = useState<string>('ALL');
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showExperienceLauncher, setShowExperienceLauncher] = useState(false);
@@ -216,7 +215,7 @@ export const LandingHubPage: React.FC = () => {
             [
               { id: 'marketplace', icon: '🎓', short: '1. Sistema Escolar (Menu Esquerdo + Tabelas)' },
               { id: 'corporate', icon: '🏛️', short: '2. Editorial B2B (Índice Direito + Matriz)' },
-              { id: 'tatame', icon: '⚡', short: '3. Arena Fighter HUD (Polígonos + Stats RPG)' },
+              { id: 'tatame', icon: '⚡', short: '3. Arena Pro Tatame (Cards de Luta + Check-in Expresso)' },
               { id: 'classic', icon: '📜', short: '4. Clássico Original' }
             ] as Array<{ id: LandingPresetId; icon: string; short: string }>
           ).map(item => {
@@ -315,13 +314,13 @@ export const LandingHubPage: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
           <div>
             <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              🎛️ VITRINE DE ARQUITETURAS RADICALMENTE DIFERENTES
+              🎛️ VITRINE DE ARQUITETURAS
             </span>
             <h2 style={{ margin: '0.25rem 0', fontSize: '1.6rem', fontWeight: 900 }}>
               4 Formas Completamente Diferentes de Apresentar o Sistema
             </h2>
             <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted-foreground)' }}>
-              Cada opção muda <strong>o lado do menu, o formato dos blocos (tabelas, círculos, matrizes retas ou polígonos chanfrados), as imagens e os textos</strong>, mantendo 100% das informações e funções.
+              Cada layout possui estrutura própria, disposições e abordagens visuais exclusivas com total compatibilidade às paletas de cores.
             </p>
           </div>
           <button
@@ -349,9 +348,9 @@ export const LandingHubPage: React.FC = () => {
             },
             {
               id: 'tatame' as LandingPresetId,
-              tag: 'POLÍGONOS CORTADOS · STATS RPG & BENTO',
-              title: '⚡ 3. Arena Fighter HUD (Game Select)',
-              desc: 'Calendário Largo 2/3 no topo + Seleção de Estilo de Luta com barras de Força/Velocidade/Cardio + Planos como Battle Pass Tiers e cards poligonais.'
+              tag: 'CARDS DE LUTA · GRADE HORIZONTAL & CHECK-IN EXPRESSO',
+              title: '⚡ 3. Arena Pro Tatame (Foco Operacional)',
+              desc: 'Foco imediato no treino do dia: Cards com foto de ação de cada arte marcial, Fita de dias de treino e Terminal de Check-in Expresso.'
             },
             {
               id: 'classic' as LandingPresetId,
@@ -390,44 +389,6 @@ export const LandingHubPage: React.FC = () => {
               </div>
             );
           })}
-        </div>
-
-        <div style={{ padding: '1.1rem', borderRadius: '16px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
-          <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.65rem' }}>
-            🚀 ACESSO DIRETO AOS PORTAIS (TAMBÉM COM 4 ARQUITETURAS DIFERENTES EM CADA PORTAL)
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: '0.6rem' }}>
-            {[
-              { icon: '🥊', label: 'Portal do Aluno (4 Layouts)', to: '/portal' },
-              { icon: '🥋', label: 'Portal do Professor (4 Layouts)', to: '/professor' },
-              { icon: '👑', label: 'Painel Admin ERP (4 Layouts)', to: '/admin' },
-              { icon: '🏆', label: 'Próximos Torneios', to: '/portal?tab=torneios' },
-              { icon: '🌍', label: 'Ranking Global MMR', to: '/portal?tab=ranking' },
-              { icon: '📊', label: 'Estatísticas & Analytics', to: '/portal?tab=desempenho' },
-              { icon: '🔥', label: 'Aula Experimental', to: '/agendar' }
-            ].map(link => (
-              <Link
-                key={link.label}
-                to={link.to}
-                style={{
-                  padding: '0.65rem 0.85rem',
-                  borderRadius: '10px',
-                  background: 'var(--bg-surface-1)',
-                  border: '1px solid var(--border-subtle)',
-                  color: 'var(--text-foreground)',
-                  textDecoration: 'none',
-                  fontSize: '0.76rem',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.45rem'
-                }}
-              >
-                <span>{link.icon}</span>
-                <span>{link.label}</span>
-              </Link>
-            ))}
-          </div>
         </div>
       </div>
     </div>
@@ -505,7 +466,7 @@ export const LandingHubPage: React.FC = () => {
   );
 
   // ============================================================================
-  // LAYOUT 4: SITE CLÁSSICO ORIGINAL (HTML COMPLETO DE INDEX.HTML)
+  // LAYOUT 4: SITE CLÁSSICO ORIGINAL
   // ============================================================================
   if (activePreset === 'classic') {
     return (
@@ -518,7 +479,7 @@ export const LandingHubPage: React.FC = () => {
   }
 
   // ============================================================================
-  // LAYOUT 1: SISTEMA DE ESCOLA / UNIVERSIDADE MARCIAL (ABA LATERAL ESQUERDA + TABELAS ESCOLARES + ELEMENTOS REDONDOS)
+  // LAYOUT 1: SISTEMA DE ESCOLA / UNIVERSIDADE MARCIAL
   // ============================================================================
   if (activePreset === 'marketplace') {
     return (
@@ -540,7 +501,6 @@ export const LandingHubPage: React.FC = () => {
             flex: 1
           }}
         >
-          {/* ABA LATERAL ESQUERDA FIXA (ESTILO SISTEMA ESCOLAR / UNIVERSITÁRIO) */}
           <aside
             style={{
               position: 'sticky',
@@ -584,7 +544,6 @@ export const LandingHubPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Menu Escolar de Cadernos / Cátedras */}
             <div>
               <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.45rem', paddingLeft: '0.35rem' }}>
                 📂 Cadernos & Módulos Escolares
@@ -639,7 +598,6 @@ export const LandingHubPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Chamada Digital na Própria Barra Escolar */}
             <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', display: 'grid', gap: '0.45rem' }}>
               <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase' }}>
                 🔐 Secretaria & Portais Acadêmicos
@@ -658,9 +616,7 @@ export const LandingHubPage: React.FC = () => {
             </div>
           </aside>
 
-          {/* ÁREA ACADÊMICA DIREITA */}
           <main style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: 0 }}>
-            {/* Cabeçalho Escolar Redondo com Imagem na Direita e Chamada Expresso */}
             <div
               style={{
                 padding: '1.65rem',
@@ -714,7 +670,7 @@ export const LandingHubPage: React.FC = () => {
   }
 
   // ============================================================================
-  // LAYOUT 2: REVISTA EDITORIAL & DOSSIÊ B2B (CONTEÚDO À ESQUERDA + ÍNDICE FIXO À DIREITA + BORDAS RETAS 0PX)
+  // LAYOUT 2: REVISTA EDITORIAL & DOSSIÊ B2B
   // ============================================================================
   if (activePreset === 'corporate') {
     return (
@@ -723,7 +679,6 @@ export const LandingHubPage: React.FC = () => {
         {ExperienceShowroomModal}
         {OrderBuilderModal}
 
-        {/* TOPO EDITORIAL DE REVISTA EXECUTIVA */}
         <header style={{ background: 'var(--bg-surface-1)', borderBottom: '2px solid var(--text-foreground)' }}>
           <div style={{ maxWidth: '1540px', margin: '0 auto', padding: '1.1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
@@ -742,7 +697,6 @@ export const LandingHubPage: React.FC = () => {
           </div>
         </header>
 
-        {/* CORPO ASSIMÉTRICO INVERTIDO: CONTEÚDO EDITORIAL NA ESQUERDA (1FR) + ÍNDICE FIXO NA DIREITA (300PX)! */}
         <div
           style={{
             maxWidth: '1540px',
@@ -755,7 +709,6 @@ export const LandingHubPage: React.FC = () => {
             alignItems: 'start'
           }}
         >
-          {/* COLUNA PRINCIPAL ESQUERDA: DOSSIÊS EM ZIG-ZAG E TABELAS MATRICIAIS */}
           <main style={{ display: 'flex', flexDirection: 'column', gap: '2.25rem', minWidth: 0 }}>
             <CompleteSiteModules
               variant="corporate_editorial"
@@ -764,7 +717,6 @@ export const LandingHubPage: React.FC = () => {
             />
           </main>
 
-          {/* COLUNA FIXA NA DIREITA (ÍNDICE EXECUTIVO + CHECK-IN TERMINAL NA DIREITA!) */}
           <aside
             style={{
               position: 'sticky',
@@ -817,7 +769,6 @@ export const LandingHubPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Indicadores Auditados na Direita */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', border: '1px solid var(--border-subtle)', background: 'var(--bg-background)' }}>
               <div style={{ padding: '0.75rem', borderRight: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
                 <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-primary)' }}>+500</div>
@@ -837,7 +788,6 @@ export const LandingHubPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Check-in Terminal posicionado na Coluna Direita */}
             <div style={{ padding: '0.9rem', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
               <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
                 ⚡ VALIDAÇÃO DE ACESSO CORPORATIVO
@@ -851,76 +801,55 @@ export const LandingHubPage: React.FC = () => {
   }
 
   // ============================================================================
-  // LAYOUT 3: ARENA FIGHTER HUD / OCTÓGONO CYBERPUNK (CALENDÁRIO LARGO 2/3 ESQUERDA + CHECK-IN 1/3 DIREITA + POLÍGONOS)
+  // LAYOUT 3: ARENA PRO TATAME (EXPERIÊNCIA LIMPA, CARDS DE LUTA & GRADE MODERNA)
   // ============================================================================
-  const hudClip = 'polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px))';
-
   return (
     <div style={{ minHeight: '100vh', color: 'var(--text-foreground)', paddingBottom: '3rem' }}>
       {GlobalExperienceDock}
       {ExperienceShowroomModal}
       {OrderBuilderModal}
 
-      {/* PLACAR ELETRÔNICO DE OCTÓGONO AO VIVO */}
-      <div style={{ background: 'var(--bg-surface-2)', borderBottom: '2px solid var(--color-primary)', padding: '0.65rem 1.25rem' }}>
+      {/* BANNER DINÂMICO DE ENTRADA DO TATAME */}
+      <div style={{ background: 'var(--bg-surface-2)', borderBottom: '1px solid var(--border-subtle)', padding: '0.85rem 1.25rem' }}>
         <div style={{ maxWidth: '1540px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ padding: '0.25rem 0.75rem', clipPath: 'polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', fontSize: '0.7rem', fontWeight: 900, fontFamily: 'monospace' }}>
-              🔴 OCTAGON HUD // LIVE TELEMETRY
+            <span style={{ padding: '0.28rem 0.75rem', borderRadius: '8px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', fontSize: '0.72rem', fontWeight: 900 }}>
+              🥋 ARENA PRO TATAME
             </span>
-            <span style={{ fontSize: '0.84rem', fontWeight: 900, fontFamily: 'monospace' }}>
-              ⏱️ {currentTime.toLocaleTimeString('pt-BR')}
+            <span style={{ fontSize: '0.84rem', fontWeight: 900, color: 'var(--text-muted-foreground)' }}>
+              Horário do Centro: <strong style={{ color: 'var(--text-foreground)' }}>{currentTime.toLocaleTimeString('pt-BR')}</strong>
             </span>
           </div>
           <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', fontSize: '0.74rem', fontWeight: 900 }}>
-            <span style={{ padding: '0.25rem 0.65rem', background: 'var(--status-available-bg)', color: 'var(--status-available)', border: '1px solid var(--status-available-border)', fontFamily: 'monospace' }}>
-              [STATUS: TATAMES OPERACIONAIS · +500 LUTADORES]
+            <span style={{ padding: '0.25rem 0.65rem', borderRadius: '6px', background: 'var(--status-available-bg)', color: 'var(--status-available)', border: '1px solid var(--status-available-border)' }}>
+              ● Tatames Abertos · Vagas Liberadas Hoje
             </span>
+            <Link to="/agendar" style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', textDecoration: 'none' }}>
+              🔥 Agendar Aula Grátis
+            </Link>
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: '1540px', margin: '1.25rem auto', padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        {/* DECK SUPERIOR ASSIMÉTRICO 2/3 + 1/3: CALENDÁRIO LARGO NA ESQUERDA (NUNCA QUEBRA!) + CHECK-IN & TELEMETRIA NA DIREITA */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))',
-            gap: '1.25rem',
-            alignItems: 'start'
-          }}
-        >
-          {/* Lado Esquerdo Largo: Calendário Ao Vivo */}
-          <div
-            style={{
-              gridColumn: 'span 2',
-              padding: '1.35rem',
-              clipPath: hudClip,
-              background: 'var(--bg-surface-1)',
-              border: '2px solid var(--color-primary)',
-              boxShadow: 'var(--shadow-card)',
-              minWidth: 0
-            }}
-          >
-            <div style={{ fontFamily: 'monospace', fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-              📅 RADAR DE TURMAS EM TEMPO REAL // GRADE 7 DIAS & LISTA COMPACTA
-            </div>
-            <InteractiveCombatCalendar userRole="ALUNO" defaultViewMode="grid" />
+      <div style={{ maxWidth: '1540px', margin: '1.5rem auto', padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        {/* DECK OPERACIONAL PRINCIPAL: CALENDÁRIO COM FITA HORIZONTAL + CHECK-IN EXPRESSO */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.35rem', alignItems: 'start' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <InteractiveCombatCalendar userRole="ALUNO" />
           </div>
 
-          {/* Lado Direito: Check-in Expresso + Atalhos de Arena */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div
               style={{
                 padding: '1.25rem',
-                clipPath: hudClip,
+                borderRadius: '16px',
                 background: 'var(--bg-surface-1)',
                 border: '2px solid var(--color-primary)',
                 boxShadow: 'var(--shadow-card)'
               }}
             >
-              <div style={{ fontFamily: 'monospace', fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-                ⚡ TERMINAL DE ENTRADA // BATER PONTO NO TATAME
+              <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                ⚡ CHECK-IN EXPRESSO POR CPF & HORÁRIO
               </div>
               <PublicQuickCheckinCard />
             </div>
@@ -928,50 +857,49 @@ export const LandingHubPage: React.FC = () => {
             <div
               style={{
                 padding: '1.25rem',
-                clipPath: hudClip,
+                borderRadius: '16px',
                 background: 'var(--bg-surface-1)',
                 border: '1px solid var(--border-subtle)',
                 display: 'grid',
                 gap: '0.55rem'
               }}
             >
-              <div style={{ fontFamily: 'monospace', fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-                🎮 COMBAT SHORTCUTS // ACESSO DIRETO
+              <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                🥊 ACESSOS RÁPIDOS DA PLATAFORMA
               </div>
               {[
-                { icon: '🏆', title: 'CHAVES DE TORNEIOS & BRACKETS', to: '/portal?tab=torneios' },
-                { icon: '🌍', title: 'LEADERBOARD GLOBAL MMR', to: '/portal?tab=ranking' },
-                { icon: '📊', title: 'TELEMETRIA & STATS DO LUTADOR', to: '/portal?tab=desempenho' },
-                { icon: '🥊', title: 'ENTRAR NO PORTAL DO ALUNO', to: '/portal' },
-                { icon: '👑', title: 'COMANDO ADMIN & ERP', to: '/admin' }
+                { icon: '🏆', title: 'Torneios Oficiais & Chaves', to: '/portal?tab=torneios' },
+                { icon: '🌍', title: 'Ranking Geral de Atletas', to: '/portal?tab=ranking' },
+                { icon: '📊', title: 'Estatísticas & Aproveitamento', to: '/portal?tab=desempenho' },
+                { icon: '🥋', title: 'Acessar Área do Aluno', to: '/portal' },
+                { icon: '👑', title: 'Painel do Gestor / ERP', to: '/admin' }
               ].map(item => (
                 <Link
                   key={item.title}
                   to={item.to}
                   style={{
-                    padding: '0.65rem 0.85rem',
-                    clipPath: 'polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)',
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: '10px',
                     background: 'var(--bg-background)',
                     border: '1px solid var(--border-subtle)',
                     color: 'var(--text-foreground)',
                     textDecoration: 'none',
-                    fontFamily: 'monospace',
-                    fontSize: '0.72rem',
-                    fontWeight: 900,
+                    fontSize: '0.76rem',
+                    fontWeight: 800,
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
                   }}
                 >
                   <span>{item.icon} {item.title}</span>
-                  <span style={{ color: 'var(--color-primary)' }}>▶</span>
+                  <span style={{ color: 'var(--color-primary)' }}>→</span>
                 </Link>
               ))}
             </div>
           </div>
         </div>
 
-        {/* MÓDULOS DE COMBATE EM ESTILO GAME SELECT & BATTLE PASS */}
+        {/* MÓDULOS COMPLETOS DO TATAME */}
         <CompleteSiteModules
           variant="arena_hud"
           academies={academies}
