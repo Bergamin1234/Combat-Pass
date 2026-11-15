@@ -31,6 +31,15 @@ interface RosterStudent {
 export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded = false }) => {
   const { preferences, setJourneyPreset } = useLayoutEngine();
   const activePreset = preferences.layoutPreset.teacher;
+  const teacherArch =
+    activePreset === 'tatame_fast'
+      ? 'school'
+      : activePreset === 'technical_perf'
+      ? 'hud'
+      : activePreset === 'partner_portal'
+      ? 'executive'
+      : 'classic';
+  const [showLayoutCustomDrawer, setShowLayoutCustomDrawer] = useState(false);
 
   // Controle de Autenticação Obrigatória do Professor (CPF: 1 | Senha: 1)
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
@@ -490,203 +499,311 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
   // =========================================================================
   // QUANDO O PROFESSOR ESTÁ AUTENTICADO: RENDERIZA O PORTAL COM OS 4 LAYOUTS
   // =========================================================================
-  const teacherLayoutOptions: Array<{ id: TeacherPresetId; icon: string; name: string; tag: string }> = [
-    { id: 'tatame_fast', icon: '🎓', name: 'Layout 1: Diário Escolar', tag: 'Aba Lateral Fixa' },
-    { id: 'technical_perf', icon: '📊', name: 'Layout 2: Mesa Técnica', tag: 'Split-Screen 50/50' },
-    { id: 'partner_portal', icon: '🏛️', name: 'Layout 3: Dossiê Executivo B2B', tag: 'Matriz 0px' },
-    { id: 'classic_teacher', icon: '⚡', name: 'Layout 4: Tatame Touch-First', tag: 'Abas Clássicas' }
+  const teacherLayoutOptions: Array<{ id: TeacherPresetId; icon: string; short: string; name: string; tag: string }> = [
+    { id: 'tatame_fast', icon: '🎓', short: '1. Escolar', name: 'Layout 1: Diário Escolar', tag: 'Sidebar 26px' },
+    { id: 'technical_perf', icon: '📊', short: '2. Mesa HUD', name: 'Layout 2: Mesa Técnica', tag: 'Split 50/50' },
+    { id: 'partner_portal', icon: '🏛️', short: '3. B2B 0px', name: 'Layout 3: Dossiê B2B', tag: 'Matriz 0px' },
+    { id: 'classic_teacher', icon: '⚡', short: '4. Super-App', name: 'Layout 4: Touch Tatame', tag: 'Hero Touch' }
   ];
 
   return (
     <div
+      data-layout-arch={teacherArch}
       style={{
         minHeight: embedded ? 'auto' : '100vh',
-        background: 'var(--bg-background)',
+        background: teacherArch === 'school' ? 'var(--bg-surface-muted, var(--bg-background))' : 'var(--bg-background)',
         color: 'var(--text-foreground)',
         padding: embedded ? '0' : '1.25rem 1rem 4rem',
         width: '100%',
         boxSizing: 'border-box'
       }}
     >
-      <div style={{ maxWidth: '1540px', width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
-        {!embedded && (
+      <div style={{ maxWidth: activePreset === 'classic_teacher' ? '980px' : '1540px', width: '100%', margin: '0 auto', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+
+        {/* TOP CHROME POLIMÓRFICO POR ARQUITETURA (EM LAYOUT 1 FICA TUDO NA SIDEBAR ESQUERDA) */}
+        {!embedded && activePreset === 'technical_perf' && (
           <header
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              padding: '0.9rem 1.25rem',
-              marginBottom: '1rem',
-              borderRadius: activePreset === 'partner_portal' ? '0px' : '18px',
+              padding: '1rem 1.25rem',
+              borderRadius: '6px',
               background: 'var(--bg-surface-1)',
               border: '1px solid var(--border-subtle)',
-              borderLeft: activePreset === 'partner_portal' ? '4px solid var(--color-primary)' : '1px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-card)'
+              borderLeft: '6px solid var(--color-primary)',
+              boxShadow: '0 0 0 1px var(--color-primary-border), 0 12px 26px rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-              <div
-                style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: activePreset === 'tatame_fast' ? '50%' : activePreset === 'partner_portal' ? '0px' : '12px',
-                  background: 'var(--color-primary)',
-                  color: 'var(--text-primary-foreground)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.25rem',
-                  fontWeight: 900
-                }}
-              >
-                🥋
-              </div>
-              <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                 <div
                   style={{
-                    fontSize: '1.15rem',
-                    fontWeight: 900,
-                    color: 'var(--text-foreground)',
-                    textTransform: 'uppercase'
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '6px',
+                    background: 'var(--color-primary)',
+                    color: 'var(--text-primary-foreground)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.3rem',
+                    fontWeight: 900
                   }}
                 >
-                  PORTAL DO PROFESSOR & MESTRE <span style={{ color: 'var(--color-primary)' }}>COMBAT-PASS</span>
+                  📊
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
-                  Autenticado como: <strong style={{ color: 'var(--color-primary)' }}>{teacherUser?.nome || 'Prof. Mestre Titular'} (CPF: {teacherUser?.cpf || '1'})</strong>
+                <div>
+                  <div style={{ fontFamily: 'monospace', fontSize: '0.64rem', fontWeight: 900, color: 'var(--color-primary)', letterSpacing: '0.1em' }}>
+                    SYS://MESA_TECNICA_DOCENTE · AVALIAÇÃO AO VIVO
+                  </div>
+                  <h1 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-foreground)' }}>
+                    {teacherUser?.nome || 'Prof. Mestre Titular'} — <span style={{ color: 'var(--color-primary)' }}>{selectedHorario} {selectedModalidade}</span>
+                  </h1>
                 </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                <ThemeSwitcher compact />
+                <button
+                  type="button"
+                  onClick={() => setShowLayoutCustomDrawer(v => !v)}
+                  style={{
+                    padding: '0.42rem 0.75rem',
+                    borderRadius: '4px',
+                    background: showLayoutCustomDrawer ? 'var(--color-primary)' : 'var(--bg-surface-2)',
+                    color: showLayoutCustomDrawer ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)',
+                    fontSize: '0.7rem',
+                    fontWeight: 900,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚙️ Ordenar & Loading
+                </button>
+                <Link to="/admin" style={{ padding: '0.42rem 0.75rem', borderRadius: '4px', background: 'var(--bg-background)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', fontSize: '0.7rem', fontWeight: 900, textDecoration: 'none' }}>
+                  👑 Admin
+                </Link>
+                <Link to="/" style={{ padding: '0.42rem 0.75rem', borderRadius: '4px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
+                  🏛️ Hub
+                </Link>
+                <button type="button" onClick={handleTeacherLogout} style={{ padding: '0.42rem 0.75rem', borderRadius: '4px', background: 'var(--status-full-bg)', color: 'var(--status-full)', border: '1px solid var(--status-full-border)', fontSize: '0.7rem', fontWeight: 900, cursor: 'pointer' }}>
+                  ✕ SAIR
+                </button>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <ThemeSwitcher />
-              <Link
-                to="/"
-                style={{
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: activePreset === 'partner_portal' ? '0px' : '10px',
-                  background: 'var(--bg-surface-2)',
-                  color: 'var(--text-foreground)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  textDecoration: 'none'
-                }}
-              >
-                🏛️ Hub Principal
-              </Link>
-              <Link
-                to="/admin"
-                style={{
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: activePreset === 'partner_portal' ? '0px' : '10px',
-                  background: 'var(--bg-surface-2)',
-                  color: 'var(--color-primary)',
-                  border: '1px solid var(--color-primary)',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  textDecoration: 'none'
-                }}
-              >
-                👑 ERP Admin
-              </Link>
-              <button
-                type="button"
-                onClick={handleTeacherLogout}
-                style={{
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: activePreset === 'partner_portal' ? '0px' : '10px',
-                  background: 'var(--status-full-bg)',
-                  color: 'var(--status-full)',
-                  border: '1px solid var(--status-full-border)',
-                  fontSize: '0.75rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
-                }}
-                title="Sair e voltar para a tela de Login do Professor"
-              >
-                🚪 Sair
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.6rem', borderTop: '1px dashed var(--border-subtle)' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                {teacherLayoutOptions.map(opt => {
+                  const isCurrent = activePreset === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        setJourneyPreset('teacher', opt.id);
+                        setFeedbackMsg(`✓ Interface ativa: ${opt.name}`);
+                      }}
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        borderRadius: '4px',
+                        fontFamily: 'monospace',
+                        fontSize: '0.7rem',
+                        fontWeight: 900,
+                        cursor: 'pointer',
+                        background: isCurrent ? 'var(--color-primary)' : 'var(--bg-background)',
+                        color: isCurrent ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                        border: isCurrent ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)'
+                      }}
+                    >
+                      {opt.icon} {opt.short.toUpperCase()} {isCurrent ? '● ATIVO' : ''}
+                    </button>
+                  );
+                })}
+              </div>
+              <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: 'var(--color-primary)', fontWeight: 900 }}>
+                TATAME: {totalConfirmadosOuAgendados}/{limiteVagas} ATLETAS · STRIKING + GRAPPLING RADAR
+              </span>
             </div>
           </header>
         )}
 
-        {/* =========================================================================
-            BARRA DE ATALHOS DIRETOS PARA TROCAR E VISUALIZAR OS 4 LAYOUTS INSTANTANEAMENTE
-            ========================================================================= */}
-        <div
-          style={{
-            marginBottom: '1rem',
-            padding: '0.85rem 1rem',
-            borderRadius: activePreset === 'partner_portal' ? '0px' : '16px',
-            background: 'var(--bg-surface-1)',
-            border: '2px solid var(--color-primary)',
-            boxShadow: 'var(--shadow-card)'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              👁️ SELETOR DIRETO DE VISUALIZAÇÃO: CLIQUE PARA VER CADA UM DOS 4 MODELOS DO PROFESSOR
-            </span>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted-foreground)', fontWeight: 800 }}>
-              Modelo Ativo: <strong>{activePreset.toUpperCase()}</strong>
-            </span>
-          </div>
+        {!embedded && activePreset === 'partner_portal' && (
+          <header
+            style={{
+              background: 'var(--bg-surface-1)',
+              border: '1px solid var(--border-subtle)',
+              borderTop: '6px solid var(--color-primary)',
+              borderBottom: '3px solid var(--text-foreground)',
+              borderRadius: '0px',
+              padding: '1rem 1.25rem'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.85rem', paddingBottom: '0.8rem', borderBottom: '1px solid var(--border-subtle)' }}>
+              <div>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.64rem', fontWeight: 900, letterSpacing: '0.14em', color: 'var(--color-primary)' }}>
+                  COMBAT-PASS B2B · PORTAL DO INSTRUTOR PARCEIRO & REPASSES
+                </div>
+                <h1 style={{ margin: '0.2rem 0 0', fontSize: '1.35rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-foreground)' }}>
+                  {teacherUser?.nome || 'Prof. Mestre Titular'} — CPF {teacherUser?.cpf || '1'}
+                </h1>
+                <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', color: 'var(--text-muted-foreground)', marginTop: '0.18rem' }}>
+                  TURMA: <strong>{selectedHorario} ({selectedModalidade})</strong> | UNIDADE: <strong>{selectedUnidade}</strong>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                <ThemeSwitcher compact />
+                <button type="button" onClick={() => setShowLayoutCustomDrawer(v => !v)} style={{ padding: '0.45rem 0.75rem', borderRadius: '0px', background: showLayoutCustomDrawer ? 'var(--color-primary)' : 'var(--bg-background)', color: showLayoutCustomDrawer ? 'var(--text-primary-foreground)' : 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer' }}>
+                  CONFIG. BLOCOS
+                </button>
+                <Link to="/admin" style={{ padding: '0.45rem 0.75rem', borderRadius: '0px', background: 'var(--bg-background)', color: 'var(--color-primary)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 900, textDecoration: 'none', textTransform: 'uppercase' }}>
+                  ERP ADMIN
+                </Link>
+                <Link to="/" style={{ padding: '0.45rem 0.75rem', borderRadius: '0px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 900, textDecoration: 'none', textTransform: 'uppercase' }}>
+                  HUB PRINCIPAL
+                </Link>
+                <button type="button" onClick={handleTeacherLogout} style={{ padding: '0.45rem 0.75rem', borderRadius: '0px', background: 'var(--bg-surface-2)', color: 'var(--status-full)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 900, cursor: 'pointer', textTransform: 'uppercase' }}>
+                  ENCERRAR SESSÃO
+                </button>
+              </div>
+            </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.65rem' }}>
-            {teacherLayoutOptions.map(opt => {
-              const isCurrent = activePreset === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => {
-                    setJourneyPreset('teacher', opt.id);
-                    setFeedbackMsg(`✓ Visualizando agora: ${opt.name} (${opt.tag})`);
-                  }}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.7rem' }}>
+              <span style={{ fontFamily: 'monospace', fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted-foreground)' }}>
+                ARQUITETURA DA INTERFACE DOCENTE:
+              </span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', border: '1px solid var(--border-subtle)' }}>
+                {teacherLayoutOptions.map(opt => {
+                  const isCurrent = activePreset === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        setJourneyPreset('teacher', opt.id);
+                        setFeedbackMsg(`✓ Interface ativa: ${opt.name}`);
+                      }}
+                      style={{
+                        padding: '0.4rem 0.85rem',
+                        borderRadius: '0px',
+                        fontSize: '0.7rem',
+                        fontWeight: 900,
+                        textTransform: 'uppercase',
+                        cursor: 'pointer',
+                        background: isCurrent ? 'var(--color-primary)' : 'var(--bg-background)',
+                        color: isCurrent ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                        border: 'none',
+                        borderRight: '1px solid var(--border-subtle)'
+                      }}
+                    >
+                      {opt.short}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </header>
+        )}
+
+        {!embedded && activePreset === 'classic_teacher' && (
+          <header
+            style={{
+              borderRadius: '22px',
+              background: 'var(--color-gradient)',
+              color: 'var(--text-primary-foreground)',
+              padding: '1.35rem 1.5rem',
+              boxShadow: 'var(--shadow-card)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.95rem'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.9rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div
+                  className="arch-keep-shape"
                   style={{
-                    padding: '0.75rem 0.9rem',
-                    borderRadius: activePreset === 'partner_portal' ? '0px' : '12px',
-                    border: isCurrent ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
-                    background: isCurrent ? 'var(--color-primary)' : 'var(--bg-surface-2)',
-                    color: isCurrent ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
-                    cursor: 'pointer',
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '16px',
+                    background: 'rgba(255,255,255,0.2)',
+                    border: '2px solid rgba(255,255,255,0.45)',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '0.5rem',
-                    textAlign: 'left',
-                    boxShadow: isCurrent ? 'var(--shadow-glow)' : 'none',
-                    transition: 'all 0.15s ease'
+                    justifyContent: 'center',
+                    fontSize: '1.5rem'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.2rem' }}>{opt.icon}</span>
-                    <div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 900 }}>{opt.name}</div>
-                      <div style={{ fontSize: '0.65rem', opacity: 0.85 }}>{opt.tag}</div>
-                    </div>
+                  🥋
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', opacity: 0.9, letterSpacing: '0.08em' }}>
+                    ⚡ SUPER-APP TATAME TOUCH · CHAMADA EM 1 TOQUE
                   </div>
-                  {isCurrent && (
-                    <span style={{ fontSize: '0.65rem', fontWeight: 900, background: 'rgba(0,0,0,0.25)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
-                      ATIVO
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                  <h1 style={{ margin: '0.1rem 0 0', fontSize: '1.4rem', fontWeight: 900 }}>
+                    {teacherUser?.nome || 'Prof. Mestre Titular'}
+                  </h1>
+                  <div style={{ fontSize: '0.76rem', fontWeight: 700, opacity: 0.92 }}>
+                    Turma: {selectedHorario} · {selectedModalidade} ({totalConfirmadosOuAgendados}/{limiteVagas} inscritos)
+                  </div>
+                </div>
+              </div>
 
-        {/* Toolbar de Configuração Completa & Ordenador */}
-        <JourneyLayoutToolbar journey="teacher" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                <ThemeSwitcher compact />
+                <button type="button" onClick={() => setShowLayoutCustomDrawer(v => !v)} style={{ padding: '0.45rem 0.85rem', borderRadius: '12px', background: 'rgba(0,0,0,0.28)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.35)', fontSize: '0.74rem', fontWeight: 900, cursor: 'pointer' }}>
+                  ⚙️ Customizar
+                </button>
+                <Link to="/admin" style={{ padding: '0.45rem 0.85rem', borderRadius: '12px', background: 'rgba(255,255,255,0.22)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.35)', fontSize: '0.74rem', fontWeight: 900, textDecoration: 'none' }}>
+                  👑 Admin
+                </Link>
+                <Link to="/" style={{ padding: '0.45rem 0.85rem', borderRadius: '12px', background: 'rgba(255,255,255,0.18)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.3)', fontSize: '0.74rem', fontWeight: 900, textDecoration: 'none' }}>
+                  🏛️ Hub
+                </Link>
+                <button type="button" onClick={handleTeacherLogout} style={{ padding: '0.45rem 0.85rem', borderRadius: '12px', background: 'rgba(0,0,0,0.35)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.3)', fontSize: '0.74rem', fontWeight: 900, cursor: 'pointer' }}>
+                  🚪 Sair
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '0.5rem' }}>
+              {teacherLayoutOptions.map(opt => {
+                const isCurrent = activePreset === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setJourneyPreset('teacher', opt.id);
+                      setFeedbackMsg(`✓ Interface ativa: ${opt.name}`);
+                    }}
+                    style={{
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '12px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      background: isCurrent ? '#FFFFFF' : 'rgba(0,0,0,0.24)',
+                      color: isCurrent ? '#111114' : '#FFFFFF',
+                      border: isCurrent ? '2px solid #FFFFFF' : '1px solid rgba(255,255,255,0.28)',
+                      fontSize: '0.74rem',
+                      fontWeight: 900
+                    }}
+                  >
+                    <div>{opt.icon} {opt.short}</div>
+                    <div style={{ fontSize: '0.62rem', opacity: 0.78 }}>{isCurrent ? '✓ Ativo agora' : opt.tag}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </header>
+        )}
+
+        {/* Toolbar Expansível Sob Demanda (Sem poluir os 4 layouts com barra repetida no topo) */}
+        {showLayoutCustomDrawer && <JourneyLayoutToolbar journey="teacher" compact />}
 
         {feedbackMsg && (
           <div
             style={{
-              marginBottom: '1rem',
               padding: '0.75rem 1rem',
               borderRadius: activePreset === 'partner_portal' ? '0px' : '12px',
               background: 'var(--status-available-bg)',
@@ -717,19 +834,20 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
         )}
 
         {/* =========================================================================
-            LAYOUT 1: SISTEMA ESCOLAR DOCENTE (CADERNETA ESCOLAR, RETRATOS REDONDOS & ABA LATERAL)
+            LAYOUT 1: SISTEMA ESCOLAR DOCENTE (SIDEBAR INTEGRADA DO TOPO AO RODAPÉ + PÍLULAS)
             ========================================================================= */}
         {activePreset === 'tatame_fast' && (
-          <div className="responsive-portal-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 300px) 1fr', gap: '1.25rem', alignItems: 'start', width: '100%' }}>
-            {/* Aba Lateral Escolar */}
+          <div className="responsive-portal-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(270px, 310px) 1fr', gap: '1.35rem', alignItems: 'start', width: '100%' }}>
+            {/* Aba Lateral Escolar Completa */}
             <aside
               className="responsive-portal-aside"
               style={{
                 position: 'sticky',
                 top: '16px',
-                borderRadius: '24px',
+                borderRadius: '26px',
                 background: 'var(--bg-surface-1)',
                 border: '2px solid var(--border-subtle)',
+                borderTop: '6px solid var(--color-primary)',
                 padding: '1.2rem',
                 boxShadow: 'var(--shadow-card)',
                 display: 'flex',
@@ -737,12 +855,54 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
                 gap: '0.9rem'
               }}
             >
-              <div style={{ padding: '1rem', borderRadius: '18px', background: 'var(--bg-surface-2)', border: '1px solid var(--color-primary)', textAlign: 'center' }}>
+              {/* Cabeçalho do Diário Escolar + ThemeSwitcher */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  🎓 DIÁRIO ESCOLAR DOCENTE
+                </div>
+                <ThemeSwitcher compact />
+              </div>
+
+              {/* Troca de Interface dentro da Sidebar Escolar */}
+              <div style={{ padding: '0.65rem', borderRadius: '20px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                  👁️ Alternar Interface (1 Clique):
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                  {teacherLayoutOptions.map(opt => {
+                    const isCurrent = activePreset === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setJourneyPreset('teacher', opt.id);
+                          setFeedbackMsg(`✓ Interface ativa: ${opt.name}`);
+                        }}
+                        style={{
+                          padding: '0.38rem 0.5rem',
+                          borderRadius: '999px',
+                          fontSize: '0.66rem',
+                          fontWeight: 900,
+                          cursor: 'pointer',
+                          background: isCurrent ? 'var(--color-primary)' : 'var(--bg-surface-1)',
+                          color: isCurrent ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                          border: isCurrent ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)'
+                        }}
+                      >
+                        {opt.short}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ padding: '1rem', borderRadius: '22px', background: 'var(--bg-surface-2)', border: '2px solid var(--color-primary-border)', textAlign: 'center' }}>
                 <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', margin: '0 auto 0.5rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900 }}>
                   🥋
                 </div>
                 <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  CADERNETA ESCOLAR DO MESTRE
+                  PROFESSOR CREDENCIADO
                 </div>
                 <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-foreground)', marginTop: '0.2rem' }}>
                   {teacherUser?.nome || 'Prof. Mestre Titular'}
@@ -827,12 +987,74 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
                   Confirmar Entrada Avulsa
                 </button>
               </form>
+
+              {/* Atalhos de Rodapé da Barra Lateral Escolar */}
+              <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowLayoutCustomDrawer(v => !v)}
+                  style={{
+                    padding: '0.45rem 0.6rem',
+                    borderRadius: '999px',
+                    background: showLayoutCustomDrawer ? 'var(--color-primary)' : 'var(--bg-background)',
+                    color: showLayoutCustomDrawer ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)',
+                    fontSize: '0.68rem',
+                    fontWeight: 900,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚙️ Ordenar
+                </button>
+                <Link to="/admin" style={{ padding: '0.45rem 0.6rem', borderRadius: '999px', background: 'var(--bg-background)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', fontSize: '0.68rem', fontWeight: 900, textDecoration: 'none', textAlign: 'center' }}>
+                  👑 Admin
+                </Link>
+                <Link to="/" style={{ padding: '0.45rem 0.6rem', borderRadius: '999px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.68rem', fontWeight: 900, textDecoration: 'none', textAlign: 'center' }}>
+                  🏠 Site
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleTeacherLogout}
+                  style={{
+                    padding: '0.45rem 0.6rem',
+                    borderRadius: '999px',
+                    background: 'var(--status-full-bg)',
+                    color: 'var(--status-full)',
+                    border: '1px solid var(--status-full-border)',
+                    fontSize: '0.68rem',
+                    fontWeight: 900,
+                    cursor: 'pointer'
+                  }}
+                >
+                  🚪 Sair
+                </button>
+              </div>
             </aside>
 
             {/* Conteúdo do Diário Escolar */}
-            <main style={{ minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <main style={{ minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
+              {/* Cabeçalho da Caderneta Escolar (Layout 1) */}
+              <div style={{ padding: '1rem 1.35rem', borderRadius: '26px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)', borderTop: '4px solid var(--color-primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    🎓 CADERNETA ACADÊMICA DO DOCENTE · LAYOUT 1 (SISTEMA ESCOLAR)
+                  </div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 900, marginTop: '0.15rem' }}>
+                    Controle de Diário, Frequência & Mérito Marcial
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span style={{ padding: '0.4rem 0.85rem', borderRadius: '999px', background: 'var(--status-available-bg)', color: 'var(--status-available)', fontSize: '0.72rem', fontWeight: 900 }}>
+                    ✓ {roster.filter(s => s.statusChamada === 'PRESENTE').length} Presentes
+                  </span>
+                  <span style={{ padding: '0.4rem 0.85rem', borderRadius: '999px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.72rem', fontWeight: 900 }}>
+                    👥 {totalConfirmadosOuAgendados}/{limiteVagas} Vagas
+                  </span>
+                </div>
+              </div>
+
               {/* Card Escolar da Turma */}
-              <section style={{ padding: '1.5rem', borderRadius: '24px', background: 'var(--bg-surface-1)', border: '2px solid var(--border-subtle)' }}>
+              <section style={{ padding: '1.5rem', borderRadius: '26px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
                   <div>
                     <span style={{ fontSize: '0.66rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
@@ -957,10 +1179,10 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
             LAYOUT 2: MESA TÉCNICA & PERFORMANCE (SPLIT-SCREEN 50/50 COM RADAR DE NOTAS E SCORES)
             ========================================================================= */}
         {activePreset === 'technical_perf' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: '1.5rem', width: '100%', alignItems: 'start' }}>
+          <div className="responsive-hud-split" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: '1.25rem', width: '100%', alignItems: 'start' }}>
             {/* Coluna 1: Painel Tático de Chamada & Avaliação Técnica dos Alunos */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <section style={{ padding: '1.35rem', borderRadius: '16px', background: 'var(--bg-surface-1)', border: '2px solid var(--color-primary)' }}>
+              <section style={{ padding: '1.35rem', borderRadius: '6px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)', borderLeft: '4px solid var(--color-primary)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <div>
                     <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--color-primary)', letterSpacing: '0.1em' }}>
@@ -1497,6 +1719,40 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
                 </form>
               </section>
             )}
+
+            {/* Barra Inferior Fixa Exclusiva do Super-App Clássico em Celular */}
+            <nav
+              aria-label="Dock Super-App Professor"
+              className="sm:hidden fixed bottom-0 left-0 right-0 z-50 px-2 py-2 flex items-center justify-around shadow-2xl backdrop-blur-md"
+              style={{
+                background: 'var(--bg-surface-1)',
+                borderTop: '2px solid var(--color-primary)',
+              }}
+            >
+              {[
+                { id: 'aula_atual', icon: '🥋', label: 'Chamada' },
+                { id: 'grade_horarios', icon: '📅', label: 'Grade' },
+                { id: 'comissoes', icon: '💵', label: 'Repasses' },
+                { id: 'avaliacao_xp', icon: '🏅', label: 'Mérito' }
+              ].map(dock => {
+                const isAct = activeNavTab === dock.id;
+                return (
+                  <button
+                    key={dock.id}
+                    type="button"
+                    onClick={() => setActiveNavTab(dock.id)}
+                    className="flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl font-bold text-[10px] transition-all"
+                    style={{
+                      background: isAct ? 'var(--color-primary)' : 'transparent',
+                      color: isAct ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                    }}
+                  >
+                    <span className="text-sm leading-none">{dock.icon}</span>
+                    <span>{dock.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
           </div>
         )}
       </div>

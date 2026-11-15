@@ -106,6 +106,15 @@ const opcoesTempoDocencia = [
 export default function AdminDashboard() {
   const { preferences, setJourneyPreset } = useLayoutEngine();
   const adminPreset = preferences.layoutPreset.admin;
+  const adminArch =
+    adminPreset === 'executive'
+      ? 'school'
+      : adminPreset === 'operational_360'
+      ? 'hud'
+      : adminPreset === 'customizer_studio'
+      ? 'executive'
+      : 'classic';
+  const [showLayoutCustomDrawer, setShowLayoutCustomDrawer] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [usuarioLogado, setUsuarioLogado] = useState<any>(null);
   const [loginInput, setLoginInput] = useState('');
@@ -1219,275 +1228,408 @@ export default function AdminDashboard() {
   // ==========================================
   return (
     <div
+      data-layout-arch={adminArch}
       className="min-h-screen font-sans p-3 sm:p-6 pb-20 relative z-10 overflow-x-hidden"
-      style={{ background: 'var(--bg-background)', color: 'var(--text-foreground)' }}
+      style={{
+        background: adminArch === 'school' ? 'var(--bg-surface-muted, var(--bg-background))' : 'var(--bg-background)',
+        color: 'var(--text-foreground)'
+      }}
     >
-      <div className={`${adminPreset === 'complete_erp' ? 'max-w-7xl' : 'max-w-[1560px]'} mx-auto space-y-6`}>
+      <div className={`${adminPreset === 'complete_erp' ? 'max-w-5xl' : 'max-w-[1560px]'} mx-auto space-y-5`}>
 
-        {/* BARRA SUPERIOR & PERFIL DO USUÁRIO */}
-        <header
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5"
-          style={{ borderBottom: '1px solid var(--border-subtle)' }}
-        >
-          <div className="flex items-center gap-3">
-            {usuarioLogado?.fotoPerfilUrl ? (
-              <img
-                src={usuarioLogado.fotoPerfilUrl}
-                alt={usuarioLogado.nome}
-                className="w-12 h-12 rounded-full shadow-md object-cover flex-shrink-0"
-                style={{ border: '2px solid var(--color-primary)' }}
-              />
-            ) : (
-              <img
-                src={ACADEMY_CONFIG.logoUrl}
-                alt={ACADEMY_CONFIG.nome}
-                className="w-12 h-12 rounded-full shadow-md object-contain flex-shrink-0 p-1"
+        {/* TOP CHROME POLIMÓRFICO POR ARQUITETURA DO ADMIN (EM LAYOUT 1 FICA TUDO NA SIDEBAR ESCOLAR INTEGRADA) */}
+        {(() => {
+          const adminLayoutChoices = [
+            { id: 'executive' as const, short: '1. Escolar', tag: 'Sidebar 26px', icon: '🎓' },
+            { id: 'operational_360' as const, short: '2. Command HUD', tag: 'Split 360°', icon: '⚡' },
+            { id: 'customizer_studio' as const, short: '3. Contábil 0px', tag: 'B2B Matriz', icon: '🏛️' },
+            { id: 'complete_erp' as const, short: '4. Super-App', tag: 'Hero Touch', icon: '📱' }
+          ];
+
+          const handleAdminLogout = () => {
+            setIsLoggedIn(false);
+            setUsuarioLogado(null);
+          };
+
+          /* HEADER LAYOUT 2: COMMAND CENTER TÁTICO 360° (HUD) */
+          if (adminPreset === 'operational_360') {
+            return (
+              <header
                 style={{
-                  border: '2px solid var(--color-primary)',
-                  background: 'var(--bg-surface-1)'
+                  padding: '1rem 1.25rem',
+                  borderRadius: '6px',
+                  background: 'var(--bg-surface-1)',
+                  border: '1px solid var(--border-subtle)',
+                  borderLeft: '6px solid var(--color-primary)',
+                  boxShadow: '0 0 0 1px var(--color-primary-border), 0 12px 28px rgba(0,0,0,0.3)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.85rem'
                 }}
-              />
-            )}
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-3xl font-black tracking-wider" style={{ color: 'var(--text-foreground)' }}>
-                  PAINEL <span style={{ color: 'var(--color-primary)' }}>COMBAT-HUB</span>
-                </h1>
-                {usuarioLogado?.cargo === 'ADMIN' ? (
-                  <>
-                    <span
-                      className="px-2.5 py-0.5 rounded-full text-xs font-black flex items-center gap-1"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <div
                       style={{
-                        background: 'var(--color-primary-light)',
-                        color: 'var(--color-primary)',
-                        border: '1px solid var(--color-primary-border)'
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '6px',
+                        background: 'var(--color-primary)',
+                        color: 'var(--text-primary-foreground)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.35rem',
+                        fontWeight: 900
                       }}
                     >
-                      👑 ADMINISTRADOR
-                    </span>
-                    {(usuarioLogado?.is_dev || usuarioLogado?.email === 'brgadmin@boru.com' || usuarioLogado?.email === 'admin@academia.com') && (
-                      <span
-                        className="px-2.5 py-0.5 rounded-full text-xs font-black flex items-center gap-1"
+                      ⚡
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'monospace', fontSize: '0.64rem', fontWeight: 900, color: 'var(--color-primary)', letterSpacing: '0.1em' }}>
+                        SYS://COMANDO_ADMIN_360 · TELEMETRIA DE REDE AO VIVO
+                      </div>
+                      <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-foreground)' }}>
+                        {usuarioLogado?.nome} <span style={{ color: 'var(--color-primary)' }}>[{usuarioLogado?.cargo || 'ADMIN'}]</span>
+                      </h1>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <ThemeSwitcher compact />
+                    <button type="button" onClick={() => setShowModal(true)} style={{ padding: '0.42rem 0.75rem', borderRadius: '4px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', border: 'none', fontSize: '0.7rem', fontWeight: 900, cursor: 'pointer' }}>
+                      ➕ NOVO ALUNO
+                    </button>
+                    <button type="button" onClick={() => setShowLayoutCustomDrawer(v => !v)} style={{ padding: '0.42rem 0.75rem', borderRadius: '4px', background: showLayoutCustomDrawer ? 'var(--color-primary)' : 'var(--bg-surface-2)', color: showLayoutCustomDrawer ? 'var(--text-primary-foreground)' : 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 900, cursor: 'pointer' }}>
+                      ⚙️ Ordenar & Loading
+                    </button>
+                    <Link to="/professor" style={{ padding: '0.42rem 0.75rem', borderRadius: '4px', background: 'var(--bg-background)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', fontSize: '0.7rem', fontWeight: 900, textDecoration: 'none' }}>
+                      🥋 Professor
+                    </Link>
+                    <Link to="/" style={{ padding: '0.42rem 0.75rem', borderRadius: '4px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
+                      🏛️ Hub
+                    </Link>
+                    <button type="button" onClick={handleAdminLogout} style={{ padding: '0.42rem 0.75rem', borderRadius: '4px', background: 'var(--status-full-bg)', color: 'var(--status-full)', border: '1px solid var(--status-full-border)', fontSize: '0.7rem', fontWeight: 900, cursor: 'pointer' }}>
+                      ✕ SAIR
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.6rem', borderTop: '1px dashed var(--border-subtle)' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {adminLayoutChoices.map(lc => {
+                      const active = adminPreset === lc.id;
+                      return (
+                        <button
+                          key={lc.id}
+                          type="button"
+                          onClick={() => setJourneyPreset('admin', lc.id)}
+                          style={{
+                            padding: '0.4rem 0.75rem',
+                            borderRadius: '4px',
+                            fontFamily: 'monospace',
+                            fontSize: '0.7rem',
+                            fontWeight: 900,
+                            cursor: 'pointer',
+                            background: active ? 'var(--color-primary)' : 'var(--bg-background)',
+                            color: active ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                            border: active ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)'
+                          }}
+                        >
+                          {lc.icon} {lc.short.toUpperCase()} {active ? '● ATIVO' : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: 'var(--color-primary)', fontWeight: 900 }}>
+                    ALUNOS: {metricas.totalAlunos} · ASSIDUIDADE: {metricas.taxaPresencaMedia ?? 100}% · PENDENTES: {metricas.inadimplentes}
+                  </div>
+                </div>
+              </header>
+            );
+          }
+
+          /* HEADER LAYOUT 3: TIMBRADO EXECUTIVO & CONTÁBIL B2B 0PX */
+          if (adminPreset === 'customizer_studio') {
+            return (
+              <header
+                style={{
+                  background: 'var(--bg-surface-1)',
+                  border: '1px solid var(--border-subtle)',
+                  borderTop: '6px solid var(--color-primary)',
+                  borderBottom: '3px solid var(--text-foreground)',
+                  borderRadius: '0px',
+                  padding: '1rem 1.25rem'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', paddingBottom: '0.85rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <div>
+                    <div style={{ fontFamily: 'monospace', fontSize: '0.64rem', fontWeight: 900, letterSpacing: '0.14em', color: 'var(--color-primary)' }}>
+                      COMBAT-PASS ERP · DIRETORIA EXECUTIVA & CONTABILIDADE B2B
+                    </div>
+                    <h1 style={{ margin: '0.2rem 0 0', fontSize: '1.38rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-foreground)' }}>
+                      {ACADEMY_CONFIG.nome} — CONTROLADORIA & STUDIO
+                    </h1>
+                    <div style={{ fontSize: '0.72rem', fontFamily: 'monospace', color: 'var(--text-muted-foreground)', marginTop: '0.18rem' }}>
+                      OPERADOR: <strong>{usuarioLogado?.nome}</strong> ({usuarioLogado?.cargo}) | MATRICULADOS: <strong>{metricas.totalAlunos}</strong> | ADIMPLÊNCIA: <strong style={{ color: 'var(--status-available)' }}>{metricas.assinaturasAtivas}</strong>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <ThemeSwitcher compact />
+                    <button type="button" onClick={() => setShowModal(true)} style={{ padding: '0.45rem 0.75rem', borderRadius: '0px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', border: 'none', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer' }}>
+                      + NOVO ALUNO
+                    </button>
+                    <button type="button" onClick={() => setShowLayoutCustomDrawer(v => !v)} style={{ padding: '0.45rem 0.75rem', borderRadius: '0px', background: showLayoutCustomDrawer ? 'var(--color-primary)' : 'var(--bg-background)', color: showLayoutCustomDrawer ? 'var(--text-primary-foreground)' : 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer' }}>
+                      CONFIG. BLOCOS
+                    </button>
+                    <Link to="/professor" style={{ padding: '0.45rem 0.75rem', borderRadius: '0px', background: 'var(--bg-background)', color: 'var(--color-primary)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 900, textDecoration: 'none', textTransform: 'uppercase' }}>
+                      PORTAL PROF.
+                    </Link>
+                    <Link to="/" style={{ padding: '0.45rem 0.75rem', borderRadius: '0px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 900, textDecoration: 'none', textTransform: 'uppercase' }}>
+                      HUB PRINCIPAL
+                    </Link>
+                    <button type="button" onClick={handleAdminLogout} style={{ padding: '0.45rem 0.75rem', borderRadius: '0px', background: 'var(--bg-surface-2)', color: 'var(--status-full)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 900, cursor: 'pointer', textTransform: 'uppercase' }}>
+                      ENCERRAR
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.7rem' }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted-foreground)' }}>
+                    MODO ESTRUTURAL DO ERP ADMIN:
+                  </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', border: '1px solid var(--border-subtle)' }}>
+                    {adminLayoutChoices.map(lc => {
+                      const active = adminPreset === lc.id;
+                      return (
+                        <button
+                          key={lc.id}
+                          type="button"
+                          onClick={() => setJourneyPreset('admin', lc.id)}
+                          style={{
+                            padding: '0.4rem 0.85rem',
+                            borderRadius: '0px',
+                            fontSize: '0.7rem',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            cursor: 'pointer',
+                            background: active ? 'var(--color-primary)' : 'var(--bg-background)',
+                            color: active ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                            border: 'none',
+                            borderRight: '1px solid var(--border-subtle)'
+                          }}
+                        >
+                          {lc.short}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </header>
+            );
+          }
+
+          /* HEADER LAYOUT 4: SUPER-APP ERP CLÁSSICO COM GRADIENTE HERO */
+          if (adminPreset === 'complete_erp') {
+            return (
+              <header
+                style={{
+                  borderRadius: '22px',
+                  background: 'var(--color-gradient)',
+                  color: 'var(--text-primary-foreground)',
+                  padding: '1.35rem 1.5rem',
+                  boxShadow: 'var(--shadow-card)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.95rem'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.9rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <img
+                      src={usuarioLogado?.fotoPerfilUrl || ACADEMY_CONFIG.logoUrl}
+                      alt={ACADEMY_CONFIG.nome}
+                      className="arch-keep-shape w-14 h-14 rounded-2xl object-contain p-1"
+                      style={{ background: 'rgba(255,255,255,0.18)', border: '2px solid rgba(255,255,255,0.45)' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', opacity: 0.9, letterSpacing: '0.08em' }}>
+                        📱 SUPER-APP ERP CLÁSSICO · {ACADEMY_CONFIG.nome}
+                      </div>
+                      <h1 style={{ margin: '0.1rem 0 0', fontSize: '1.45rem', fontWeight: 900 }}>
+                        Gestão Combat-Pass · {usuarioLogado?.nome}
+                      </h1>
+                      <div style={{ fontSize: '0.76rem', fontWeight: 700, opacity: 0.92 }}>
+                        👥 {metricas.totalAlunos} Alunos · ✅ {metricas.assinaturasAtivas} Em Dia · 📊 {metricas.taxaPresencaMedia ?? 100}% Assiduidade
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <ThemeSwitcher compact />
+                    <button type="button" onClick={() => setShowModal(true)} style={{ padding: '0.45rem 0.9rem', borderRadius: '12px', background: '#FFFFFF', color: '#111114', border: 'none', fontSize: '0.74rem', fontWeight: 900, cursor: 'pointer' }}>
+                      ➕ Novo Aluno
+                    </button>
+                    <button type="button" onClick={() => setShowLayoutCustomDrawer(v => !v)} style={{ padding: '0.45rem 0.85rem', borderRadius: '12px', background: 'rgba(0,0,0,0.28)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.35)', fontSize: '0.74rem', fontWeight: 900, cursor: 'pointer' }}>
+                      ⚙️ Customizar
+                    </button>
+                    <Link to="/professor" style={{ padding: '0.45rem 0.85rem', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.35)', fontSize: '0.74rem', fontWeight: 900, textDecoration: 'none' }}>
+                      🥋 Professor
+                    </Link>
+                    <Link to="/" style={{ padding: '0.45rem 0.85rem', borderRadius: '12px', background: 'rgba(255,255,255,0.16)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.3)', fontSize: '0.74rem', fontWeight: 900, textDecoration: 'none' }}>
+                      🏠 Site
+                    </Link>
+                    <button type="button" onClick={handleAdminLogout} style={{ padding: '0.45rem 0.85rem', borderRadius: '12px', background: 'rgba(0,0,0,0.35)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.3)', fontSize: '0.74rem', fontWeight: 900, cursor: 'pointer' }}>
+                      🚪 Sair
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '0.5rem' }}>
+                  {adminLayoutChoices.map(lc => {
+                    const active = adminPreset === lc.id;
+                    return (
+                      <button
+                        key={lc.id}
+                        type="button"
+                        onClick={() => setJourneyPreset('admin', lc.id)}
                         style={{
-                          background: 'var(--bg-surface-2)',
-                          color: 'var(--color-accent)',
-                          border: '1px solid var(--border-subtle)'
+                          padding: '0.55rem 0.75rem',
+                          borderRadius: '12px',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          background: active ? '#FFFFFF' : 'rgba(0,0,0,0.24)',
+                          color: active ? '#111114' : '#FFFFFF',
+                          border: active ? '2px solid #FFFFFF' : '1px solid rgba(255,255,255,0.28)',
+                          fontSize: '0.74rem',
+                          fontWeight: 900
                         }}
                       >
-                        💻 [DEV-SYSTEM]
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <span
-                    className="px-2.5 py-0.5 rounded-full text-xs font-black flex items-center gap-1"
-                    style={{
-                      background: 'var(--color-primary-light)',
-                      color: 'var(--color-primary)',
-                      border: '1px solid var(--color-primary-border)'
-                    }}
-                  >
-                    🥋 PROFESSOR
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <p className="text-xs sm:text-sm" style={{ color: 'var(--text-muted-foreground)' }}>
-                  Olá, <strong style={{ color: 'var(--text-foreground)' }}>{usuarioLogado?.nome}</strong> ({usuarioLogado?.prajied || 'Prajied Oficial'})
-                </p>
-                <button
-                  onClick={() => abrirModalEdicaoProf(usuarioLogado)}
-                  className="px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 transition cursor-pointer"
-                  style={{
-                    background: 'var(--bg-surface-1)',
-                    color: 'var(--color-primary)',
-                    border: '1px solid var(--border-subtle)'
-                  }}
-                  title="Editar minhas informações de perfil, foto e dados"
-                >
-                  <span>✏️</span> Editar meus dados
-                </button>
-              </div>
-            </div>
-          </div>
+                        <div>{lc.icon} {lc.short}</div>
+                        <div style={{ fontSize: '0.62rem', opacity: 0.78 }}>{active ? '✓ Ativo agora' : lc.tag}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </header>
+            );
+          }
 
-          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-            <ThemeSwitcher />
-            <button
-              onClick={() => abrirModalEdicaoProf(usuarioLogado)}
-              className="px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-              style={{
-                background: 'var(--bg-surface-1)',
-                color: 'var(--text-foreground)',
-                border: '1px solid var(--border-subtle)'
-              }}
-              title="Editar minhas informações de perfil, foto e dados"
-            >
-              <span>👤</span> Meu Perfil
-            </button>
-            <Link
-              to="/professor"
-              style={{
-                padding: '0.5rem 0.85rem',
-                borderRadius: '8px',
-                background: 'var(--bg-surface-2)',
-                color: 'var(--color-primary)',
-                border: '1px solid var(--color-primary)',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-                textDecoration: 'none'
-              }}
-            >
-              🥋 Portal Professor
-            </Link>
-            <Link
-              to="/"
-              style={{
-                padding: '0.5rem 0.85rem',
-                borderRadius: '8px',
-                background: 'var(--bg-surface-1)',
-                color: 'var(--text-foreground)',
-                border: '1px solid var(--border-subtle)',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-                textDecoration: 'none'
-              }}
-            >
-              🏠 Vitrine Principal
-            </Link>
-            <button
-              onClick={() => setShowModal(true)}
-              className="px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-md cursor-pointer"
-              style={{
-                background: 'var(--color-primary)',
-                color: 'var(--text-primary-foreground)',
-                border: 'none'
-              }}
-            >
-              <span>➕ Novo Aluno</span>
-            </button>
-            <button
-              onClick={() => { setIsLoggedIn(false); setUsuarioLogado(null); }}
-              className="px-3 py-2 rounded-lg text-xs font-bold transition cursor-pointer"
-              style={{
-                background: 'var(--bg-surface-2)',
-                color: 'var(--text-foreground)',
-                border: '1px solid var(--border-subtle)'
-              }}
-            >
-              🚪 Sair
-            </button>
-          </div>
-        </header>
+          /* EM LAYOUT 1 (executive = school): TUDO NA SIDEBAR ESCOLAR INTEGRADA DESDE O TOPO! */
+          return null;
+        })()}
 
-        {/* VISUALIZADOR IMEDIATO & TROCA DOS 4 LAYOUTS DO ADMINISTRADOR (1 CLIQUE) */}
-        <section
-          style={{
-            padding: '0.85rem 1rem',
-            borderRadius: '14px',
-            background: 'var(--bg-surface-1)',
-            border: '1px solid var(--border-subtle)',
-            boxShadow: 'var(--shadow-card)'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.6rem' }}>
-            <span style={{ fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary)' }}>
-              👁️ SELETOR DIRETO DOS 4 LAYOUTS DO ADMINISTRADOR — VISUALIZE SEM PRECISAR DE OUTRO LOGIN
-            </span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
-              Layout Ativo: <strong style={{ color: 'var(--text-foreground)' }}>{adminPreset}</strong>
-            </span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: '0.55rem' }}>
-            {[
-              { id: 'executive' as const, badge: 'ESCOLAR / DIRETORIA', title: 'Layout 1: Sistema Escolar', desc: 'Aba lateral fixa à esquerda, indicadores circulares e pílulas de categoria' },
-              { id: 'operational_360' as const, badge: 'COMMAND CENTER 360°', title: 'Layout 2: Telemetria 360°', desc: 'Deck lateral de recepção rápida, medidores de progresso e grade tática' },
-              { id: 'customizer_studio' as const, badge: 'CONTÁBIL B2B 0PX', title: 'Layout 3: Diretoria & Estúdio', desc: 'Balancete executivo 0px + Estúdio White-Label + índice formal tabular' },
-              { id: 'complete_erp' as const, badge: 'CLÁSSICO ERP', title: 'Layout 4: Abas Tradicionais', desc: 'Cartões KPI + barra deslizante original 100% adaptada à paleta de cores' }
-            ].map(item => {
-              const isSelected = adminPreset === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setJourneyPreset('admin', item.id)}
-                  style={{
-                    textAlign: 'left',
-                    padding: '0.7rem 0.85rem',
-                    borderRadius: '10px',
-                    border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
-                    background: isSelected ? 'var(--color-primary-light)' : 'var(--bg-background)',
-                    color: 'var(--text-foreground)',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.18rem' }}>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--color-primary)' }}>
-                      {item.badge}
-                    </span>
-                    <span style={{ fontSize: '0.62rem', fontWeight: 900, color: isSelected ? 'var(--status-available)' : 'var(--text-muted-foreground)' }}>
-                      {isSelected ? '✓ ATIVO' : 'Visualizar →'}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 900 }}>{item.title}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted-foreground)', marginTop: '0.12rem', lineHeight: 1.3 }}>
-                    {item.desc}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* MOTOR MULTI-LAYOUT & ESTÚDIO DE CUSTOMIZAÇÃO DO ADMINISTRADOR */}
-        <JourneyLayoutToolbar journey="admin" />
+        {/* MOTOR DE ORDENACAO EXPANSIVEL SOB DEMANDA */}
+        {showLayoutCustomDrawer && <JourneyLayoutToolbar journey="admin" compact />}
 
         {/* SHELL POLIMÓRFICO DO ADMINISTRADOR */}
         <div
           className={(adminPreset === 'executive' || adminPreset === 'operational_360') ? 'responsive-portal-grid' : ''}
           style={
             adminPreset === 'executive'
-              ? { display: 'grid', gridTemplateColumns: 'minmax(255px, 290px) 1fr', gap: '1.25rem', alignItems: 'start' }
+              ? { display: 'grid', gridTemplateColumns: 'minmax(270px, 310px) 1fr', gap: '1.35rem', alignItems: 'start' }
               : adminPreset === 'operational_360'
-              ? { display: 'grid', gridTemplateColumns: 'minmax(290px, 340px) 1fr', gap: '1.25rem', alignItems: 'start' }
+              ? { display: 'grid', gridTemplateColumns: 'minmax(290px, 345px) 1fr', gap: '1.25rem', alignItems: 'start' }
               : { display: 'block' }
           }
         >
-          {/* ABA LATERAL FIXA DO SISTEMA ESCOLAR / ERP (QUANDO LAYOUT 1 ESTÁ ATIVO) */}
+          {/* ABA LATERAL COMPLETA INTEGRADA DO SISTEMA ESCOLAR / ERP (QUANDO LAYOUT 1 ESTÁ ATIVO) */}
           {adminPreset === 'executive' && (
             <aside
               className="responsive-portal-aside"
               style={{
                 position: 'sticky',
                 top: '16px',
-                borderRadius: '18px',
+                borderRadius: '26px',
                 background: 'var(--bg-surface-1)',
                 border: '2px solid var(--border-subtle)',
-                padding: '1.1rem',
+                borderTop: '6px solid var(--color-primary)',
+                padding: '1.15rem',
                 boxShadow: 'var(--shadow-card)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '0.85rem'
               }}
             >
+              {/* Topo Escolar da Sidebar + Troca Rápida de Layouts */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  🎓 ERP ESCOLAR · DIRETORIA
+                </div>
+                <ThemeSwitcher compact />
+              </div>
+
+              <div style={{ padding: '0.65rem', borderRadius: '20px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                  👁️ Alternar Interface (1 Clique):
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                  {[
+                    { id: 'executive' as const, label: '1. Escolar ✓' },
+                    { id: 'operational_360' as const, label: '2. Command HUD' },
+                    { id: 'customizer_studio' as const, label: '3. Contábil 0px' },
+                    { id: 'complete_erp' as const, label: '4. Super-App' }
+                  ].map(opt => {
+                    const active = adminPreset === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setJourneyPreset('admin', opt.id)}
+                        style={{
+                          padding: '0.38rem 0.5rem',
+                          borderRadius: '999px',
+                          fontSize: '0.66rem',
+                          fontWeight: 900,
+                          cursor: 'pointer',
+                          background: active ? 'var(--color-primary)' : 'var(--bg-surface-1)',
+                          color: active ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                          border: active ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)'
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div
                 style={{
                   padding: '0.9rem',
-                  borderRadius: '14px',
+                  borderRadius: '22px',
                   background: 'var(--bg-surface-2)',
-                  border: '1px solid var(--color-primary)'
+                  border: '2px solid var(--color-primary-border)',
+                  textAlign: 'center'
                 }}
               >
                 <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  🎓 DIRETORIA ACADÊMICA & ERP
+                  🏛️ GESTOR AUTENTICADO
                 </div>
                 <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-foreground)', marginTop: '0.2rem' }}>
                   {usuarioLogado?.nome}
                 </div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted-foreground)', marginTop: '0.1rem' }}>
-                  Cargo: <strong style={{ color: 'var(--color-primary)' }}>{usuarioLogado?.cargo}</strong> · {usuarioLogado?.prajied || 'Coordenação'}
+                  Cargo: <strong style={{ color: 'var(--color-primary)' }}>{usuarioLogado?.cargo}</strong>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(true)}
+                  style={{
+                    marginTop: '0.6rem',
+                    width: '100%',
+                    padding: '0.5rem',
+                    borderRadius: '999px',
+                    background: 'var(--color-primary)',
+                    color: 'var(--text-primary-foreground)',
+                    border: 'none',
+                    fontSize: '0.72rem',
+                    fontWeight: 900,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ➕ Matricular Novo Aluno
+                </button>
               </div>
 
               {[
@@ -1563,6 +1705,65 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+
+              {/* Controles Administrativos no Rodapé da Barra Lateral Escolar */}
+              <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowLayoutCustomDrawer(v => !v)}
+                  style={{
+                    padding: '0.45rem 0.6rem',
+                    borderRadius: '999px',
+                    background: showLayoutCustomDrawer ? 'var(--color-primary)' : 'var(--bg-background)',
+                    color: showLayoutCustomDrawer ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)',
+                    fontSize: '0.68rem',
+                    fontWeight: 900,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚙️ Ordenar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => abrirModalEdicaoProf(usuarioLogado)}
+                  style={{
+                    padding: '0.45rem 0.6rem',
+                    borderRadius: '999px',
+                    background: 'var(--bg-background)',
+                    color: 'var(--color-primary)',
+                    border: '1px solid var(--border-subtle)',
+                    fontSize: '0.68rem',
+                    fontWeight: 900,
+                    cursor: 'pointer'
+                  }}
+                >
+                  👤 Perfil
+                </button>
+                <Link to="/professor" style={{ padding: '0.45rem 0.6rem', borderRadius: '999px', background: 'var(--bg-background)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', fontSize: '0.68rem', fontWeight: 900, textDecoration: 'none', textAlign: 'center' }}>
+                  🥋 Professor
+                </Link>
+                <Link to="/" style={{ padding: '0.45rem 0.6rem', borderRadius: '999px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.68rem', fontWeight: 900, textDecoration: 'none', textAlign: 'center' }}>
+                  🏠 Site
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => { setIsLoggedIn(false); setUsuarioLogado(null); }}
+                  style={{
+                    gridColumn: 'span 2',
+                    padding: '0.45rem 0.6rem',
+                    borderRadius: '999px',
+                    background: 'var(--status-full-bg)',
+                    color: 'var(--status-full)',
+                    border: '1px solid var(--status-full-border)',
+                    fontSize: '0.68rem',
+                    fontWeight: 900,
+                    cursor: 'pointer'
+                  }}
+                >
+                  🚪 Sair da Diretoria
+                </button>
+              </div>
             </aside>
           )}
 
@@ -1590,7 +1791,7 @@ export default function AdminDashboard() {
           {/* COLUNA PRINCIPAL DO ERP ADMINISTRATIVO */}
           <div className="space-y-6 min-w-0">
 
-        {(abaAtiva === 'aparencia_layouts' || adminPreset === 'customizer_studio') && (
+        {abaAtiva === 'aparencia_layouts' && (
           <AdminLayoutStudio
             usuarioLogado={usuarioLogado}
             alunos={alunos}
@@ -1670,8 +1871,9 @@ export default function AdminDashboard() {
             { id: 'loja', num: '09', icon: '🛍️', label: 'Loja & Mercado', activeMatch: abaAtiva === 'loja' },
             { id: 'agendamentos', num: '10', icon: '🎯', label: 'Leads & Aulas Exp.', activeMatch: abaAtiva === 'agendamentos' },
             { id: 'gamificacao', num: '11', icon: '🏆', label: 'Gestão de Gamificação', activeMatch: abaAtiva === 'gamificacao' },
-            ...(isAdminRole ? [{ id: 'professores', num: '12', icon: '👑', label: 'Professores & Equipe', activeMatch: abaAtiva === 'professores' }] : []),
-            ...(isDevRole ? [{ id: 'dev_dashboard', num: '13', icon: '💻', label: 'Dev Dashboard', activeMatch: abaAtiva === 'dev_dashboard' }] : [])
+            { id: 'aparencia_layouts', num: '12', icon: '🎨', label: 'Estúdio & Temas', activeMatch: abaAtiva === 'aparencia_layouts' },
+            ...(isAdminRole ? [{ id: 'professores', num: '13', icon: '👑', label: 'Professores & Equipe', activeMatch: abaAtiva === 'professores' }] : []),
+            ...(isDevRole ? [{ id: 'dev_dashboard', num: '14', icon: '💻', label: 'Dev Dashboard', activeMatch: abaAtiva === 'dev_dashboard' }] : [])
           ];
 
           const getStatusColor = (s: string) => {

@@ -24,6 +24,15 @@ export default function PortalAluno() {
   const location = useLocation();
   const { preferences, setJourneyPreset } = useLayoutEngine();
   const studentPreset = preferences.layoutPreset.student;
+  const studentArch =
+    studentPreset === 'tatame_express'
+      ? 'school'
+      : studentPreset === 'gamified_journey'
+      ? 'hud'
+      : studentPreset === 'agenda_control'
+      ? 'executive'
+      : 'classic';
+  const [showLayoutCustomDrawer, setShowLayoutCustomDrawer] = useState(false);
   const [aulas, setAulas] = useState<any[]>([]);
   const [alunoLogado, setAlunoLogado] = useState<any>(null);
   
@@ -709,8 +718,12 @@ export default function PortalAluno() {
   // ==========================================
   return (
     <div
+      data-layout-arch={studentArch}
       className="min-h-screen backdrop-blur-[1px] font-sans p-3 sm:p-6 pb-28 sm:pb-12 relative z-10 overflow-x-hidden"
-      style={{ background: 'var(--bg-background)', color: 'var(--text-foreground)' }}
+      style={{
+        background: studentArch === 'school' ? 'var(--bg-surface-muted, var(--bg-background))' : 'var(--bg-background)',
+        color: 'var(--text-foreground)'
+      }}
     >
       {/* MÓDULO 2: MIDDLEWARE DE BLOQUEIO DO CONTRATO ELETRÔNICO */}
       <ContractBlockingModal
@@ -720,9 +733,9 @@ export default function PortalAluno() {
         }}
       />
 
-      <div className={`${studentPreset === 'complete_tabs' ? 'max-w-5xl' : 'max-w-[1500px]'} mx-auto space-y-5`}>
+      <div className={`${studentPreset === 'complete_tabs' ? 'max-w-5xl' : 'max-w-[1540px]'} mx-auto space-y-5`}>
 
-        {/* FEEDBACK DE CHECK-IN COM SUCESSO (ESTÍMULO VISUAL) */}
+        {/* FEEDBACK DE CHECK-IN COM SUCESSO */}
         {checkinSucessoAnim && (
           <div
             className="p-4 rounded-xl flex items-center justify-between shadow-xl animate-bounce"
@@ -749,270 +762,536 @@ export default function PortalAluno() {
           </div>
         )}
 
-        {/* HEADER SUPERIOR GLOBAL DO PORTAL DO ALUNO */}
-        <header
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4"
-          style={{ borderBottom: '1px solid var(--border-subtle)' }}
-        >
-          <div className="flex items-center gap-3">
-            <img
-              src={ACADEMY_CONFIG.logoUrl}
-              alt={ACADEMY_CONFIG.nome}
-              className="w-12 h-12 rounded-full shadow-md object-contain flex-shrink-0 p-1"
-              style={{
-                border: '2px solid var(--color-primary)',
-                background: 'var(--bg-surface-1)'
-              }}
-            />
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-3xl font-black tracking-wider" style={{ color: 'var(--text-foreground)' }}>
-                  ÁREA DO <span style={{ color: 'var(--color-primary)' }}>ALUNO</span>
-                </h1>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-bold"
-                  style={{
-                    background: 'var(--color-primary-light)',
-                    color: 'var(--color-primary)',
-                    border: '1px solid var(--color-primary-border)'
-                  }}
-                >
-                  {ACADEMY_CONFIG.nome}
-                </span>
-                {alunoLogado?.is_bolsista && (
-                  <span
-                    className="text-[10px] px-2 py-0.5 rounded-full font-black uppercase"
-                    style={{
-                      background: 'var(--bg-surface-2)',
-                      color: 'var(--color-accent)',
-                      border: '1px solid var(--border-subtle)'
-                    }}
-                  >
-                    🎓 Aluno Bolsista
-                  </span>
-                )}
-              </div>
-              <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'var(--text-muted-foreground)' }}>
-                Sawasdee Krap, <strong style={{ color: 'var(--text-foreground)' }}>{alunoLogado?.nome}</strong>!
-              </p>
-            </div>
-          </div>
+        {/* COMPONENTE INLINE COMPACTO DE SELETOR DE 4 ARQUITETURAS + HEADER ESPECÍFICO POR LAYOUT */}
+        {(() => {
+          const layoutChoices = [
+            { id: 'tatame_express' as const, short: '1. Escolar', badge: 'Sidebar 26px', icon: '🎓' },
+            { id: 'gamified_journey' as const, short: '2. Arena HUD', badge: 'Cockpit Tático', icon: '⚡' },
+            { id: 'agenda_control' as const, short: '3. B2B 0px', badge: 'Dossiê Formal', icon: '🏛️' },
+            { id: 'complete_tabs' as const, short: '4. Super-App', badge: 'Hero Touch', icon: '📱' }
+          ];
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link
-              to="/"
-              className="px-3 py-1.5 rounded-lg text-xs font-bold transition"
-              style={{
-                background: 'var(--bg-surface-1)',
-                color: 'var(--text-foreground)',
-                border: '1px solid var(--border-subtle)'
-              }}
-            >
-              🏠 Site Principal
-            </Link>
-            <ThemeSwitcher />
-            <a
-              href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, sou o aluno(a) ${alunoLogado?.nome} e gostaria de tirar uma dúvida na recepção!`)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm"
-              style={{
-                background: 'var(--status-available-bg)',
-                color: 'var(--status-available)',
-                border: '1px solid var(--status-available-border)'
-              }}
-            >
-              <span>📲 WhatsApp Recepção</span>
-            </a>
-            <button
-              onClick={() => { try { sessionStorage.removeItem('combat_hub_aluno_session'); } catch(e){} setIsLoggedIn(false); setAlunoLogado(null); }}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
-              style={{
-                background: 'var(--bg-surface-2)',
-                color: 'var(--text-foreground)',
-                border: '1px solid var(--border-subtle)'
-              }}
-            >
-              🚪 Sair
-            </button>
-          </div>
-        </header>
+          const handleLogoutStudent = () => {
+            try { sessionStorage.removeItem('combat_hub_aluno_session'); } catch (e) {}
+            setIsLoggedIn(false);
+            setAlunoLogado(null);
+          };
 
-        {/* VISUALIZADOR IMEDIATO & TROCA DOS 4 LAYOUTS DO ALUNO (1 CLIQUE) */}
-        <section
-          style={{
-            padding: '0.85rem 1rem',
-            borderRadius: '14px',
-            background: 'var(--bg-surface-1)',
-            border: '1px solid var(--border-subtle)',
-            boxShadow: 'var(--shadow-card)'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.6rem' }}>
-            <span style={{ fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary)' }}>
-              👁️ SELETOR DIRETO DOS 4 LAYOUTS DO ALUNO — COMPARE NO PÓS-LOGIN COM 1 CLIQUE
-            </span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
-              Layout Ativo: <strong style={{ color: 'var(--text-foreground)' }}>{studentPreset}</strong>
-            </span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: '0.55rem' }}>
-            {[
-              { id: 'tatame_express' as const, badge: 'SISTEMA ESCOLAR', title: 'Layout 1: Diário Escolar', desc: 'Aba lateral escolar, boletim em pílulas arredondadas e grade acadêmica' },
-              { id: 'gamified_journey' as const, badge: 'ARENA RPG / HUD', title: 'Layout 2: Arena Fighter HUD', desc: 'Cockpit tático com telemetria XP/Nível, metas e atalhos [01..11]' },
-              { id: 'agenda_control' as const, badge: 'EXECUTIVO B2B 0PX', title: 'Layout 3: Dossiê Executivo', desc: 'Estrutura formal 0px em split-view com calendário fixo e matriz' },
-              { id: 'complete_tabs' as const, badge: 'CLÁSSICO TOUCH', title: 'Layout 4: Abas Clássicas', desc: 'Cartões clássicos originais + barra de abas adaptados à paleta' }
-            ].map(item => {
-              const isSelected = studentPreset === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setJourneyPreset('student', item.id)}
-                  style={{
-                    textAlign: 'left',
-                    padding: '0.7rem 0.85rem',
-                    borderRadius: '10px',
-                    border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
-                    background: isSelected ? 'var(--color-primary-light)' : 'var(--bg-background)',
-                    color: 'var(--text-foreground)',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.18rem' }}>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--color-primary)' }}>
-                      {item.badge}
-                    </span>
-                    <span style={{ fontSize: '0.62rem', fontWeight: 900, color: isSelected ? 'var(--status-available)' : 'var(--text-muted-foreground)' }}>
-                      {isSelected ? '✓ ATIVO' : 'Visualizar →'}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 900 }}>{item.title}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted-foreground)', marginTop: '0.12rem', lineHeight: 1.3 }}>
-                    {item.desc}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* MOTOR MULTI-LAYOUT & ORDENADOR DINÂMICO DO ALUNO */}
-        <JourneyLayoutToolbar journey="student" />
-
-        {/* HUD SUPERIOR EXCLUSIVO QUANDO EM LAYOUT 2 (ARENA FIGHTER HUD) */}
-        {studentPreset === 'gamified_journey' && (
-          <div
-            style={{
-              padding: '1.25rem',
-              borderRadius: '18px',
-              background: 'linear-gradient(135deg, var(--bg-surface-1) 0%, var(--bg-surface-2) 100%)',
-              border: '2px solid var(--color-primary)',
-              boxShadow: 'var(--shadow-card)',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
-              gap: '1rem',
-              alignItems: 'center'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-              <div
+          /* HEADER DO LAYOUT 2 (ARENA FIGHTER HUD - CYBER TÁTICO COMPACTO) */
+          if (studentPreset === 'gamified_journey') {
+            return (
+              <header
                 style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '16px',
-                  background: 'var(--color-primary)',
-                  color: 'var(--text-primary-foreground)',
+                  padding: '1rem 1.25rem',
+                  borderRadius: '6px',
+                  background: 'var(--bg-surface-1)',
+                  border: '1px solid var(--border-subtle)',
+                  borderLeft: '6px solid var(--color-primary)',
+                  boxShadow: '0 0 0 1px var(--color-primary-border), 0 12px 28px rgba(0,0,0,0.3)',
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 900,
-                  flexShrink: 0
+                  gap: '0.85rem'
                 }}
               >
-                <span style={{ fontSize: '0.58rem' }}>LVL</span>
-                <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>
-                  {Math.max(1, Math.floor(Number(gamificacao?.xpTotal || alunoLogado?.xp || 0) / 100) + 1)}
-                </span>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.66rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-                  🏆 ARENA FIGHTER HUD · TELEMETRIA DO ATLETA
-                </div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
-                  {alunoLogado?.nome}
-                </div>
-                <div style={{ fontSize: '0.74rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
-                  🥋 {alunoLogado?.prajied || 'Branco'} · 🔥 {gamificacao?.streak || 0} treinos seguidos · ⚡ {gamificacao?.xpTotal || 0} XP
-                </div>
-              </div>
-            </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div
+                      style={{
+                        width: '52px',
+                        height: '52px',
+                        borderRadius: '6px',
+                        background: 'var(--color-primary)',
+                        color: 'var(--text-primary-foreground)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 900,
+                        fontFamily: 'monospace'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.55rem' }}>LVL</span>
+                      <span style={{ fontSize: '1.35rem', lineHeight: 1 }}>
+                        {Math.max(1, Math.floor(Number(gamificacao?.xpTotal || alunoLogado?.total_xp || 0) / 100) + 1)}
+                      </span>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: 'monospace', fontSize: '0.66rem', fontWeight: 900, color: 'var(--color-primary)', letterSpacing: '0.1em' }}>
+                        SYS://COMBAT_ARENA_HUD · COCKPIT DO ATLETA
+                      </div>
+                      <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-foreground)' }}>
+                        {alunoLogado?.nome} <span style={{ color: 'var(--color-primary)' }}>[{alunoLogado?.prajied || 'BRANCO'}]</span>
+                      </h1>
+                    </div>
+                  </div>
 
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 900, marginBottom: '0.3rem' }}>
-                <span>META MENSAL ({gamificacao?.presencasNoMes || 0}/{gamificacao?.metaMes || 12} TREINOS)</span>
-                <span style={{ color: 'var(--color-primary)' }}>{gamificacao?.progressoMeta || 0}%</span>
-              </div>
-              <div style={{ width: '100%', height: '10px', borderRadius: '999px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
-                <div style={{ width: `${gamificacao?.progressoMeta || 0}%`, height: '100%', background: 'linear-gradient(90deg, var(--color-primary), var(--color-accent))' }} />
-              </div>
-            </div>
-          </div>
-        )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <ThemeSwitcher compact />
+                    <button
+                      type="button"
+                      onClick={() => setShowLayoutCustomDrawer(v => !v)}
+                      style={{
+                        padding: '0.42rem 0.75rem',
+                        borderRadius: '4px',
+                        background: showLayoutCustomDrawer ? 'var(--color-primary)' : 'var(--bg-surface-2)',
+                        color: showLayoutCustomDrawer ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                        border: '1px solid var(--border-subtle)',
+                        fontSize: '0.7rem',
+                        fontWeight: 900,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ⚙️ Ordenar & Loading
+                    </button>
+                    <Link
+                      to="/"
+                      style={{
+                        padding: '0.42rem 0.75rem',
+                        borderRadius: '4px',
+                        background: 'var(--bg-background)',
+                        color: 'var(--text-foreground)',
+                        border: '1px solid var(--border-subtle)',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      🏛️ Hub
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogoutStudent}
+                      style={{
+                        padding: '0.42rem 0.75rem',
+                        borderRadius: '4px',
+                        background: 'var(--status-full-bg)',
+                        color: 'var(--status-full)',
+                        border: '1px solid var(--status-full-border)',
+                        fontSize: '0.7rem',
+                        fontWeight: 900,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✕ SAIR
+                    </button>
+                  </div>
+                </div>
+
+                {/* Switcher Tático Compacto */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', paddingTop: '0.6rem', borderTop: '1px dashed var(--border-subtle)' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {layoutChoices.map(lc => {
+                      const active = studentPreset === lc.id;
+                      return (
+                        <button
+                          key={lc.id}
+                          type="button"
+                          onClick={() => setJourneyPreset('student', lc.id)}
+                          style={{
+                            padding: '0.4rem 0.75rem',
+                            borderRadius: '4px',
+                            fontFamily: 'monospace',
+                            fontSize: '0.7rem',
+                            fontWeight: 900,
+                            cursor: 'pointer',
+                            background: active ? 'var(--color-primary)' : 'var(--bg-background)',
+                            color: active ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                            border: active ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)'
+                          }}
+                        >
+                          {lc.icon} {lc.short.toUpperCase()} {active ? '● ATIVO' : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: 'var(--color-primary)', fontWeight: 900 }}>
+                    ⚡ {gamificacao?.xpTotal || alunoLogado?.total_xp || 0} XP · 🔥 {gamificacao?.streak || 0} STREAK · META {gamificacao?.progressoMeta || 0}%
+                  </div>
+                </div>
+              </header>
+            );
+          }
+
+          /* HEADER DO LAYOUT 3 (TIMBRADO EXECUTIVO FORMAL B2B 0PX) */
+          if (studentPreset === 'agenda_control') {
+            return (
+              <header
+                style={{
+                  background: 'var(--bg-surface-1)',
+                  border: '1px solid var(--border-subtle)',
+                  borderTop: '6px solid var(--color-primary)',
+                  borderBottom: '3px solid var(--text-foreground)',
+                  borderRadius: '0px',
+                  padding: '1rem 1.25rem'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', paddingBottom: '0.85rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <div>
+                    <div style={{ fontFamily: 'monospace', fontSize: '0.64rem', fontWeight: 900, letterSpacing: '0.14em', color: 'var(--color-primary)' }}>
+                      COMBAT-PASS ENTERPRISE · FICHA EXECUTIVA DO FILIADO #{String(alunoLogado?.id || '').slice(0, 8).toUpperCase()}
+                    </div>
+                    <h1 style={{ margin: '0.2rem 0 0', fontSize: '1.4rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.02em', color: 'var(--text-foreground)' }}>
+                      {alunoLogado?.nome} — {ACADEMY_CONFIG.nome}
+                    </h1>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)', marginTop: '0.2rem', fontFamily: 'monospace' }}>
+                      GRADUAÇÃO: <strong>{alunoLogado?.prajied || 'Branco'}</strong> | PLANO: <strong>{alunoLogado?.plano || 'Padrão'}</strong> | SITUAÇÃO: <strong style={{ color: 'var(--status-available)' }}>REGULAR</strong>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <ThemeSwitcher compact />
+                    <button
+                      type="button"
+                      onClick={() => setShowLayoutCustomDrawer(v => !v)}
+                      style={{
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: '0px',
+                        background: showLayoutCustomDrawer ? 'var(--color-primary)' : 'var(--bg-background)',
+                        color: showLayoutCustomDrawer ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                        border: '1px solid var(--border-subtle)',
+                        fontSize: '0.7rem',
+                        fontWeight: 900,
+                        textTransform: 'uppercase',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      CONFIG. BLOCOS
+                    </button>
+                    <Link
+                      to="/"
+                      style={{
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: '0px',
+                        background: 'var(--bg-background)',
+                        color: 'var(--text-foreground)',
+                        border: '1px solid var(--border-subtle)',
+                        fontSize: '0.7rem',
+                        fontWeight: 900,
+                        textDecoration: 'none',
+                        textTransform: 'uppercase'
+                      }}
+                    >
+                      SITE PRINCIPAL
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogoutStudent}
+                      style={{
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: '0px',
+                        background: 'var(--bg-surface-2)',
+                        color: 'var(--status-full)',
+                        border: '1px solid var(--border-subtle)',
+                        fontSize: '0.7rem',
+                        fontWeight: 900,
+                        cursor: 'pointer',
+                        textTransform: 'uppercase'
+                      }}
+                    >
+                      ENCERRAR SESSÃO
+                    </button>
+                  </div>
+                </div>
+
+                {/* Strip 0px B2B para alternar layouts */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.7rem' }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted-foreground)' }}>
+                    MODO DE VISUALIZAÇÃO ESTRUTURAL:
+                  </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0px', border: '1px solid var(--border-subtle)' }}>
+                    {layoutChoices.map(lc => {
+                      const active = studentPreset === lc.id;
+                      return (
+                        <button
+                          key={lc.id}
+                          type="button"
+                          onClick={() => setJourneyPreset('student', lc.id)}
+                          style={{
+                            padding: '0.4rem 0.85rem',
+                            borderRadius: '0px',
+                            fontSize: '0.7rem',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            cursor: 'pointer',
+                            background: active ? 'var(--color-primary)' : 'var(--bg-background)',
+                            color: active ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                            border: 'none',
+                            borderRight: '1px solid var(--border-subtle)'
+                          }}
+                        >
+                          {lc.short}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </header>
+            );
+          }
+
+          /* HEADER DO LAYOUT 4 (SUPER-APP MOBILE-FIRST HERO COM GRADIENTE) */
+          if (studentPreset === 'complete_tabs') {
+            return (
+              <header
+                style={{
+                  borderRadius: '22px',
+                  background: 'var(--color-gradient)',
+                  color: 'var(--text-primary-foreground)',
+                  padding: '1.35rem 1.5rem',
+                  boxShadow: 'var(--shadow-card)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                    <img
+                      src={ACADEMY_CONFIG.logoUrl}
+                      alt={ACADEMY_CONFIG.nome}
+                      className="arch-keep-shape w-14 h-14 rounded-2xl object-contain p-1.5"
+                      style={{ background: 'rgba(255,255,255,0.16)', border: '2px solid rgba(255,255,255,0.45)' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', opacity: 0.9, letterSpacing: '0.08em' }}>
+                        📱 SUPER-APP TOUCH · {ACADEMY_CONFIG.nome}
+                      </div>
+                      <h1 style={{ margin: '0.1rem 0 0', fontSize: '1.45rem', fontWeight: 900 }}>
+                        Olá, {alunoLogado?.nome?.split(' ')[0] || 'Guerreiro'}!
+                      </h1>
+                      <div style={{ fontSize: '0.76rem', fontWeight: 700, opacity: 0.92 }}>
+                        🥋 {alunoLogado?.prajied || 'Branco'} · 🔥 {gamificacao?.streak || 0} treinos seguidos · 🎫 {alunoLogado?.plano || 'Combat-Pass'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <ThemeSwitcher compact />
+                    <button
+                      type="button"
+                      onClick={() => setShowLayoutCustomDrawer(v => !v)}
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '12px',
+                        background: 'rgba(0,0,0,0.28)',
+                        color: '#FFFFFF',
+                        border: '1px solid rgba(255,255,255,0.35)',
+                        fontSize: '0.74rem',
+                        fontWeight: 900,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ⚙️ Customizar
+                    </button>
+                    <Link
+                      to="/"
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '12px',
+                        background: 'rgba(255,255,255,0.2)',
+                        color: '#FFFFFF',
+                        border: '1px solid rgba(255,255,255,0.35)',
+                        fontSize: '0.74rem',
+                        fontWeight: 900,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      🏠 Início
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogoutStudent}
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '12px',
+                        background: 'rgba(0,0,0,0.35)',
+                        color: '#FFFFFF',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                        fontSize: '0.74rem',
+                        fontWeight: 900,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      🚪 Sair
+                    </button>
+                  </div>
+                </div>
+
+                {/* Switcher Touch-Friendly dos 4 Layouts dentro do Hero Banner */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '0.5rem' }}>
+                  {layoutChoices.map(lc => {
+                    const active = studentPreset === lc.id;
+                    return (
+                      <button
+                        key={lc.id}
+                        type="button"
+                        onClick={() => setJourneyPreset('student', lc.id)}
+                        style={{
+                          padding: '0.55rem 0.75rem',
+                          borderRadius: '12px',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          background: active ? '#FFFFFF' : 'rgba(0,0,0,0.24)',
+                          color: active ? '#111114' : '#FFFFFF',
+                          border: active ? '2px solid #FFFFFF' : '1px solid rgba(255,255,255,0.28)',
+                          fontSize: '0.74rem',
+                          fontWeight: 900
+                        }}
+                      >
+                        <div>{lc.icon} {lc.short}</div>
+                        <div style={{ fontSize: '0.62rem', opacity: 0.78 }}>{active ? '✓ Ativo agora' : lc.badge}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </header>
+            );
+          }
+
+          /* EM LAYOUT 1 (tatame_express): SEM HEADER SOLTO NO TOPO — TUDO FICA NA SIDEBAR ESCOLAR INTEGRADA + SAUDACÃO NO PAINEL DIREITO! */
+          return null;
+        })()}
+
+        {/* PAINEL EXPANSÍVEL SOB DEMANDA PARA REORDENAR BLOCOS & LOADING (NÃO OCUPA ESPAÇO NO TOPO QUANDO FECHADO) */}
+        {showLayoutCustomDrawer && <JourneyLayoutToolbar journey="student" compact />}
 
         {/* SHELL POLIMÓRFICO DO PORTAL DO ALUNO */}
         <div
-          className={(studentPreset === 'tatame_express' || studentPreset === 'agenda_control') ? 'responsive-portal-grid' : ''}
+          className={
+            studentPreset === 'tatame_express' || studentPreset === 'agenda_control'
+              ? 'responsive-portal-grid'
+              : studentPreset === 'gamified_journey'
+              ? 'responsive-hud-split'
+              : ''
+          }
           style={
             studentPreset === 'tatame_express'
-              ? { display: 'grid', gridTemplateColumns: 'minmax(250px, 285px) 1fr', gap: '1.25rem', alignItems: 'start' }
+              ? { display: 'grid', gridTemplateColumns: 'minmax(270px, 310px) 1fr', gap: '1.35rem', alignItems: 'start' }
+              : studentPreset === 'gamified_journey'
+              ? { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(290px, 360px)', gap: '1.25rem', alignItems: 'start' }
               : studentPreset === 'agenda_control'
               ? { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(290px, 360px)', gap: '1.25rem', alignItems: 'start' }
               : { display: 'block' }
           }
         >
-          {/* ABA LATERAL FIXA DO SISTEMA ESCOLAR (QUANDO LAYOUT 1 ESTÁ ATIVO) */}
-          {preferences.layoutPreset.student === 'tatame_express' && (
+          {/* ABA LATERAL COMPLETA INTEGRADA DO SISTEMA ESCOLAR (LAYOUT 1 DESDE O TOPO ESQUERDO) */}
+          {studentPreset === 'tatame_express' && (
             <aside
               className="responsive-portal-aside"
               style={{
                 position: 'sticky',
                 top: '16px',
-                borderRadius: '18px',
+                borderRadius: '26px',
                 background: 'var(--bg-surface-1)',
                 border: '2px solid var(--border-subtle)',
-                padding: '1.1rem',
+                borderTop: '6px solid var(--color-primary)',
+                padding: '1.15rem',
                 boxShadow: 'var(--shadow-card)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '0.85rem'
               }}
             >
+              {/* Cabeçalho da Escola + Troca Rápida dos 4 Layouts */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  <img
+                    src={ACADEMY_CONFIG.logoUrl}
+                    alt={ACADEMY_CONFIG.nome}
+                    className="w-10 h-10 rounded-full object-contain p-1"
+                    style={{ border: '2px solid var(--color-primary)', background: 'var(--bg-background)' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                      PORTAL ESCOLAR
+                    </div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 900 }}>{ACADEMY_CONFIG.nome}</div>
+                  </div>
+                </div>
+                <ThemeSwitcher compact />
+              </div>
+
+              {/* Seletor de Layouts em Pílulas dentro da Sidebar Escolar */}
+              <div
+                style={{
+                  padding: '0.65rem',
+                  borderRadius: '20px',
+                  background: 'var(--bg-background)',
+                  border: '1px solid var(--border-subtle)'
+                }}
+              >
+                <div style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                  👁️ Alternar Interface (1 Clique):
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                  {[
+                    { id: 'tatame_express' as const, label: '1. Escolar ✓' },
+                    { id: 'gamified_journey' as const, label: '2. Arena HUD' },
+                    { id: 'agenda_control' as const, label: '3. B2B 0px' },
+                    { id: 'complete_tabs' as const, label: '4. Super-App' }
+                  ].map(opt => {
+                    const active = studentPreset === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setJourneyPreset('student', opt.id)}
+                        style={{
+                          padding: '0.38rem 0.5rem',
+                          borderRadius: '999px',
+                          fontSize: '0.66rem',
+                          fontWeight: 900,
+                          cursor: 'pointer',
+                          background: active ? 'var(--color-primary)' : 'var(--bg-surface-1)',
+                          color: active ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                          border: active ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)'
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Carteirinha Escolar / Acadêmica do Aluno */}
               <div
                 style={{
                   padding: '0.9rem',
-                  borderRadius: '14px',
+                  borderRadius: '22px',
                   background: 'var(--bg-surface-2)',
-                  border: '1px solid var(--color-primary)'
+                  border: '2px solid var(--color-primary-border)',
+                  textAlign: 'center'
                 }}
               >
-                <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <div
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    background: 'var(--color-primary)',
+                    color: 'var(--text-primary-foreground)',
+                    margin: '0 auto 0.45rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 900,
+                    fontSize: '1.1rem'
+                  }}
+                >
+                  {(alunoLogado?.nome || 'A').slice(0, 1)}
+                </div>
+                <div style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   🎓 CARTEIRA ACADÊMICA DO ALUNO
                 </div>
-                <div style={{ fontSize: '0.98rem', fontWeight: 900, color: 'var(--text-foreground)', marginTop: '0.2rem' }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-foreground)', marginTop: '0.15rem' }}>
                   {alunoLogado?.nome}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)', marginTop: '0.15rem' }}>
-                  🥋 Graduação: <strong style={{ color: 'var(--text-foreground)' }}>{alunoLogado?.prajied || 'Branco'}</strong>
+                  🥋 <strong style={{ color: 'var(--text-foreground)' }}>{alunoLogado?.prajied || 'Branco'}</strong> · 🎫 <strong style={{ color: 'var(--color-primary)' }}>{alunoLogado?.plano || 'Passe'}</strong>
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)', marginTop: '0.1rem' }}>
-                  🎫 Plano: <strong style={{ color: 'var(--color-primary)' }}>{alunoLogado?.plano || '2x na semana'}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.55rem', paddingTop: '0.45rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.68rem', fontWeight: 800 }}>
-                  <span style={{ color: 'var(--status-available)' }}>● Matrícula Ativa</span>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.45rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.68rem', fontWeight: 800 }}>
+                  <span style={{ color: 'var(--status-available)' }}>● Ativo</span>
                   <span style={{ color: 'var(--color-accent)' }}>🔥 {gamificacao?.streak || 0} seguidos</span>
                 </div>
               </div>
@@ -1132,6 +1411,76 @@ export default function PortalAluno() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Controles Rápidos do Sistema Escolar no Rodapé da Barra Lateral */}
+              <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowLayoutCustomDrawer(v => !v)}
+                  style={{
+                    padding: '0.45rem 0.6rem',
+                    borderRadius: '999px',
+                    background: showLayoutCustomDrawer ? 'var(--color-primary)' : 'var(--bg-background)',
+                    color: showLayoutCustomDrawer ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)',
+                    fontSize: '0.68rem',
+                    fontWeight: 900,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚙️ Ordenar
+                </button>
+                <Link
+                  to="/"
+                  style={{
+                    padding: '0.45rem 0.6rem',
+                    borderRadius: '999px',
+                    background: 'var(--bg-background)',
+                    color: 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)',
+                    fontSize: '0.68rem',
+                    fontWeight: 900,
+                    textDecoration: 'none',
+                    textAlign: 'center'
+                  }}
+                >
+                  🏠 Início
+                </Link>
+                <a
+                  href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, sou o aluno(a) ${alunoLogado?.nome} e gostaria de tirar uma dúvida na recepção!`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    padding: '0.45rem 0.6rem',
+                    borderRadius: '999px',
+                    background: 'var(--status-available-bg)',
+                    color: 'var(--status-available)',
+                    border: '1px solid var(--status-available-border)',
+                    fontSize: '0.68rem',
+                    fontWeight: 900,
+                    textDecoration: 'none',
+                    textAlign: 'center'
+                  }}
+                >
+                  📲 WhatsApp
+                </a>
+                <button
+                  type="button"
+                  onClick={() => { try { sessionStorage.removeItem('combat_hub_aluno_session'); } catch (e) {} setIsLoggedIn(false); setAlunoLogado(null); }}
+                  style={{
+                    padding: '0.45rem 0.6rem',
+                    borderRadius: '999px',
+                    background: 'var(--status-full-bg)',
+                    color: 'var(--status-full)',
+                    border: '1px solid var(--status-full-border)',
+                    fontSize: '0.68rem',
+                    fontWeight: 900,
+                    cursor: 'pointer'
+                  }}
+                >
+                  🚪 Sair
+                </button>
               </div>
             </aside>
           )}
@@ -2579,7 +2928,179 @@ export default function PortalAluno() {
               </div>
             </aside>
           )}
+
+          {/* COLUNA DIREITA DE TELEMETRIA AO VIVO QUANDO EM LAYOUT 2 (ARENA FIGHTER HUD SPLIT-SCREEN) */}
+          {studentPreset === 'gamified_journey' && (
+            <aside
+              className="responsive-portal-aside"
+              style={{
+                position: 'sticky',
+                top: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.9rem'
+              }}
+            >
+              <div
+                style={{
+                  padding: '1.1rem',
+                  borderRadius: '6px',
+                  background: 'var(--bg-surface-1)',
+                  border: '1px solid var(--border-subtle)',
+                  borderLeft: '4px solid var(--color-primary)',
+                  boxShadow: '0 0 0 1px var(--color-primary-border)'
+                }}
+              >
+                <div style={{ fontFamily: 'monospace', fontSize: '0.64rem', fontWeight: 900, color: 'var(--color-primary)', letterSpacing: '0.1em', marginBottom: '0.45rem' }}>
+                  ⚡ TELEMETRIA HUD · COMBATE AO VIVO
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.85rem' }}>
+                  <div style={{ padding: '0.65rem', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)', borderRadius: '4px' }}>
+                    <div style={{ fontFamily: 'monospace', fontSize: '0.58rem', color: 'var(--text-muted-foreground)' }}>XP ACUMULADO</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-primary)', fontFamily: 'monospace' }}>
+                      {gamificacao?.xpTotal || alunoLogado?.total_xp || 0}
+                    </div>
+                  </div>
+                  <div style={{ padding: '0.65rem', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)', borderRadius: '4px' }}>
+                    <div style={{ fontFamily: 'monospace', fontSize: '0.58rem', color: 'var(--text-muted-foreground)' }}>SEQUÊNCIA</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-accent)', fontFamily: 'monospace' }}>
+                      🔥 {gamificacao?.streak || 0}d
+                    </div>
+                  </div>
+                </div>
+                <div style={{ marginBottom: '0.85rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '0.66rem', fontWeight: 900, marginBottom: '0.25rem' }}>
+                    <span>META MENSAL ({gamificacao?.presencasNoMes || 0}/{gamificacao?.metaMes || 12})</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{gamificacao?.progressoMeta || 0}%</span>
+                  </div>
+                  <div style={{ height: '8px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${gamificacao?.progressoMeta || 0}%`, height: '100%', background: 'var(--color-primary)' }} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setAbaAtiva('treinos')}
+                    style={{
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '4px',
+                      background: 'var(--color-primary)',
+                      color: 'var(--text-primary-foreground)',
+                      border: 'none',
+                      fontSize: '0.72rem',
+                      fontWeight: 900,
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    🥊 FAZER CHECK-IN DE HOJE →
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAbaAtiva('conquistas')}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '4px',
+                      background: 'var(--bg-background)',
+                      color: 'var(--text-foreground)',
+                      border: '1px solid var(--border-subtle)',
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    🏆 VER MINHAS CONQUISTAS & XP
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAbaAtiva('recompensas')}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '4px',
+                      background: 'var(--bg-background)',
+                      color: 'var(--text-foreground)',
+                      border: '1px solid var(--border-subtle)',
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    🪙 RESGATAR PRÊMIOS COM POINTS
+                  </button>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '1rem',
+                  borderRadius: '6px',
+                  background: 'var(--bg-surface-1)',
+                  border: '1px solid var(--border-subtle)',
+                  borderLeft: '4px solid var(--status-available)'
+                }}
+              >
+                <div style={{ fontFamily: 'monospace', fontSize: '0.62rem', fontWeight: 900, color: 'var(--status-available)', marginBottom: '0.35rem' }}>
+                  🥊 PRÓXIMAS AULAS DE HOJE ({aulas.length})
+                </div>
+                {aulas.slice(0, 3).map((au: any) => (
+                  <div key={au.id} style={{ padding: '0.45rem 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.74rem' }}>
+                    <div style={{ fontWeight: 900, color: 'var(--text-foreground)' }}>{au.horario} · {au.modalidade}</div>
+                    <div style={{ fontSize: '0.66rem', color: 'var(--text-muted-foreground)' }}>{au.academiaNome}</div>
+                  </div>
+                ))}
+                {aulas.length === 0 && (
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)' }}>
+                    Consulte a grade completa na aba Frequência.
+                  </div>
+                )}
+              </div>
+            </aside>
+          )}
         </div>
+
+        {/* DOCK FLUTUANTE INFERIOR MOBILE QUANDO EM LAYOUT 4 (SUPER-APP TOUCH) */}
+        {studentPreset === 'complete_tabs' && (
+          <nav
+            className="sm:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 gap-1 p-2"
+            style={{
+              background: 'var(--bg-surface-1)',
+              borderTop: '2px solid var(--color-primary)',
+              boxShadow: '0 -8px 24px rgba(0,0,0,0.35)'
+            }}
+          >
+            {[
+              { id: 'treinos', icon: '🥊', label: 'Treinos' },
+              { id: 'frequencia', icon: '📅', label: 'Agenda' },
+              { id: 'conquistas', icon: '🏆', label: 'XP' },
+              { id: 'recompensas', icon: '🪙', label: 'Points' },
+              { id: 'torneios', icon: '🏅', label: 'Lutas' }
+            ].map(d => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => { setAbaAtiva(d.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                style={{
+                  padding: '0.45rem 0.25rem',
+                  borderRadius: '12px',
+                  background: abaAtiva === d.id ? 'var(--color-primary)' : 'transparent',
+                  color: abaAtiva === d.id ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                  border: 'none',
+                  fontSize: '0.66rem',
+                  fontWeight: 900,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.1rem'
+                }}
+              >
+                <span style={{ fontSize: '1.05rem' }}>{d.icon}</span>
+                <span>{d.label}</span>
+              </button>
+            ))}
+          </nav>
+        )}
       </div>
 
       {/* MODAL JUSTIFICAR AUSÊNCIA / INFORMAR DOENÇA */}

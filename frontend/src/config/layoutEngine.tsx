@@ -721,22 +721,22 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
       { id: 'classic', name: 'Layout Clássico (HTML Institucional)', badge: 'Original', desc: 'Landing page institucional clássica do Centro de Combate' }
     ],
     student: [
-      { id: 'tatame_express', name: 'Layout A: Tatame Express', badge: 'Zero Fricção', desc: 'Foco no próximo treino, Check-in Expresso em 1 clique e botão Cancelar Vaga pendente' },
-      { id: 'gamified_journey', name: 'Layout B: Jornada & Evolução', badge: 'Gamificado', desc: 'Perfil atlético com XP, missões/streak, Loja de Recompensas por Points e graduação' },
-      { id: 'agenda_control', name: 'Layout C: Agenda & Controle', badge: 'Split-View Formal', desc: 'Visão dividida com Calendário Semanal/Mensal, histórico de presenças e faturas' },
-      { id: 'complete_tabs', name: 'Modo Completo Multi-Abas', badge: 'Todas as Abas', desc: 'Navegação clássica com todas as abas ordenáveis do Portal do Aluno' }
+      { id: 'tatame_express', name: 'Layout 1: Sistema Escolar', badge: 'Sidebar & Pílulas 26px', desc: 'Barra lateral fixa estilo boletim escolar, cartões arredondados e menus agrupados' },
+      { id: 'gamified_journey', name: 'Layout 2: Arena HUD Tático', badge: 'Cockpit 2 Colunas', desc: 'Cockpit cyber-esportivo 6px com barra lateral esquerda neon e painel de telemetria ao vivo' },
+      { id: 'agenda_control', name: 'Layout 3: Dossiê B2B 0px', badge: 'Matriz Formal 0px', desc: 'Timbrado executivo sem arredondamento, tabela formal de módulos e agenda lateral fixa' },
+      { id: 'complete_tabs', name: 'Layout 4: Super-App Clássico', badge: 'Hero Gradiente Touch', desc: 'Etapa centralizada mobile-first com banner em gradiente, mega-tiles e dock inferior' }
     ],
     teacher: [
-      { id: 'tatame_fast', name: 'Layout 1: Diário Escolar (Aba Lateral)', badge: 'Sidebar Docente', desc: 'Portal estilo sistema escolar com menu lateral fixo, caderneta de chamada e fotos dos alunos' },
-      { id: 'technical_perf', name: 'Layout 2: Mesa Técnica & Performance', badge: 'Split-Screen 50/50', desc: 'Duas colunas simultâneas: Avaliação técnica de atletas (Striking/Grappling) e ocupação tática' },
-      { id: 'partner_portal', name: 'Layout 3: Dossiê Executivo B2B & Repasses', badge: 'Matriz Formal 0px', desc: 'Estrutura formal corporativa com tabela de presença em planilha executiva e balanço financeiro' },
-      { id: 'classic_teacher', name: 'Layout 4: Tatame Touch-First (Abas Clássicas)', badge: 'Clássico Touch', desc: 'Grandes botões de 1-toque otimizados para tablet/celular com navegação em abas horizontais' }
+      { id: 'tatame_fast', name: 'Layout 1: Diário Escolar', badge: 'Sidebar & Pílulas 26px', desc: 'Menu lateral escolar de topo ao rodapé, caderneta em pílulas arredondadas e retratos circulares' },
+      { id: 'technical_perf', name: 'Layout 2: Mesa Técnica HUD', badge: 'Cockpit 50/50 Neon', desc: 'Painel técnico chanfrado 6px em duas colunas com notas 0..10 e concessão rápida de XP' },
+      { id: 'partner_portal', name: 'Layout 3: Dossiê Executivo B2B', badge: 'Timbrado & Tabela 0px', desc: 'Balanço contábil R$, planilha zebra 0px com borda superior em destaque e repasses' },
+      { id: 'classic_teacher', name: 'Layout 4: Super-App Tatame', badge: 'Hero Touch Centralizado', desc: 'Interface touch centralizada com hero gradiente ao vivo e botões grandes para celular/tablet' }
     ],
     admin: [
-      { id: 'executive', name: 'Layout A: Executivo & Estratégico', badge: 'Diretoria', desc: 'Sidebar elegante, KPIs consolidados de repasses e resumo de Fechamento de Caixa' },
-      { id: 'operational_360', name: 'Layout B: Operacional 360° & Recepção', badge: 'Alta Densidade', desc: 'Busca Global 360° fixa no topo, Grade Oficial editável e Caixa/Check-in lateral' },
-      { id: 'customizer_studio', name: 'Layout C: Estúdio de Customização & Arquitetura', badge: 'White-Label Studio', desc: 'Painel de controle + Live Preview multi-dispositivo (Paletas + Layouts + Ordem)' },
-      { id: 'complete_erp', name: 'Modo ERP Completo em Abas', badge: 'Todos os Módulos', desc: 'Acesso direto a todas as abas operacionais na ordem personalizada' }
+      { id: 'executive', name: 'Layout 1: Diretoria Escolar', badge: 'Sidebar & Pílulas 26px', desc: 'ERP estilo sistema escolar com sidebar permanente, KPIs circulares em pílulas e blocos suaves' },
+      { id: 'operational_360', name: 'Layout 2: Command Center HUD', badge: 'Cockpit 360° Split', desc: 'Cockpit tático 6px com medidores de progresso, grade [01..13] e recepção rápida fixa' },
+      { id: 'customizer_studio', name: 'Layout 3: Contábil B2B 0px', badge: 'Timbrado & Balancete', desc: 'Estúdio White-Label + Balancete formal B2B em 0px e índice tabular com sublinhado reto' },
+      { id: 'complete_erp', name: 'Layout 4: Super-App ERP', badge: 'Hero Touch Centralizado', desc: 'Painel clássico centralizado com banner gradiente, abas deslizantes e visão focada' }
     ]
   };
 

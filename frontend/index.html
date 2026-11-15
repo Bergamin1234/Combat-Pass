@@ -657,10 +657,84 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
     /* ========================================================
-       MOBILE & RESPONSIVE ENGINE (PREVENÇÃO DE OVERFLOW & LAYOUT 1 COLLAPSE)
+       MOTOR POLIMÓRFICO DE 4 ARQUITETURAS DISTINTAS (PROFUNDO EM TODOS OS PORTAIS)
+       Garante que Layout 1 (Escolar), 2 (HUD Tático), 3 (Executivo 0px) e 4 (Super-App Touch)
+       transformem cabeçalhos, cards internos, botões, bordas e geometria de ponta a ponta.
+       ======================================================== */
+    [data-layout-arch="school"] {
+      --arch-radius: 26px;
+      --arch-pill: 999px;
+    }
+    [data-layout-arch="school"] .rounded-xl,
+    [data-layout-arch="school"] .rounded-2xl {
+      border-radius: 26px !important;
+      border-width: 2px !important;
+      border-top-width: 4px !important;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14) !important;
+    }
+    [data-layout-arch="school"] .rounded-lg,
+    [data-layout-arch="school"] button:not(.arch-keep-shape) {
+      border-radius: 999px !important;
+    }
+
+    [data-layout-arch="hud"] {
+      --arch-radius: 6px;
+      --arch-pill: 4px;
+    }
+    [data-layout-arch="hud"] .rounded-xl,
+    [data-layout-arch="hud"] .rounded-2xl {
+      border-radius: 6px !important;
+      border-left: 4px solid var(--color-primary) !important;
+      box-shadow: 0 0 0 1px var(--color-primary-border), 0 10px 24px rgba(0, 0, 0, 0.32) !important;
+    }
+    [data-layout-arch="hud"] .rounded-lg,
+    [data-layout-arch="hud"] .rounded-full:not(img),
+    [data-layout-arch="hud"] button:not(.arch-keep-shape) {
+      border-radius: 4px !important;
+      letter-spacing: 0.04em;
+    }
+    [data-layout-arch="hud"] h2,
+    [data-layout-arch="hud"] h3,
+    [data-layout-arch="hud"] h4 {
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    [data-layout-arch="executive"] {
+      --arch-radius: 0px;
+      --arch-pill: 0px;
+    }
+    [data-layout-arch="executive"] .rounded-xl,
+    [data-layout-arch="executive"] .rounded-2xl,
+    [data-layout-arch="executive"] .rounded-lg,
+    [data-layout-arch="executive"] .rounded-md,
+    [data-layout-arch="executive"] .rounded-full,
+    [data-layout-arch="executive"] input,
+    [data-layout-arch="executive"] select,
+    [data-layout-arch="executive"] button:not(.arch-keep-shape) {
+      border-radius: 0px !important;
+      box-shadow: none !important;
+    }
+    [data-layout-arch="executive"] .rounded-xl,
+    [data-layout-arch="executive"] .rounded-2xl {
+      border-top: 3px solid var(--color-primary) !important;
+    }
+    [data-layout-arch="executive"] table th,
+    [data-layout-arch="executive"] table td {
+      font-variant-numeric: tabular-nums;
+    }
+
+    [data-layout-arch="classic"] .rounded-2xl,
+    [data-layout-arch="classic"] .rounded-xl {
+      border-radius: 16px;
+    }
+
+    /* ========================================================
+       MOBILE & RESPONSIVE ENGINE (PREVENÇÃO DE OVERFLOW & COLLAPSE)
        ======================================================== */
     @media (max-width: 1024px) {
-      .responsive-portal-grid {
+      .responsive-portal-grid,
+      .responsive-hud-split {
         grid-template-columns: 1fr !important;
         display: flex !important;
         flex-direction: column !important;
