@@ -323,6 +323,7 @@ export const LayoutEngineProvider: React.FC<{ children: React.ReactNode }> = ({ 
         tatame_fast: ['ongoing_class', 'touch_rollcall', 'weekly_schedule', 'bonus_merit', 'commissions_summary'],
         technical_perf: ['touch_rollcall', 'bonus_merit', 'weekly_schedule', 'ongoing_class', 'commissions_summary'],
         partner_portal: ['commissions_summary', 'weekly_schedule', 'ongoing_class', 'touch_rollcall', 'bonus_merit'],
+        classic_teacher: ['ongoing_class', 'touch_rollcall', 'weekly_schedule', 'commissions_summary', 'bonus_merit'],
         // Admin Presets
         executive: ['kpi_Overview', 'reception_cash_checkin', 'live_grid_control', 'global_search_360', 'active_module_view'],
         operational_360: ['global_search_360', 'reception_cash_checkin', 'live_grid_control', 'kpi_Overview', 'active_module_view'],
@@ -726,9 +727,10 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
       { id: 'complete_tabs', name: 'Modo Completo Multi-Abas', badge: 'Todas as Abas', desc: 'Navegação clássica com todas as abas ordenáveis do Portal do Aluno' }
     ],
     teacher: [
-      { id: 'tatame_fast', name: 'Layout A: Modo Tatame / Chamada Rápida', badge: 'Touch-First', desc: 'Contador de vagas [HÁ VAGAS]/[LOTADO], chamada em 1 toque e Walk-in Check-in' },
-      { id: 'technical_perf', name: 'Layout B: Gestão Técnica & Performance', badge: 'Profissional', desc: 'Tabela técnica da turma, concessão de XP Bônus/Points de mérito e grade semanal' },
-      { id: 'partner_portal', name: 'Layout C: Portal do Instrutor Parceiro', badge: 'Formal & Financeiro', desc: 'Extrato detalhado de comissões dinâmicas por check-in, retenção e CTs' }
+      { id: 'tatame_fast', name: 'Layout 1: Diário Escolar (Aba Lateral)', badge: 'Sidebar Docente', desc: 'Portal estilo sistema escolar com menu lateral fixo, caderneta de chamada e fotos dos alunos' },
+      { id: 'technical_perf', name: 'Layout 2: Mesa Técnica & Performance', badge: 'Split-Screen 50/50', desc: 'Duas colunas simultâneas: Avaliação técnica de atletas (Striking/Grappling) e ocupação tática' },
+      { id: 'partner_portal', name: 'Layout 3: Dossiê Executivo B2B & Repasses', badge: 'Matriz Formal 0px', desc: 'Estrutura formal corporativa com tabela de presença em planilha executiva e balanço financeiro' },
+      { id: 'classic_teacher', name: 'Layout 4: Tatame Touch-First (Abas Clássicas)', badge: 'Clássico Touch', desc: 'Grandes botões de 1-toque otimizados para tablet/celular com navegação em abas horizontais' }
     ],
     admin: [
       { id: 'executive', name: 'Layout A: Executivo & Estratégico', badge: 'Diretoria', desc: 'Sidebar elegante, KPIs consolidados de repasses e resumo de Fechamento de Caixa' },
