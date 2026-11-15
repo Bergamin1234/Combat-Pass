@@ -104,7 +104,8 @@ const opcoesTempoDocencia = [
 ];
 
 export default function AdminDashboard() {
-  const { preferences } = useLayoutEngine();
+  const { preferences, setJourneyPreset } = useLayoutEngine();
+  const adminPreset = preferences.layoutPreset.admin;
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [usuarioLogado, setUsuarioLogado] = useState<any>(null);
   const [loginInput, setLoginInput] = useState('');
@@ -331,13 +332,13 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const realizarLoginAdmin = async (usuarioParam: string, senhaParam: string) => {
     setLoginLoading(true);
     try {
       const response = await adminApi.login({
-        emailOuUsuario: loginInput,
-        senha: password
+        emailOuUsuario: usuarioParam,
+        senha: senhaParam,
+        portal: 'admin'
       });
       setUsuarioLogado(response.data.usuario);
       setIsLoggedIn(true);
@@ -346,6 +347,17 @@ export default function AdminDashboard() {
     } finally {
       setLoginLoading(false);
     }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await realizarLoginAdmin(loginInput, password);
+  };
+
+  const handleDemoAdminLogin = async () => {
+    setLoginInput('1');
+    setPassword('1');
+    await realizarLoginAdmin('1', '1');
   };
 
   // ==========================================
@@ -1011,67 +1023,159 @@ export default function AdminDashboard() {
   };
 
   // ==========================================
-  // TELA DE LOGIN DO ADMIN / PROFESSOR
+  // TELA DE LOGIN DO ADMIN / ERP MASTER
   // ==========================================
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center p-4 relative z-10">
-        <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10">
-          <div className="flex justify-end mb-2">
+      <div
+        className="min-h-screen w-full flex items-center justify-center p-4 relative z-10"
+        style={{ background: 'var(--bg-background)', color: 'var(--text-foreground)' }}
+      >
+        <div
+          className="backdrop-blur-md p-7 sm:p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10"
+          style={{
+            background: 'var(--bg-surface-1)',
+            border: '1px solid var(--border-subtle)',
+            boxShadow: 'var(--shadow-card)'
+          }}
+        >
+          <div className="flex justify-between items-center mb-3 gap-2">
+            <span
+              style={{
+                fontSize: '0.62rem',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                padding: '0.25rem 0.65rem',
+                borderRadius: '999px',
+                background: 'var(--color-primary-light)',
+                color: 'var(--color-primary)',
+                border: '1px solid var(--color-primary-border)'
+              }}
+            >
+              🏛️ PAINEL ADMIN & ERP
+            </span>
             <ThemeSwitcher compact />
           </div>
-          <div className="text-center mb-6">
-            <img 
-              src={ACADEMY_CONFIG.logoUrl} 
-              alt={ACADEMY_CONFIG.nome} 
-              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-contain bg-[#1A1A1E] p-1.5" 
+
+          <div className="text-center mb-5">
+            <img
+              src={ACADEMY_CONFIG.logoUrl}
+              alt={ACADEMY_CONFIG.nome}
+              className="w-20 h-20 rounded-full mx-auto mb-3 shadow-xl object-contain p-1.5"
+              style={{
+                border: '2px solid var(--color-primary)',
+                background: 'var(--bg-background)'
+              }}
             />
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-widest mb-1 leading-tight drop-shadow-sm">{ACADEMY_CONFIG.nome}</h1>
-            <p className="text-amber-400 font-extrabold text-xs uppercase tracking-widest drop-shadow-sm">Painel Administrativo & Professores</p>
-            <p className="text-zinc-300 text-xs mt-1">Controle de Alunos, Aulas, Modalidades e Equipe</p>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-widest mb-1 leading-tight" style={{ color: 'var(--text-foreground)' }}>
+              {ACADEMY_CONFIG.nome}
+            </h1>
+            <p className="font-extrabold text-xs uppercase tracking-widest" style={{ color: 'var(--color-primary)' }}>
+              Gestão Administrativa & Rede Combat-Pass
+            </p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted-foreground)' }}>
+              Controle de Alunos, Financeiro, Aulas, Professores e Layouts
+            </p>
+          </div>
+
+          {/* Card de Acesso Rápido Homologado (Login 1 / Senha 1) */}
+          <div
+            className="mb-4 p-3.5 rounded-xl"
+            style={{
+              background: 'var(--color-primary-light)',
+              border: '1px solid var(--color-primary-border)'
+            }}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
+                  ⚡ Acesso Rápido Admin Master
+                </div>
+                <div className="text-xs font-bold mt-0.5" style={{ color: 'var(--text-foreground)' }}>
+                  Login: <code className="px-1.5 py-0.5 rounded font-black" style={{ background: 'var(--bg-surface-1)' }}>1</code> · Senha:{' '}
+                  <code className="px-1.5 py-0.5 rounded font-black" style={{ background: 'var(--bg-surface-1)' }}>1</code>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleDemoAdminLogin}
+                disabled={loginLoading}
+                className="px-3.5 py-2 rounded-lg text-xs font-black uppercase tracking-wide shrink-0 transition cursor-pointer"
+                style={{
+                  background: 'var(--color-primary)',
+                  color: 'var(--text-primary-foreground)',
+                  border: 'none'
+                }}
+              >
+                ⚡ Entrar Agora (1 / 1)
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-zinc-400 text-xs font-semibold mb-1">Login de Acesso</label>
-              <input 
-                type="text" 
+              <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-muted-foreground)' }}>
+                Login de Acesso (ou digite 1 para demo)
+              </label>
+              <input
+                type="text"
                 value={loginInput}
                 onChange={(e) => setLoginInput(e.target.value)}
-                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
-                placeholder="Usuário ou CPF do Professor"
+                className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+                style={{
+                  background: 'var(--bg-background)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-foreground)'
+                }}
+                placeholder="Usuário, CPF ou 1"
                 required
               />
-              <p className="text-[11px] text-zinc-500 mt-1">
-                * Professores acessam informando o seu <strong>CPF</strong> (com ou sem pontuação) e senha cadastrada.
-              </p>
             </div>
             <div>
-              <label className="block text-zinc-400 text-xs font-semibold mb-1">Senha de Acesso</label>
-              <input 
-                type="password" 
+              <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-muted-foreground)' }}>
+                Senha de Acesso
+              </label>
+              <input
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
-                placeholder="Sua senha de acesso"
+                className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+                style={{
+                  background: 'var(--bg-background)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-foreground)'
+                }}
+                placeholder="Sua senha (ou 1)"
                 required
               />
             </div>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loginLoading}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30 text-sm uppercase tracking-wider"
+              className="w-full disabled:opacity-50 font-bold py-3 rounded-lg transition transform active:scale-95 text-sm uppercase tracking-wider"
+              style={{
+                background: 'var(--color-primary)',
+                color: 'var(--text-primary-foreground)',
+                border: 'none',
+                cursor: 'pointer'
+              }}
             >
-              {loginLoading ? 'Verificando...' : 'Entrar no Painel'}
+              {loginLoading ? 'Verificando...' : 'Entrar no Painel Admin'}
             </button>
-            <p className="text-[11px] text-zinc-500 text-center mt-3">
-              Esqueceu a senha de professor? A redefinição de senha é feita diretamente com a Administração.
-            </p>
           </form>
 
-          <Link to="/" className="block text-center mt-5 text-zinc-500 hover:text-white text-xs transition">
-            ← Voltar ao site principal
-          </Link>
+          <div className="flex items-center justify-between gap-2 mt-5 pt-4 flex-wrap" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+            <Link to="/" className="text-xs font-bold transition" style={{ color: 'var(--text-muted-foreground)' }}>
+              ← Site Principal
+            </Link>
+            <Link to="/professor" className="text-xs font-bold transition" style={{ color: 'var(--color-primary)' }}>
+              🥋 Portal Professor
+            </Link>
+            <Link to="/portal" className="text-xs font-bold transition" style={{ color: 'var(--color-primary)' }}>
+              👤 Portal Aluno
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -1114,50 +1218,91 @@ export default function AdminDashboard() {
   // PAINEL LOGADO
   // ==========================================
   return (
-    <div className="min-h-screen text-zinc-100 font-sans p-3 sm:p-6 pb-20 relative z-10">
-      <div className={`${preferences.layoutPreset.admin === 'complete_erp' ? 'max-w-7xl' : 'max-w-[1560px]'} mx-auto space-y-6`}>
+    <div
+      className="min-h-screen font-sans p-3 sm:p-6 pb-20 relative z-10 overflow-x-hidden"
+      style={{ background: 'var(--bg-background)', color: 'var(--text-foreground)' }}
+    >
+      <div className={`${adminPreset === 'complete_erp' ? 'max-w-7xl' : 'max-w-[1560px]'} mx-auto space-y-6`}>
 
         {/* BARRA SUPERIOR & PERFIL DO USUÁRIO */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
+        <header
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5"
+          style={{ borderBottom: '1px solid var(--border-subtle)' }}
+        >
           <div className="flex items-center gap-3">
             {usuarioLogado?.fotoPerfilUrl ? (
-              <img 
-                src={usuarioLogado.fotoPerfilUrl} 
-                alt={usuarioLogado.nome} 
-                className="w-12 h-12 rounded-full border-2 border-amber-500 shadow-md object-cover flex-shrink-0" 
+              <img
+                src={usuarioLogado.fotoPerfilUrl}
+                alt={usuarioLogado.nome}
+                className="w-12 h-12 rounded-full shadow-md object-cover flex-shrink-0"
+                style={{ border: '2px solid var(--color-primary)' }}
               />
             ) : (
-              <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-contain flex-shrink-0 bg-[#141416] p-1" />
+              <img
+                src={ACADEMY_CONFIG.logoUrl}
+                alt={ACADEMY_CONFIG.nome}
+                className="w-12 h-12 rounded-full shadow-md object-contain flex-shrink-0 p-1"
+                style={{
+                  border: '2px solid var(--color-primary)',
+                  background: 'var(--bg-surface-1)'
+                }}
+              />
             )}
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
-                  PAINEL <span className="text-red-600">COMBAT-HUB</span>
+                <h1 className="text-xl sm:text-3xl font-black tracking-wider" style={{ color: 'var(--text-foreground)' }}>
+                  PAINEL <span style={{ color: 'var(--color-primary)' }}>COMBAT-HUB</span>
                 </h1>
                 {usuarioLogado?.cargo === 'ADMIN' ? (
                   <>
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                    <span
+                      className="px-2.5 py-0.5 rounded-full text-xs font-black flex items-center gap-1"
+                      style={{
+                        background: 'var(--color-primary-light)',
+                        color: 'var(--color-primary)',
+                        border: '1px solid var(--color-primary-border)'
+                      }}
+                    >
                       👑 ADMINISTRADOR
                     </span>
                     {(usuarioLogado?.is_dev || usuarioLogado?.email === 'brgadmin@boru.com' || usuarioLogado?.email === 'admin@academia.com') && (
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-purple-600/30 text-purple-300 border border-purple-500/50 flex items-center gap-1">
-                        💻 [DEV-SYSTEM] (BrgAdmin)
+                      <span
+                        className="px-2.5 py-0.5 rounded-full text-xs font-black flex items-center gap-1"
+                        style={{
+                          background: 'var(--bg-surface-2)',
+                          color: 'var(--color-accent)',
+                          border: '1px solid var(--border-subtle)'
+                        }}
+                      >
+                        💻 [DEV-SYSTEM]
                       </span>
                     )}
                   </>
                 ) : (
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+                  <span
+                    className="px-2.5 py-0.5 rounded-full text-xs font-black flex items-center gap-1"
+                    style={{
+                      background: 'var(--color-primary-light)',
+                      color: 'var(--color-primary)',
+                      border: '1px solid var(--color-primary-border)'
+                    }}
+                  >
                     🥋 PROFESSOR
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <p className="text-zinc-400 text-xs sm:text-sm">
-                  Olá, <strong className="text-white">{usuarioLogado?.nome}</strong> ({usuarioLogado?.prajied || 'Prajied Oficial'})
+                <p className="text-xs sm:text-sm" style={{ color: 'var(--text-muted-foreground)' }}>
+                  Olá, <strong style={{ color: 'var(--text-foreground)' }}>{usuarioLogado?.nome}</strong> ({usuarioLogado?.prajied || 'Prajied Oficial'})
                 </p>
                 <button
                   onClick={() => abrirModalEdicaoProf(usuarioLogado)}
-                  className="px-2 py-0.5 rounded bg-zinc-800/80 hover:bg-zinc-700 text-[11px] text-amber-400 hover:text-amber-300 font-semibold border border-amber-500/30 flex items-center gap-1 transition"
+                  className="px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 transition cursor-pointer"
+                  style={{
+                    background: 'var(--bg-surface-1)',
+                    color: 'var(--color-primary)',
+                    border: '1px solid var(--border-subtle)'
+                  }}
                   title="Editar minhas informações de perfil, foto e dados"
                 >
                   <span>✏️</span> Editar meus dados
@@ -1166,11 +1311,16 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
             <ThemeSwitcher />
-            <button 
+            <button
               onClick={() => abrirModalEdicaoProf(usuarioLogado)}
-              className="px-3 py-2 rounded-lg bg-zinc-800/90 hover:bg-zinc-700 text-xs font-bold text-amber-400 hover:text-amber-300 transition border border-amber-500/30 flex items-center gap-1.5 shadow-sm"
+              className="px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              style={{
+                background: 'var(--bg-surface-1)',
+                color: 'var(--text-foreground)',
+                border: '1px solid var(--border-subtle)'
+              }}
               title="Editar minhas informações de perfil, foto e dados"
             >
               <span>👤</span> Meu Perfil
@@ -1190,41 +1340,124 @@ export default function AdminDashboard() {
             >
               🥋 Portal Professor
             </Link>
-            <button 
+            <Link
+              to="/"
+              style={{
+                padding: '0.5rem 0.85rem',
+                borderRadius: '8px',
+                background: 'var(--bg-surface-1)',
+                color: 'var(--text-foreground)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                textDecoration: 'none'
+              }}
+            >
+              🏠 Vitrine Principal
+            </Link>
+            <button
               onClick={() => setShowModal(true)}
-              className="px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
+              className="px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-md cursor-pointer"
+              style={{
+                background: 'var(--color-primary)',
+                color: 'var(--text-primary-foreground)',
+                border: 'none'
+              }}
             >
               <span>➕ Novo Aluno</span>
             </button>
-            <button 
+            <button
               onClick={() => { setIsLoggedIn(false); setUsuarioLogado(null); }}
-              className="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-300 transition"
+              className="px-3 py-2 rounded-lg text-xs font-bold transition cursor-pointer"
+              style={{
+                background: 'var(--bg-surface-2)',
+                color: 'var(--text-foreground)',
+                border: '1px solid var(--border-subtle)'
+              }}
             >
-              Sair
+              🚪 Sair
             </button>
           </div>
         </header>
 
+        {/* VISUALIZADOR IMEDIATO & TROCA DOS 4 LAYOUTS DO ADMINISTRADOR (1 CLIQUE) */}
+        <section
+          style={{
+            padding: '0.85rem 1rem',
+            borderRadius: '14px',
+            background: 'var(--bg-surface-1)',
+            border: '1px solid var(--border-subtle)',
+            boxShadow: 'var(--shadow-card)'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.6rem' }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary)' }}>
+              👁️ SELETOR DIRETO DOS 4 LAYOUTS DO ADMINISTRADOR — VISUALIZE SEM PRECISAR DE OUTRO LOGIN
+            </span>
+            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
+              Layout Ativo: <strong style={{ color: 'var(--text-foreground)' }}>{adminPreset}</strong>
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: '0.55rem' }}>
+            {[
+              { id: 'executive' as const, badge: 'ESCOLAR / DIRETORIA', title: 'Layout 1: Sistema Escolar', desc: 'Aba lateral fixa à esquerda, indicadores circulares e pílulas de categoria' },
+              { id: 'operational_360' as const, badge: 'COMMAND CENTER 360°', title: 'Layout 2: Telemetria 360°', desc: 'Deck lateral de recepção rápida, medidores de progresso e grade tática' },
+              { id: 'customizer_studio' as const, badge: 'CONTÁBIL B2B 0PX', title: 'Layout 3: Diretoria & Estúdio', desc: 'Balancete executivo 0px + Estúdio White-Label + índice formal tabular' },
+              { id: 'complete_erp' as const, badge: 'CLÁSSICO ERP', title: 'Layout 4: Abas Tradicionais', desc: 'Cartões KPI + barra deslizante original 100% adaptada à paleta de cores' }
+            ].map(item => {
+              const isSelected = adminPreset === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setJourneyPreset('admin', item.id)}
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: '10px',
+                    border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                    background: isSelected ? 'var(--color-primary-light)' : 'var(--bg-background)',
+                    color: 'var(--text-foreground)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.18rem' }}>
+                    <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--color-primary)' }}>
+                      {item.badge}
+                    </span>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 900, color: isSelected ? 'var(--status-available)' : 'var(--text-muted-foreground)' }}>
+                      {isSelected ? '✓ ATIVO' : 'Visualizar →'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 900 }}>{item.title}</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted-foreground)', marginTop: '0.12rem', lineHeight: 1.3 }}>
+                    {item.desc}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         {/* MOTOR MULTI-LAYOUT & ESTÚDIO DE CUSTOMIZAÇÃO DO ADMINISTRADOR */}
         <JourneyLayoutToolbar journey="admin" />
 
-        {/* SHELL POLIMÓRFICO DO ADMINISTRADOR:
-            Layout 1 (executive): Sistema Escolar / ERP com Aba Lateral Fixa à Esquerda (290px + 1fr)
-            Layout 2 (operational_360): Command Center 360° Split-Deck (Recepção/Busca 360 + Módulo ERP)
-            Layout 3 (customizer_studio): Estúdio White-Label + ERP Completo
-            Layout 4 (complete_erp): Clássico em Abas Horizontais */}
+        {/* SHELL POLIMÓRFICO DO ADMINISTRADOR */}
         <div
+          className={(adminPreset === 'executive' || adminPreset === 'operational_360') ? 'responsive-portal-grid' : ''}
           style={
-            preferences.layoutPreset.admin === 'executive'
+            adminPreset === 'executive'
               ? { display: 'grid', gridTemplateColumns: 'minmax(255px, 290px) 1fr', gap: '1.25rem', alignItems: 'start' }
-              : preferences.layoutPreset.admin === 'operational_360'
-              ? { display: 'grid', gridTemplateColumns: 'minmax(300px, 345px) 1fr', gap: '1.25rem', alignItems: 'start' }
+              : adminPreset === 'operational_360'
+              ? { display: 'grid', gridTemplateColumns: 'minmax(290px, 340px) 1fr', gap: '1.25rem', alignItems: 'start' }
               : { display: 'block' }
           }
         >
           {/* ABA LATERAL FIXA DO SISTEMA ESCOLAR / ERP (QUANDO LAYOUT 1 ESTÁ ATIVO) */}
-          {preferences.layoutPreset.admin === 'executive' && (
+          {adminPreset === 'executive' && (
             <aside
+              className="responsive-portal-aside"
               style={{
                 position: 'sticky',
                 top: '16px',
@@ -1334,8 +1567,9 @@ export default function AdminDashboard() {
           )}
 
           {/* DECK LATERAL DE RECEPÇÃO 360° (QUANDO LAYOUT 2 ESTÁ ATIVO) */}
-          {preferences.layoutPreset.admin === 'operational_360' && (
+          {adminPreset === 'operational_360' && (
             <aside
+              className="responsive-portal-aside"
               style={{
                 position: 'sticky',
                 top: '16px',
@@ -1356,7 +1590,7 @@ export default function AdminDashboard() {
           {/* COLUNA PRINCIPAL DO ERP ADMINISTRATIVO */}
           <div className="space-y-6 min-w-0">
 
-        {(abaAtiva === 'aparencia_layouts' || preferences.layoutPreset.admin === 'customizer_studio') && (
+        {(abaAtiva === 'aparencia_layouts' || adminPreset === 'customizer_studio') && (
           <AdminLayoutStudio
             usuarioLogado={usuarioLogado}
             alunos={alunos}
@@ -1365,205 +1599,432 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* CARDS DE MÉTRICAS (INTERATIVOS COM ATALHO DIRETO) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          <div 
-            onClick={() => { setAbaAtiva('alunos'); setFiltroAssiduidade('TODOS'); }}
-            className="bg-[#141416] border border-zinc-800 hover:border-zinc-700 rounded-xl p-3 sm:p-4 cursor-pointer transition group"
-            title="Ver todos os alunos matriculados"
-          >
-            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1 group-hover:text-white transition">Total de Alunos</p>
-            <p className="text-2xl sm:text-3xl font-black text-white">{metricas.totalAlunos}</p>
-            <span className="text-[10px] text-zinc-500 block mt-0.5 group-hover:text-zinc-400 transition">Matriculados ativos →</span>
-          </div>
-          <div 
-            onClick={() => { if (usuarioLogado?.cargo === 'ADMIN') setAbaAtiva('financeiro_gestao'); else setAbaAtiva('alunos'); }}
-            className="bg-[#141416] border border-zinc-800 hover:border-green-600/50 rounded-xl p-3 sm:p-4 cursor-pointer transition group"
-            title="Ver assinaturas e mensalidades em dia"
-          >
-            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1 group-hover:text-green-400 transition">Em Dia</p>
-            <p className="text-2xl sm:text-3xl font-black text-green-500">{metricas.assinaturasAtivas}</p>
-            <span className="text-[10px] text-zinc-500 block mt-0.5 group-hover:text-green-400/70 transition">Mensalidade vigente →</span>
-          </div>
-          <div 
-            onClick={() => { if (usuarioLogado?.cargo === 'ADMIN') setAbaAtiva('financeiro_gestao'); else setAbaAtiva('alunos'); }}
-            className="bg-[#141416] border border-zinc-800 hover:border-red-600/50 rounded-xl p-3 sm:p-4 cursor-pointer transition group"
-            title="Ver inadimplências e pendências"
-          >
-            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1 group-hover:text-red-400 transition">Atrasados / Pendentes</p>
-            <p className="text-2xl sm:text-3xl font-black text-red-500">{metricas.inadimplentes}</p>
-            <span className="text-[10px] text-zinc-500 block mt-0.5 group-hover:text-red-400/70 transition">Vencidas ou sem plano →</span>
-          </div>
-          <div 
-            onClick={() => setAbaAtiva('chamada_diaria')}
-            className="bg-[#141416] border border-zinc-800 hover:border-cyan-600/50 rounded-xl p-3 sm:p-4 cursor-pointer transition group"
-            title="Abrir Chamada & Frequência de hoje"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1 group-hover:text-cyan-400 transition">Assiduidade Geral</p>
-              <span className="text-xs">📊</span>
-            </div>
-            <p className="text-2xl sm:text-3xl font-black text-cyan-400">{metricas.taxaPresencaMedia ?? 100}%</p>
-            <span className="text-[10px] text-zinc-500 block mt-0.5 group-hover:text-cyan-400/70 transition">Chamada & Frequência →</span>
-          </div>
-          <div 
-            onClick={() => { setAbaAtiva('alunos'); setFiltroAssiduidade('RISCO'); }}
-            className="bg-[#141416] border border-zinc-800 hover:border-amber-600/50 rounded-xl p-3 sm:p-4 col-span-2 sm:col-span-1 cursor-pointer transition group"
-            title="Filtrar alunos em risco de evasão"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1 group-hover:text-amber-400 transition">Alunos em Risco</p>
-              <span className="text-xs">⚠️</span>
-            </div>
-            <p className={`text-2xl sm:text-3xl font-black ${(metricas.alunosEmRisco || 0) > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-              {metricas.alunosEmRisco || 0}
-            </p>
-            <span className="text-[10px] text-zinc-500 block mt-0.5 group-hover:text-amber-400/70 transition">Frequência &lt; 50% (Filtrar) →</span>
-          </div>
-        </div>
+        {/* CARDS DE MÉTRICAS & NAVEGAÇÃO POLIMÓRFICA POR PRESET DO ADMIN */}
+        {(() => {
+          const isAdminRole = usuarioLogado?.cargo === 'ADMIN';
+          const isDevRole = usuarioLogado?.is_dev || usuarioLogado?.email === 'brgadmin@boru.com';
+          const kpis = [
+            {
+              key: 'total',
+              icon: '👥',
+              label: 'Total de Alunos',
+              value: metricas.totalAlunos,
+              sub: 'Matriculados ativos →',
+              status: 'primary',
+              pct: 100,
+              onClick: () => { setAbaAtiva('alunos'); setFiltroAssiduidade('TODOS'); }
+            },
+            {
+              key: 'emdia',
+              icon: '✅',
+              label: 'Em Dia',
+              value: metricas.assinaturasAtivas,
+              sub: 'Mensalidade vigente →',
+              status: 'available',
+              pct: metricas.totalAlunos > 0 ? Math.round((metricas.assinaturasAtivas / metricas.totalAlunos) * 100) : 100,
+              onClick: () => { if (isAdminRole) setAbaAtiva('financeiro_gestao'); else setAbaAtiva('alunos'); }
+            },
+            {
+              key: 'pendentes',
+              icon: '⏳',
+              label: 'Atrasados / Pendentes',
+              value: metricas.inadimplentes,
+              sub: 'Vencidas ou sem plano →',
+              status: 'full',
+              pct: metricas.totalAlunos > 0 ? Math.round((metricas.inadimplentes / metricas.totalAlunos) * 100) : 0,
+              onClick: () => { if (isAdminRole) setAbaAtiva('financeiro_gestao'); else setAbaAtiva('alunos'); }
+            },
+            {
+              key: 'assiduidade',
+              icon: '📊',
+              label: 'Assiduidade Geral',
+              value: `${metricas.taxaPresencaMedia ?? 100}%`,
+              sub: 'Chamada & Frequência →',
+              status: 'accent',
+              pct: Number(metricas.taxaPresencaMedia ?? 100),
+              onClick: () => setAbaAtiva('chamada_diaria')
+            },
+            {
+              key: 'risco',
+              icon: '⚠️',
+              label: 'Alunos em Risco',
+              value: metricas.alunosEmRisco || 0,
+              sub: 'Frequência < 50% →',
+              status: (metricas.alunosEmRisco || 0) > 0 ? 'full' : 'available',
+              pct: metricas.totalAlunos > 0 ? Math.round(((metricas.alunosEmRisco || 0) / metricas.totalAlunos) * 100) : 0,
+              onClick: () => { setAbaAtiva('alunos'); setFiltroAssiduidade('RISCO'); }
+            }
+          ];
 
-        {/* NAVEGAÇÃO DE ABAS (IDENTIDADE VISUAL BORÜ + BARRA DE ROLAGEM CUSTOMIZADA) */}
-        <div className="relative flex items-center gap-1.5 bg-[#111114]/90 border border-zinc-800/90 rounded-2xl p-2 shadow-xl">
-          <button
-            type="button"
-            onClick={() => scrollTabs('left')}
-            title="Deslizar abas para a esquerda"
-            className="shrink-0 w-8 h-9 rounded-xl bg-[#1A1A1E] hover:bg-red-600 text-zinc-400 hover:text-white border border-zinc-700/80 hover:border-red-500 flex items-center justify-center font-black text-base transition shadow-sm"
-          >
-            ‹
-          </button>
+          const adminTabs = [
+            { id: 'alunos', num: '01', icon: '👥', label: `Alunos (${alunos.length})`, activeMatch: abaAtiva === 'alunos' },
+            { id: 'chamada_diaria', num: '02', icon: '✅', label: 'Chamada & Frequência', activeMatch: ['chamada_diaria', 'calendario_geral', 'presencas'].includes(abaAtiva) },
+            ...(isAdminRole ? [
+              { id: 'financeiro_gestao', num: '03', icon: '💰', label: 'Gestão Financeira & Baixa', activeMatch: abaAtiva === 'financeiro_gestao' },
+              { id: 'caixa_diario', num: '04', icon: '💵', label: 'Caixa Diário (PDV)', activeMatch: abaAtiva === 'caixa_diario' },
+              { id: 'comissoes', num: '05', icon: '🥋', label: 'Comissões Professores', activeMatch: abaAtiva === 'comissoes' }
+            ] : []),
+            { id: 'ocupacao', num: '06', icon: '🔥', label: 'Ocupação de Turmas', activeMatch: abaAtiva === 'ocupacao' },
+            { id: 'resgates_loja', num: '07', icon: '🎟️', label: 'Vouchers & Retiradas', activeMatch: abaAtiva === 'resgates_loja' },
+            { id: 'avisos', num: '08', icon: '📢', label: `Mural de Avisos (${avisos.length})`, activeMatch: abaAtiva === 'avisos' },
+            { id: 'loja', num: '09', icon: '🛍️', label: 'Loja & Mercado', activeMatch: abaAtiva === 'loja' },
+            { id: 'agendamentos', num: '10', icon: '🎯', label: 'Leads & Aulas Exp.', activeMatch: abaAtiva === 'agendamentos' },
+            { id: 'gamificacao', num: '11', icon: '🏆', label: 'Gestão de Gamificação', activeMatch: abaAtiva === 'gamificacao' },
+            ...(isAdminRole ? [{ id: 'professores', num: '12', icon: '👑', label: 'Professores & Equipe', activeMatch: abaAtiva === 'professores' }] : []),
+            ...(isDevRole ? [{ id: 'dev_dashboard', num: '13', icon: '💻', label: 'Dev Dashboard', activeMatch: abaAtiva === 'dev_dashboard' }] : [])
+          ];
 
-          <div
-            ref={tabsScrollRef}
-            className="flex gap-2 sm:gap-2.5 pb-2 pt-0.5 px-1 overflow-x-auto boru-scrollbar scroll-smooth flex-1"
-          >
-            <button 
-              onClick={() => setAbaAtiva('alunos')}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                abaAtiva === 'alunos' ? 'bg-red-600 text-white shadow-md shadow-red-900/30' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-              }`}
-            >
-              👥 Alunos ({alunos.length})
-            </button>
-            <button 
-              onClick={() => setAbaAtiva('chamada_diaria')}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                ['chamada_diaria', 'calendario_geral', 'presencas'].includes(abaAtiva)
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20'
-                  : 'bg-[#141416] text-emerald-400 hover:text-white border border-emerald-500/40'
-              }`}
-            >
-              ✅ Chamada & Frequência
-            </button>
-            {usuarioLogado?.cargo === 'ADMIN' && (
-              <button 
-                onClick={() => setAbaAtiva('financeiro_gestao')}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                  abaAtiva === 'financeiro_gestao' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'bg-[#141416] text-emerald-300 hover:text-white border border-emerald-500/40'
-                }`}
-              >
-                💰 Gestão Financeira & Baixa
-              </button>
-            )}
-            {usuarioLogado?.cargo === 'ADMIN' && (
-              <button 
-                onClick={() => setAbaAtiva('caixa_diario')}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                  abaAtiva === 'caixa_diario' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'bg-[#141416] text-emerald-400 hover:text-white border border-emerald-500/40'
-                }`}
-              >
-                💵 Caixa Diário (Fechamento)
-              </button>
-            )}
-            {usuarioLogado?.cargo === 'ADMIN' && (
-              <button 
-                onClick={() => setAbaAtiva('comissoes')}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                  abaAtiva === 'comissoes' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-500/40'
-                }`}
-              >
-                🥋 Comissões Professores
-              </button>
-            )}
-            <button 
-              onClick={() => setAbaAtiva('ocupacao')}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                abaAtiva === 'ocupacao' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'bg-[#141416] text-red-400 hover:text-white border border-red-500/40'
-              }`}
-            >
-              🔥 Ocupação de Turmas
-            </button>
-            <button 
-              onClick={() => setAbaAtiva('resgates_loja')}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                abaAtiva === 'resgates_loja' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-[#141416] text-amber-300 hover:text-white border border-amber-500/40'
-              }`}
-            >
-              🎟️ Vouchers & Retiradas
-            </button>
-            <button 
-              onClick={() => setAbaAtiva('avisos')}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                abaAtiva === 'avisos' ? 'bg-red-600 text-white shadow-md shadow-red-900/30' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-              }`}
-            >
-              📢 Mural de Avisos ({avisos.length})
-            </button>
-            <button 
-              onClick={() => setAbaAtiva('loja')}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                abaAtiva === 'loja' ? 'bg-red-600 text-white shadow-md shadow-red-900/30' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-              }`}
-            >
-              🛍️ Loja & Mercado (Beta)
-            </button>
-            <button 
-              onClick={() => setAbaAtiva('agendamentos')}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                abaAtiva === 'agendamentos' ? 'bg-red-600 text-white shadow-md shadow-red-900/30' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-              }`}
-            >
-              🎯 Leads & Aulas Exp.
-            </button>
-            <button 
-              onClick={() => setAbaAtiva('gamificacao')}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                abaAtiva === 'gamificacao' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-500/40'
-              }`}
-            >
-              🏆 Gestão de Gamificação
-            </button>
-            {usuarioLogado?.cargo === 'ADMIN' && (
-              <button 
-                onClick={() => setAbaAtiva('professores')}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                  abaAtiva === 'professores' ? 'bg-amber-600 text-white' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-900/50'
-                }`}
-              >
-                👑 Professores & Equipe
-              </button>
-            )}
-            {(usuarioLogado?.is_dev || usuarioLogado?.email === 'brgadmin@boru.com') && (
-              <button 
-                onClick={() => setAbaAtiva('dev_dashboard')}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-black transition whitespace-nowrap flex items-center gap-1.5 ${
-                  abaAtiva === 'dev_dashboard' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'bg-red-950/40 text-red-400 hover:text-white border border-red-500/50'
-                }`}
-              >
-                💻 Dev Dashboard
-              </button>
-            )}
-          </div>
+          const getStatusColor = (s: string) => {
+            if (s === 'available') return 'var(--status-available)';
+            if (s === 'full') return 'var(--status-full)';
+            if (s === 'accent') return 'var(--color-accent)';
+            return 'var(--color-primary)';
+          };
 
-          <button
-            type="button"
-            onClick={() => scrollTabs('right')}
-            title="Deslizar abas para a direita"
-            className="shrink-0 w-8 h-9 rounded-xl bg-[#1A1A1E] hover:bg-red-600 text-zinc-400 hover:text-white border border-zinc-700/80 hover:border-red-500 flex items-center justify-center font-black text-base transition shadow-sm"
-          >
-            ›
-          </button>
-        </div>
+          if (adminPreset === 'executive') {
+            return (
+              <>
+                {/* LAYOUT 1: CARDS ESCOLARES ARREDONDADOS EM PÍLULA COM MEDALHA CIRCULAR */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 190px), 1fr))', gap: '0.75rem' }}>
+                  {kpis.map(k => (
+                    <button
+                      key={k.key}
+                      type="button"
+                      onClick={k.onClick}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        textAlign: 'left',
+                        padding: '0.85rem 1rem',
+                        borderRadius: '24px',
+                        background: 'var(--bg-surface-1)',
+                        border: '2px solid var(--border-subtle)',
+                        boxShadow: 'var(--shadow-card)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '50%',
+                          background: 'var(--bg-background)',
+                          border: `2px solid ${getStatusColor(k.status)}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1.15rem',
+                          flexShrink: 0
+                        }}
+                      >
+                        {k.icon}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-muted-foreground)' }}>
+                          {k.label}
+                        </div>
+                        <div style={{ fontSize: '1.35rem', fontWeight: 900, color: getStatusColor(k.status), lineHeight: 1.1 }}>
+                          {k.value}
+                        </div>
+                        <div style={{ fontSize: '0.62rem', color: 'var(--text-muted-foreground)', marginTop: '0.1rem' }}>
+                          {k.sub}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Atalho Mobile / Tablet em Pílulas Escolares (Desktop usa Sidebar à Esquerda) */}
+                <div className="flex lg:hidden gap-2 overflow-x-auto boru-scrollbar pb-1">
+                  {adminTabs.map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setAbaAtiva(t.id)}
+                      style={{
+                        padding: '0.5rem 0.9rem',
+                        borderRadius: '999px',
+                        whiteSpace: 'nowrap',
+                        fontSize: '0.75rem',
+                        fontWeight: 900,
+                        cursor: 'pointer',
+                        background: t.activeMatch ? 'var(--color-primary)' : 'var(--bg-surface-1)',
+                        color: t.activeMatch ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                        border: '1px solid var(--border-subtle)'
+                      }}
+                    >
+                      {t.icon} {t.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            );
+          }
+
+          if (adminPreset === 'operational_360') {
+            return (
+              <>
+                {/* LAYOUT 2: COMMAND CENTER TÁTICO 360° (GAUGES COM BARRA DE PROGRESSO & GRADE DE HOTKEYS) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 195px), 1fr))', gap: '0.75rem' }}>
+                  {kpis.map(k => (
+                    <div
+                      key={k.key}
+                      onClick={k.onClick}
+                      style={{
+                        cursor: 'pointer',
+                        padding: '0.9rem 1rem',
+                        borderRadius: '10px',
+                        background: 'var(--bg-surface-1)',
+                        border: '1px solid var(--border-subtle)',
+                        borderBottom: `3px solid ${getStatusColor(k.status)}`,
+                        boxShadow: 'var(--shadow-card)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.64rem', fontWeight: 900, fontFamily: 'monospace', color: 'var(--text-muted-foreground)', textTransform: 'uppercase' }}>
+                          {k.label}
+                        </span>
+                        <span>{k.icon}</span>
+                      </div>
+                      <div style={{ fontSize: '1.65rem', fontWeight: 900, color: getStatusColor(k.status), margin: '0.2rem 0' }}>
+                        {k.value}
+                      </div>
+                      <div style={{ height: '5px', borderRadius: '2px', background: 'var(--bg-background)', overflow: 'hidden', marginBottom: '0.35rem' }}>
+                        <div style={{ width: `${Math.min(100, Math.max(8, k.pct))}%`, height: '100%', background: getStatusColor(k.status) }} />
+                      </div>
+                      <div style={{ fontSize: '0.64rem', fontWeight: 700, color: 'var(--text-muted-foreground)' }}>
+                        {k.sub}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Grade Tática de Acesso Rápido [01..13] */}
+                <div
+                  style={{
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    background: 'var(--bg-surface-1)',
+                    border: '1px solid var(--border-subtle)',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 165px), 1fr))',
+                    gap: '0.45rem'
+                  }}
+                >
+                  {adminTabs.map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setAbaAtiva(t.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        padding: '0.55rem 0.7rem',
+                        borderRadius: '6px',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        background: t.activeMatch ? 'var(--color-primary)' : 'var(--bg-background)',
+                        color: t.activeMatch ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                        border: t.activeMatch ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                        fontSize: '0.72rem',
+                        fontWeight: 900
+                      }}
+                    >
+                      <span style={{ fontFamily: 'monospace', fontSize: '0.64rem', opacity: 0.75 }}>{t.num}</span>
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {t.icon} {t.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            );
+          }
+
+          if (adminPreset === 'customizer_studio') {
+            return (
+              <>
+                {/* LAYOUT 3: BALANCETE EXECUTIVO FORMAL B2B (0PX SHARP GRID & ÍNDICE TABULAR) */}
+                <section
+                  style={{
+                    borderRadius: '0px',
+                    background: 'var(--bg-surface-1)',
+                    border: '1px solid var(--border-subtle)',
+                    borderTop: '4px solid var(--color-primary)',
+                    padding: '1.1rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.85rem' }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', fontWeight: 900, letterSpacing: '0.1em', color: 'var(--color-primary)' }}>
+                      BALANCETE OPERACIONAL B2B · INDICADORES CONSOLIDADOS
+                    </span>
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.66rem', color: 'var(--text-muted-foreground)' }}>
+                      CLIQUE EM QUALQUER INDICADOR PARA FILTRAR
+                    </span>
+                  </div>
+
+                  <div style={{ overflowX: 'auto', border: '1px solid var(--border-subtle)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.78rem' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg-background)', borderBottom: '2px solid var(--color-primary)' }}>
+                          <th style={{ padding: '0.6rem 0.85rem' }}>INDICADOR ERP</th>
+                          <th style={{ padding: '0.6rem 0.85rem' }}>VALOR ATUAL</th>
+                          <th style={{ padding: '0.6rem 0.85rem' }}>AÇÃO DIRETA</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {kpis.map((k, idx) => (
+                          <tr
+                            key={k.key}
+                            onClick={k.onClick}
+                            style={{
+                              cursor: 'pointer',
+                              borderBottom: '1px solid var(--border-subtle)',
+                              background: idx % 2 === 0 ? 'var(--bg-surface-1)' : 'var(--bg-background)'
+                            }}
+                          >
+                            <td style={{ padding: '0.55rem 0.85rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
+                              {k.icon} {k.label}
+                            </td>
+                            <td style={{ padding: '0.55rem 0.85rem', fontWeight: 900, fontFamily: 'monospace', fontSize: '0.95rem', color: getStatusColor(k.status) }}>
+                              {k.value}
+                            </td>
+                            <td style={{ padding: '0.55rem 0.85rem', fontWeight: 700, color: 'var(--color-primary)' }}>
+                              {k.sub}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Índice B2B Formal sem Cantos Arredondados */}
+                  <div
+                    className="flex gap-1 overflow-x-auto boru-scrollbar mt-4"
+                    style={{ borderBottom: '2px solid var(--border-subtle)' }}
+                  >
+                    {adminTabs.map(t => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setAbaAtiva(t.id)}
+                        style={{
+                          padding: '0.6rem 0.9rem',
+                          borderRadius: '0px',
+                          whiteSpace: 'nowrap',
+                          fontSize: '0.74rem',
+                          fontWeight: 900,
+                          textTransform: 'uppercase',
+                          cursor: 'pointer',
+                          background: t.activeMatch ? 'var(--color-primary)' : 'transparent',
+                          color: t.activeMatch ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                          border: 'none',
+                          borderBottom: t.activeMatch ? '3px solid var(--color-primary)' : '3px solid transparent'
+                        }}
+                      >
+                        {t.num}. {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              </>
+            );
+          }
+
+          /* LAYOUT 4: CLÁSSICO ERP ADAPTADO 100% ÀS VARIÁVEIS DO TEMA ATIVO */
+          return (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                {kpis.map((k, idx) => (
+                  <div
+                    key={k.key}
+                    onClick={k.onClick}
+                    className={`rounded-xl p-3 sm:p-4 cursor-pointer transition group ${idx === kpis.length - 1 ? 'col-span-2 sm:col-span-1' : ''}`}
+                    style={{
+                      background: 'var(--bg-surface-1)',
+                      border: '1px solid var(--border-subtle)',
+                      boxShadow: 'var(--shadow-card)'
+                    }}
+                    title={k.sub}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted-foreground)' }}>
+                        {k.label}
+                      </p>
+                      <span className="text-xs">{k.icon}</span>
+                    </div>
+                    <p className="text-2xl sm:text-3xl font-black" style={{ color: getStatusColor(k.status) }}>
+                      {k.value}
+                    </p>
+                    <span className="text-[10px] block mt-0.5" style={{ color: 'var(--text-muted-foreground)' }}>
+                      {k.sub}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                className="relative flex items-center gap-1.5 rounded-2xl p-2 shadow-xl"
+                style={{
+                  background: 'var(--bg-surface-1)',
+                  border: '1px solid var(--border-subtle)'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => scrollTabs('left')}
+                  title="Deslizar abas para a esquerda"
+                  className="shrink-0 w-8 h-9 rounded-xl flex items-center justify-center font-black text-base transition shadow-sm cursor-pointer"
+                  style={{
+                    background: 'var(--bg-background)',
+                    color: 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)'
+                  }}
+                >
+                  ‹
+                </button>
+
+                <div
+                  ref={tabsScrollRef}
+                  className="flex gap-2 sm:gap-2.5 pb-2 pt-0.5 px-1 overflow-x-auto boru-scrollbar scroll-smooth flex-1"
+                >
+                  {adminTabs.map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setAbaAtiva(t.id)}
+                      className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer"
+                      style={{
+                        background: t.activeMatch ? 'var(--color-primary)' : 'var(--bg-background)',
+                        color: t.activeMatch ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                        border: t.activeMatch ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)'
+                      }}
+                    >
+                      <span>{t.icon}</span>
+                      <span>{t.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => scrollTabs('right')}
+                  title="Deslizar abas para a direita"
+                  className="shrink-0 w-8 h-9 rounded-xl flex items-center justify-center font-black text-base transition shadow-sm cursor-pointer"
+                  style={{
+                    background: 'var(--bg-background)',
+                    color: 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)'
+                  }}
+                >
+                  ›
+                </button>
+              </div>
+            </>
+          );
+        })()}
 
         {/* SUB-BARRA UNIFICADA DE CHAMADA & FREQUÊNCIA (ELIMINA REDUNDÂNCIAS) */}
         {['chamada_diaria', 'calendario_geral', 'presencas'].includes(abaAtiva) && (

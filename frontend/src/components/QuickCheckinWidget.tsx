@@ -119,11 +119,11 @@ export const PublicQuickCheckinCard: React.FC = () => {
           >
             ⚡ Check-in Expresso (Sem Login)
           </span>
-          <h3 className="text-sm sm:text-base font-black text-white mt-1">
+          <h3 style={{ color: 'var(--text-foreground)' }} className="text-sm sm:text-base font-black mt-1">
             Bater Ponto de Presença de Hoje
           </h3>
-          <p className="text-[11px] text-zinc-400">
-            Escolha o CT parceiro e horário da aula e confirme com seu CPF e senha.
+          <p style={{ color: 'var(--text-muted-foreground)' }} className="text-[11px]">
+            Escolha o CT parceiro e horário da aula e confirme com seu CPF e senha (Teste rápido: CPF <strong>1</strong> · Senha <strong>1</strong>).
           </p>
         </div>
         <span className="text-2xl">🥊</span>
@@ -156,14 +156,15 @@ export const PublicQuickCheckinCard: React.FC = () => {
 
       {/* SELEÇÃO DO HORÁRIO E CT DO TREINO DE HOJE */}
       <div className="space-y-1">
-        <label className="text-[10px] font-black uppercase tracking-wider text-zinc-300 flex items-center justify-between">
+        <label style={{ color: 'var(--text-muted-foreground)' }} className="text-[10px] font-black uppercase tracking-wider flex items-center justify-between">
           <span>⏰ Escolha o Horário & CT de Treino de Hoje:</span>
-          {loadingAulas && <span className="text-[10px] text-zinc-500 font-normal">Carregando grade...</span>}
+          {loadingAulas && <span className="text-[10px] opacity-75 font-normal">Carregando grade...</span>}
         </label>
         <select
           value={eventoSelecionadoId}
           onChange={(e) => setEventoSelecionadoId(e.target.value)}
-          className="w-full bg-[#0E0E11] border border-zinc-700/80 rounded-xl px-3 py-2 text-xs text-white focus:border-red-500 outline-none font-bold"
+          style={{ backgroundColor: 'var(--bg-background)', color: 'var(--text-foreground)', borderColor: 'var(--border-subtle)' }}
+          className="w-full border rounded-xl px-3 py-2 text-xs outline-none font-bold"
         >
           {aulasDeHoje.length === 0 ? (
             <option value="">{loadingAulas ? 'Carregando horários...' : 'Nenhum treino disponível hoje'}</option>
@@ -173,7 +174,6 @@ export const PublicQuickCheckinCard: React.FC = () => {
                 key={aula.id}
                 value={aula.id}
                 disabled={aula.cancelada || aula.lotado}
-                className={aula.cancelada ? 'text-zinc-500 line-through' : aula.lotado ? 'text-red-400' : 'text-white'}
               >
                 {aula.horario} • {aula.academiaNome || 'CT Borü'} — {aula.titulo} ({aula.professorNome})
                 {aula.cancelada ? ' [AULA CANCELADA]' : aula.lotado ? ' [LOTADO]' : ' [HÁ VAGAS]'}
@@ -188,17 +188,19 @@ export const PublicQuickCheckinCard: React.FC = () => {
           type="text"
           value={cpf}
           onChange={(e) => setCpf(e.target.value)}
-          placeholder="CPF (apenas números)"
+          placeholder="CPF (ou 1)"
           required
-          className="sm:col-span-5 bg-[#0E0E11] border border-zinc-700/80 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-red-500 outline-none"
+          style={{ backgroundColor: 'var(--bg-background)', color: 'var(--text-foreground)', borderColor: 'var(--border-subtle)' }}
+          className="sm:col-span-5 border rounded-xl px-3 py-2.5 text-xs outline-none"
         />
         <input
           type="password"
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
-          placeholder="Sua Senha"
+          placeholder="Senha (ou 1)"
           required
-          className="sm:col-span-4 bg-[#0E0E11] border border-zinc-700/80 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-red-500 outline-none"
+          style={{ backgroundColor: 'var(--bg-background)', color: 'var(--text-foreground)', borderColor: 'var(--border-subtle)' }}
+          className="sm:col-span-4 border rounded-xl px-3 py-2.5 text-xs outline-none"
         />
         <button
           type="submit"

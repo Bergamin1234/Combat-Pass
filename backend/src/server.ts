@@ -43,7 +43,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // Login unificado de equipe (AdminDev, Administrador Geral e Professores)
 app.post('/api/auth/login', async (req, res) => {
-  const { emailOuUsuario, senha } = req.body;
+  const { emailOuUsuario, senha, portal } = req.body;
 
   if (!emailOuUsuario || !senha) {
     return res.status(400).json({ erro: 'Informe o login e a senha de acesso.' });
@@ -53,8 +53,25 @@ app.post('/api/auth/login', async (req, res) => {
   const termoLower = termo.toLowerCase();
   const cpfLimpo = termo.replace(/\D/g, '');
 
-  // 0. Suporte direto a credenciais rápidas de demonstração para Professor (CPF: 1 | Senha: 1)
-  if ((termo === '1' || cpfLimpo === '1' || termoLower === 'professor') && senha === '1') {
+  // 0. Suporte direto a credenciais rápidas de demonstração (CPF/Login: 1 | Senha: 1) em Admin e Professor
+  if ((termo === '1' || cpfLimpo === '1' || termoLower === 'professor' || termoLower === 'admin') && senha === '1') {
+    if (portal === 'admin' || termoLower === 'admin') {
+      return res.json({
+        usuario: {
+          id: 'admin-demo-1',
+          nome: 'Administrador Master (Combat-Pass Demo)',
+          email: 'admin@combathub.com',
+          cpf: '1',
+          cargo: 'ADMIN',
+          is_dev: true,
+          role_level: 'ADMIN_DEV',
+          prajied: 'Diretoria Executiva',
+          modalidade: '[ERP-MULTI-CT]',
+          graduacao: 'Gestão & Diretoria Combat-Pass',
+          fotoPerfilUrl: null
+        }
+      });
+    }
     return res.json({
       usuario: {
         id: 'prof-demo-1',
@@ -662,11 +679,68 @@ app.post('/api/alunos/login', async (req, res) => {
   const { cpf, senha } = req.body;
   if (!cpf) return res.status(400).json({ erro: 'CPF é obrigatório.' });
 
-  const cpfLimpo = cpf.replace(/[^\d]+/g, '');
+  const cpfRaw = String(cpf).trim();
+  const cpfLimpo = cpfRaw.replace(/[^\d]+/g, '');
 
   try {
-    const aluno = await prisma.aluno.findUnique({
-      where: { cpf: cpfLimpo },
+    // Suporte oficial de demonstração para CPF: 1 e Senha: 1 em TODOS os acessos
+    if (cpfLimpo === '1' && String(senha || '').trim() === '1') {
+      let alunoDemo = await prisma.aluno.findFirst({
+        where: { OR: [{ cpf: '1' }, { email: 'aluno.demo@combathub.com' }] },
+        include: {
+          mensalidades: { orderBy: { dataVencimento: 'desc' }, take: 1 }
+        }
+      });
+
+      if (!alunoDemo) {
+        const vencimento = new Date();
+        vencimento.setDate(vencimento.getDate() + 30);
+        alunoDemo = await prisma.aluno.create({
+          data: {
+            nome: 'Atleta Demo Combat-Pass',
+            email: 'aluno.demo@combathub.com',
+            telefone: '(11) 99999-1111',
+            cpf: '1',
+            senha: '1',
+            primeiroAcesso: false,
+            plano: 'Combat-Pass Gold Ilimitado',
+            tierPasse: 'GOLD',
+            academiaOrigem: 'CT Borü (Matriz)',
+            modalidade: 'Muay Thai',
+            graduacao: 'Prajied Azul',
+            prajied: 'Prajied Azul',
+            is_bolsista: false,
+            has_signed_contract: true,
+            data_de_adesao: new Date(),
+            contract_signed_at: new Date(),
+            total_xp: 4820,
+            spendable_points: 1250,
+            mensalidades: {
+              create: {
+                valor: 199.9,
+                dataVencimento: vencimento,
+                status: 'PAGO',
+                dataPagamento: new Date()
+              }
+            }
+          },
+          include: {
+            mensalidades: { orderBy: { dataVencimento: 'desc' }, take: 1 }
+          }
+        });
+      }
+
+      return res.json({
+        ...alunoDemo,
+        isDiariaOuConvenio: false,
+        tipoCobranca: 'MENSALIDADE'
+      });
+    }
+
+    const aluno = await prisma.aluno.findFirst({
+      where: {
+        OR: [{ cpf: cpfLimpo }, { cpf: cpfRaw }]
+      },
       include: {
         mensalidades: { orderBy: { dataVencimento: 'desc' }, take: 1 }
       }

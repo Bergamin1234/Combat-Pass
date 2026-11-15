@@ -957,7 +957,7 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
             LAYOUT 2: MESA TÉCNICA & PERFORMANCE (SPLIT-SCREEN 50/50 COM RADAR DE NOTAS E SCORES)
             ========================================================================= */}
         {activePreset === 'technical_perf' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem', width: '100%', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: '1.5rem', width: '100%', alignItems: 'start' }}>
             {/* Coluna 1: Painel Tático de Chamada & Avaliação Técnica dos Alunos */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <section style={{ padding: '1.35rem', borderRadius: '16px', background: 'var(--bg-surface-1)', border: '2px solid var(--color-primary)' }}>

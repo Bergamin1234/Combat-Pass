@@ -22,7 +22,8 @@ import { StudentLayoutPresetsView } from '../components/StudentLayoutPresets';
 
 export default function PortalAluno() {
   const location = useLocation();
-  const { preferences } = useLayoutEngine();
+  const { preferences, setJourneyPreset } = useLayoutEngine();
+  const studentPreset = preferences.layoutPreset.student;
   const [aulas, setAulas] = useState<any[]>([]);
   const [alunoLogado, setAlunoLogado] = useState<any>(null);
   
@@ -105,16 +106,19 @@ export default function PortalAluno() {
     return true;
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validarCPF(cpf)) {
+  const realizarLoginComCredenciais = async (cpfParam: string, senhaParam: string) => {
+    const rawDigits = cpfParam.replace(/\D/g, '');
+    if (rawDigits !== '1' && !validarCPF(cpfParam)) {
       setErroCpf('CPF Inválido. Verifique os números e tente novamente.');
       return;
     }
-    
+
     setLoading(true);
     try {
-      const response = await studentApi.login({ cpf, senha });
+      const response = await studentApi.login({
+        cpf: rawDigits === '1' ? '1' : cpfParam,
+        senha: senhaParam
+      });
       setAlunoLogado(response.data);
       try {
         sessionStorage.setItem('combat_hub_aluno_session', JSON.stringify(response.data));
@@ -140,6 +144,17 @@ export default function PortalAluno() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await realizarLoginComCredenciais(cpf, senha);
+  };
+
+  const handleDemoQuickLogin = async () => {
+    setCpf('1');
+    setSenha('1');
+    await realizarLoginComCredenciais('1', '1');
   };
 
   const handleRecuperarSenha = async (e: React.FormEvent) => {
@@ -377,22 +392,53 @@ export default function PortalAluno() {
   // TELA DE LOGIN DO ALUNO + MÓDULO 3: CHECK-IN RÁPIDO PÚBLICO
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center p-4 py-8 relative z-10">
+      <div
+        className="min-h-screen w-full flex items-center justify-center p-4 py-8 relative z-10"
+        style={{ background: 'var(--bg-background)', color: 'var(--text-foreground)' }}
+      >
         <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 items-start my-auto relative z-10">
           {/* Card de Login */}
-          <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-7 sm:p-8 rounded-2xl w-full shadow-2xl">
-            <div className="flex justify-end mb-2">
+          <div
+            className="backdrop-blur-md p-6 sm:p-8 rounded-2xl w-full shadow-2xl"
+            style={{
+              background: 'var(--bg-surface-1)',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: 'var(--shadow-card)'
+            }}
+          >
+            <div className="flex justify-between items-center mb-3 gap-2">
+              <span
+                style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '999px',
+                  background: 'var(--color-primary-light)',
+                  color: 'var(--color-primary)',
+                  border: '1px solid var(--color-primary-border)'
+                }}
+              >
+                🥋 PORTAL DO ALUNO
+              </span>
               <ThemeSwitcher compact />
             </div>
-            <div className="text-center mb-6">
-              <img 
-                src={ACADEMY_CONFIG.logoUrl} 
-                alt={ACADEMY_CONFIG.nome} 
-                className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-contain bg-[#1A1A1E] p-1.5" 
+            <div className="text-center mb-5">
+              <img
+                src={ACADEMY_CONFIG.logoUrl}
+                alt={ACADEMY_CONFIG.nome}
+                className="w-20 h-20 rounded-full mx-auto mb-3 shadow-xl object-contain p-1.5"
+                style={{
+                  border: '2px solid var(--color-primary)',
+                  background: 'var(--bg-background)'
+                }}
               />
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
-              <p className="text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">
-                {showRecuperarSenha ? 'Recuperar Acesso' : 'Portal do Aluno'}
+              <h1 className="text-2xl sm:text-3xl font-black tracking-widest mb-1" style={{ color: 'var(--text-foreground)' }}>
+                {ACADEMY_CONFIG.nome}
+              </h1>
+              <p className="font-bold text-xs uppercase tracking-widest" style={{ color: 'var(--color-primary)' }}>
+                {showRecuperarSenha ? 'Recuperar Acesso' : 'Área Exclusiva do Atleta'}
               </p>
             </div>
 
@@ -413,27 +459,80 @@ export default function PortalAluno() {
                 </div>
               );
             })()}
-            
+
+            {!showRecuperarSenha && (
+              <div
+                className="mb-4 p-3.5 rounded-xl"
+                style={{
+                  background: 'var(--color-primary-light)',
+                  border: '1px solid var(--color-primary-border)'
+                }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div>
+                    <div className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
+                      ⚡ Acesso Rápido Homologado (Atleta Demo)
+                    </div>
+                    <div className="text-xs font-bold mt-0.5" style={{ color: 'var(--text-foreground)' }}>
+                      CPF: <code className="px-1.5 py-0.5 rounded font-black" style={{ background: 'var(--bg-surface-1)' }}>1</code> · Senha:{' '}
+                      <code className="px-1.5 py-0.5 rounded font-black" style={{ background: 'var(--bg-surface-1)' }}>1</code>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDemoQuickLogin}
+                    disabled={loading}
+                    className="px-3.5 py-2 rounded-lg text-xs font-black uppercase tracking-wide shrink-0 transition cursor-pointer"
+                    style={{
+                      background: 'var(--color-primary)',
+                      color: 'var(--text-primary-foreground)',
+                      border: 'none'
+                    }}
+                  >
+                    ⚡ Entrar Agora (1 / 1)
+                  </button>
+                </div>
+              </div>
+            )}
+
             {showRecuperarSenha ? (
               <form onSubmit={handleRecuperarSenha} className="space-y-4">
                 <div>
-                  <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail, CPF ou Telefone</label>
-                  <input 
-                    type="text" 
+                  <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-muted-foreground)' }}>
+                    E-mail, CPF ou Telefone
+                  </label>
+                  <input
+                    type="text"
                     value={contatoRecuperacao}
                     onChange={(e) => setContatoRecuperacao(e.target.value)}
-                    className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                    className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+                    style={{
+                      background: 'var(--bg-background)',
+                      border: '1px solid var(--border-subtle)',
+                      color: 'var(--text-foreground)'
+                    }}
                     placeholder="Insira seu contato"
                     required
                   />
                 </div>
-                <button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30 text-sm">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full disabled:opacity-50 font-bold py-3 rounded-lg transition transform active:scale-95 text-sm"
+                  style={{
+                    background: 'var(--color-primary)',
+                    color: 'var(--text-primary-foreground)',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
                   {loading ? 'Buscando...' : 'Recuperar Acesso'}
                 </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowRecuperarSenha(false)} 
-                  className="w-full text-zinc-500 hover:text-white text-xs transition font-semibold"
+                <button
+                  type="button"
+                  onClick={() => setShowRecuperarSenha(false)}
+                  className="w-full text-xs transition font-semibold"
+                  style={{ color: 'var(--text-muted-foreground)', background: 'transparent', border: 'none', cursor: 'pointer' }}
                 >
                   Voltar para Login
                 </button>
@@ -441,47 +540,81 @@ export default function PortalAluno() {
             ) : (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Seu CPF</label>
-                  <input 
-                    type="text" 
+                  <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-muted-foreground)' }}>
+                    Seu CPF (ou digite 1 para demo)
+                  </label>
+                  <input
+                    type="text"
                     value={cpf}
                     onChange={(e) => formatarCpf(e.target.value)}
                     maxLength={14}
-                    className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
-                    placeholder="000.000.000-00"
+                    className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+                    style={{
+                      background: 'var(--bg-background)',
+                      border: '1px solid var(--border-subtle)',
+                      color: 'var(--text-foreground)'
+                    }}
+                    placeholder="000.000.000-00 ou 1"
                     required
                   />
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="block text-zinc-400 text-xs font-semibold">Senha</label>
-                    <button 
-                      type="button" 
-                      onClick={() => setShowRecuperarSenha(true)} 
-                      className="text-xs text-red-500 hover:text-red-400 font-bold transition"
+                    <label className="block text-xs font-semibold" style={{ color: 'var(--text-muted-foreground)' }}>
+                      Senha
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowRecuperarSenha(true)}
+                      className="text-xs font-bold transition"
+                      style={{ color: 'var(--color-primary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
                     >
                       Esqueci a senha
                     </button>
                   </div>
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
-                    className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
-                    placeholder="Sua senha"
+                    className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+                    style={{
+                      background: 'var(--bg-background)',
+                      border: '1px solid var(--border-subtle)',
+                      color: 'var(--text-foreground)'
+                    }}
+                    placeholder="Sua senha (ou 1)"
                     required
                   />
-                  {erroCpf && <p className="text-red-500 text-xs mt-2 font-semibold">{erroCpf}</p>}
+                  {erroCpf && (
+                    <p className="text-xs mt-2 font-semibold" style={{ color: 'var(--status-full)' }}>
+                      {erroCpf}
+                    </p>
+                  )}
                 </div>
-                <button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30 text-sm uppercase tracking-wider">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full disabled:opacity-50 font-bold py-3 rounded-lg transition transform active:scale-95 text-sm uppercase tracking-wider"
+                  style={{
+                    background: 'var(--color-primary)',
+                    color: 'var(--text-primary-foreground)',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
                   {loading ? 'Entrando...' : 'Acessar Portal'}
                 </button>
               </form>
             )}
 
-            <Link to="/" className="block text-center mt-6 text-zinc-500 hover:text-white text-xs transition">
-              ← Voltar ao site principal
-            </Link>
+            <div className="flex items-center justify-between gap-2 mt-6 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+              <Link to="/" className="text-xs font-bold transition" style={{ color: 'var(--text-muted-foreground)' }}>
+                ← Voltar ao site principal
+              </Link>
+              <Link to="/professor" className="text-xs font-bold transition" style={{ color: 'var(--color-primary)' }}>
+                Sou Professor →
+              </Link>
+            </div>
           </div>
 
           {/* MÓDULO 3: CHECK-IN RÁPIDO NA TELA DE LOGIN (PÚBLICO) */}
@@ -496,36 +629,73 @@ export default function PortalAluno() {
   // TELA DE PRIMEIRO ACESSO (MUDAR SENHA)
   if (alunoLogado?.primeiroAcesso) {
     return (
-      <div className="fixed inset-0 bg-[#0B0B0C] flex items-center justify-center z-[9999] px-4">
-        <div className="bg-[#141416] border border-zinc-800 p-8 rounded-2xl w-full max-w-sm shadow-2xl">
+      <div
+        className="fixed inset-0 flex items-center justify-center z-[9999] px-4"
+        style={{ background: 'var(--bg-background)', color: 'var(--text-foreground)' }}
+      >
+        <div
+          className="p-8 rounded-2xl w-full max-w-sm shadow-2xl"
+          style={{
+            background: 'var(--bg-surface-1)',
+            border: '1px solid var(--border-subtle)'
+          }}
+        >
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-black text-white mb-2">Bem-vindo(a), {alunoLogado.nome.split(' ')[0]}!</h1>
-            <p className="text-zinc-400 text-xs">Este é o seu primeiro acesso. Crie uma senha definitiva para continuar.</p>
+            <h1 className="text-2xl font-black mb-2" style={{ color: 'var(--text-foreground)' }}>
+              Bem-vindo(a), {alunoLogado.nome.split(' ')[0]}!
+            </h1>
+            <p className="text-xs" style={{ color: 'var(--text-muted-foreground)' }}>
+              Este é o seu primeiro acesso. Crie uma senha definitiva para continuar.
+            </p>
           </div>
           <form onSubmit={handleAlterarSenha} className="space-y-4">
             <div>
-              <label className="block text-zinc-400 text-xs font-semibold mb-1">Nova Senha</label>
-              <input 
-                type="password" 
+              <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-muted-foreground)' }}>
+                Nova Senha
+              </label>
+              <input
+                type="password"
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
-                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+                style={{
+                  background: 'var(--bg-background)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-foreground)'
+                }}
                 placeholder="Mínimo 6 caracteres"
                 required
               />
             </div>
             <div>
-              <label className="block text-zinc-400 text-xs font-semibold mb-1">Confirme a Senha</label>
-              <input 
-                type="password" 
+              <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-muted-foreground)' }}>
+                Confirme a Senha
+              </label>
+              <input
+                type="password"
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
-                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+                style={{
+                  background: 'var(--bg-background)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-foreground)'
+                }}
                 placeholder="Repita a senha"
                 required
               />
             </div>
-            <button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 text-sm uppercase">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full disabled:opacity-50 font-bold py-3 rounded-lg transition transform active:scale-95 text-sm uppercase"
+              style={{
+                background: 'var(--color-primary)',
+                color: 'var(--text-primary-foreground)',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
               {loading ? 'Salvando...' : 'Salvar e Entrar'}
             </button>
           </form>
@@ -538,7 +708,10 @@ export default function PortalAluno() {
   // TELA DO PORTAL PRINCIPAL
   // ==========================================
   return (
-    <div className="min-h-screen bg-[#0B0B0C]/80 backdrop-blur-[1px] text-zinc-100 font-sans p-3 sm:p-6 pb-28 sm:pb-12 relative z-10">
+    <div
+      className="min-h-screen backdrop-blur-[1px] font-sans p-3 sm:p-6 pb-28 sm:pb-12 relative z-10 overflow-x-hidden"
+      style={{ background: 'var(--bg-background)', color: 'var(--text-foreground)' }}
+    >
       {/* MÓDULO 2: MIDDLEWARE DE BLOQUEIO DO CONTRATO ELETRÔNICO */}
       <ContractBlockingModal
         aluno={alunoLogado}
@@ -547,74 +720,189 @@ export default function PortalAluno() {
         }}
       />
 
-      <div className={`${preferences.layoutPreset.student === 'complete_tabs' ? 'max-w-5xl' : 'max-w-[1500px]'} mx-auto space-y-5`}>
+      <div className={`${studentPreset === 'complete_tabs' ? 'max-w-5xl' : 'max-w-[1500px]'} mx-auto space-y-5`}>
 
         {/* FEEDBACK DE CHECK-IN COM SUCESSO (ESTÍMULO VISUAL) */}
         {checkinSucessoAnim && (
-          <div className="p-4 rounded-xl bg-gradient-to-r from-red-600/30 to-amber-500/30 border border-red-500/50 text-white flex items-center justify-between shadow-xl animate-bounce">
+          <div
+            className="p-4 rounded-xl flex items-center justify-between shadow-xl animate-bounce"
+            style={{
+              background: 'var(--color-primary-light)',
+              border: '1px solid var(--color-primary)',
+              color: 'var(--text-foreground)'
+            }}
+          >
             <div className="flex items-center gap-3">
               <span className="text-2xl">🔥</span>
               <div>
-                <p className="font-black text-sm text-amber-300">CHECK-IN CONFIRMADO!</p>
-                <p className="text-xs text-zinc-200">{checkinSucessoAnim}</p>
+                <p className="font-black text-sm" style={{ color: 'var(--color-primary)' }}>CHECK-IN CONFIRMADO!</p>
+                <p className="text-xs" style={{ color: 'var(--text-foreground)' }}>{checkinSucessoAnim}</p>
               </div>
             </div>
-            <button onClick={() => setCheckinSucessoAnim(null)} className="text-zinc-400 hover:text-white font-bold text-sm">✕</button>
+            <button
+              onClick={() => setCheckinSucessoAnim(null)}
+              className="font-bold text-sm"
+              style={{ color: 'var(--text-muted-foreground)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+            >
+              ✕
+            </button>
           </div>
         )}
 
         {/* HEADER SUPERIOR GLOBAL DO PORTAL DO ALUNO */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+        <header
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4"
+          style={{ borderBottom: '1px solid var(--border-subtle)' }}
+        >
           <div className="flex items-center gap-3">
-            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-contain flex-shrink-0 bg-[#141416] p-1" />
+            <img
+              src={ACADEMY_CONFIG.logoUrl}
+              alt={ACADEMY_CONFIG.nome}
+              className="w-12 h-12 rounded-full shadow-md object-contain flex-shrink-0 p-1"
+              style={{
+                border: '2px solid var(--color-primary)',
+                background: 'var(--bg-surface-1)'
+              }}
+            />
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
-                  ÁREA DO <span className="text-red-600">ALUNO</span>
+                <h1 className="text-xl sm:text-3xl font-black tracking-wider" style={{ color: 'var(--text-foreground)' }}>
+                  ÁREA DO <span style={{ color: 'var(--color-primary)' }}>ALUNO</span>
                 </h1>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold">
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full font-bold"
+                  style={{
+                    background: 'var(--color-primary-light)',
+                    color: 'var(--color-primary)',
+                    border: '1px solid var(--color-primary-border)'
+                  }}
+                >
                   {ACADEMY_CONFIG.nome}
                 </span>
                 {alunoLogado?.is_bolsista && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-black uppercase">
+                  <span
+                    className="text-[10px] px-2 py-0.5 rounded-full font-black uppercase"
+                    style={{
+                      background: 'var(--bg-surface-2)',
+                      color: 'var(--color-accent)',
+                      border: '1px solid var(--border-subtle)'
+                    }}
+                  >
                     🎓 Aluno Bolsista
                   </span>
                 )}
               </div>
-              <p className="text-zinc-400 text-xs sm:text-sm mt-0.5">Sawasdee Krap, <strong className="text-white">{alunoLogado?.nome}</strong>!</p>
+              <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'var(--text-muted-foreground)' }}>
+                Sawasdee Krap, <strong style={{ color: 'var(--text-foreground)' }}>{alunoLogado?.nome}</strong>!
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             <Link
               to="/"
-              className="px-3 py-1.5 rounded-lg bg-[#141416] hover:bg-zinc-800 text-xs font-bold text-zinc-200 border border-zinc-700 transition"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold transition"
+              style={{
+                background: 'var(--bg-surface-1)',
+                color: 'var(--text-foreground)',
+                border: '1px solid var(--border-subtle)'
+              }}
             >
               🏠 Site Principal
             </Link>
             <ThemeSwitcher />
-            <a 
+            <a
               href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, sou o aluno(a) ${alunoLogado?.nome} e gostaria de tirar uma dúvida na recepção!`)}`}
               target="_blank"
               rel="noreferrer"
-              className="px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white text-xs font-bold transition flex items-center gap-1 shadow-sm"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm"
+              style={{
+                background: 'var(--status-available-bg)',
+                color: 'var(--status-available)',
+                border: '1px solid var(--status-available-border)'
+              }}
             >
               <span>📲 WhatsApp Recepção</span>
             </a>
-            <button 
+            <button
               onClick={() => { try { sessionStorage.removeItem('combat_hub_aluno_session'); } catch(e){} setIsLoggedIn(false); setAlunoLogado(null); }}
-              className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-300 transition"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
+              style={{
+                background: 'var(--bg-surface-2)',
+                color: 'var(--text-foreground)',
+                border: '1px solid var(--border-subtle)'
+              }}
             >
-              Sair
+              🚪 Sair
             </button>
           </div>
         </header>
+
+        {/* VISUALIZADOR IMEDIATO & TROCA DOS 4 LAYOUTS DO ALUNO (1 CLIQUE) */}
+        <section
+          style={{
+            padding: '0.85rem 1rem',
+            borderRadius: '14px',
+            background: 'var(--bg-surface-1)',
+            border: '1px solid var(--border-subtle)',
+            boxShadow: 'var(--shadow-card)'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.6rem' }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary)' }}>
+              👁️ SELETOR DIRETO DOS 4 LAYOUTS DO ALUNO — COMPARE NO PÓS-LOGIN COM 1 CLIQUE
+            </span>
+            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
+              Layout Ativo: <strong style={{ color: 'var(--text-foreground)' }}>{studentPreset}</strong>
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: '0.55rem' }}>
+            {[
+              { id: 'tatame_express' as const, badge: 'SISTEMA ESCOLAR', title: 'Layout 1: Diário Escolar', desc: 'Aba lateral escolar, boletim em pílulas arredondadas e grade acadêmica' },
+              { id: 'gamified_journey' as const, badge: 'ARENA RPG / HUD', title: 'Layout 2: Arena Fighter HUD', desc: 'Cockpit tático com telemetria XP/Nível, metas e atalhos [01..11]' },
+              { id: 'agenda_control' as const, badge: 'EXECUTIVO B2B 0PX', title: 'Layout 3: Dossiê Executivo', desc: 'Estrutura formal 0px em split-view com calendário fixo e matriz' },
+              { id: 'complete_tabs' as const, badge: 'CLÁSSICO TOUCH', title: 'Layout 4: Abas Clássicas', desc: 'Cartões clássicos originais + barra de abas adaptados à paleta' }
+            ].map(item => {
+              const isSelected = studentPreset === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setJourneyPreset('student', item.id)}
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: '10px',
+                    border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                    background: isSelected ? 'var(--color-primary-light)' : 'var(--bg-background)',
+                    color: 'var(--text-foreground)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.18rem' }}>
+                    <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--color-primary)' }}>
+                      {item.badge}
+                    </span>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 900, color: isSelected ? 'var(--status-available)' : 'var(--text-muted-foreground)' }}>
+                      {isSelected ? '✓ ATIVO' : 'Visualizar →'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 900 }}>{item.title}</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted-foreground)', marginTop: '0.12rem', lineHeight: 1.3 }}>
+                    {item.desc}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
         {/* MOTOR MULTI-LAYOUT & ORDENADOR DINÂMICO DO ALUNO */}
         <JourneyLayoutToolbar journey="student" />
 
         {/* HUD SUPERIOR EXCLUSIVO QUANDO EM LAYOUT 2 (ARENA FIGHTER HUD) */}
-        {preferences.layoutPreset.student === 'gamified_journey' && (
+        {studentPreset === 'gamified_journey' && (
           <div
             style={{
               padding: '1.25rem',
@@ -623,7 +911,7 @@ export default function PortalAluno() {
               border: '2px solid var(--color-primary)',
               boxShadow: 'var(--shadow-card)',
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
               gap: '1rem',
               alignItems: 'center'
             }}
@@ -674,18 +962,14 @@ export default function PortalAluno() {
           </div>
         )}
 
-        {/* SHELL POLIMÓRFICO DO PORTAL DO ALUNO:
-            Layout 1 (tatame_express): Sistema Escolar com Aba Lateral Fixa à Esquerda (280px + 1fr)
-            Layout 2 (gamified_journey): Arena Fighter HUD com Barra Tática
-            Layout 3 (agenda_control): Executivo Split-View 2 Colunas Simultâneas
-            Layout 4 (complete_tabs): Clássico em Abas Horizontais */}
+        {/* SHELL POLIMÓRFICO DO PORTAL DO ALUNO */}
         <div
-          className={preferences.layoutPreset.student === 'tatame_express' ? 'responsive-portal-grid' : ''}
+          className={(studentPreset === 'tatame_express' || studentPreset === 'agenda_control') ? 'responsive-portal-grid' : ''}
           style={
-            preferences.layoutPreset.student === 'tatame_express'
+            studentPreset === 'tatame_express'
               ? { display: 'grid', gridTemplateColumns: 'minmax(250px, 285px) 1fr', gap: '1.25rem', alignItems: 'start' }
-              : preferences.layoutPreset.student === 'agenda_control'
-              ? { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem', alignItems: 'start' }
+              : studentPreset === 'agenda_control'
+              ? { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(290px, 360px)', gap: '1.25rem', alignItems: 'start' }
               : { display: 'block' }
           }
         >
@@ -855,193 +1139,480 @@ export default function PortalAluno() {
           {/* COLUNA PRINCIPAL DE CONTEÚDO DO ALUNO */}
           <div className="space-y-6 min-w-0">
 
-        {/* OS 3 PILARES COMPETITIVOS: TORNEIOS / RANKING / DESEMPENHO */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1: Próximos Torneios */}
-          <div 
-            onClick={() => setAbaAtiva('torneios')}
-            className={`group cursor-pointer rounded-2xl p-5 border transition-all duration-300 shadow-xl flex flex-col justify-between ${
-              abaAtiva === 'torneios' 
-                ? 'border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30 bg-[var(--color-bg-card-alt)]' 
-                : 'border-[var(--color-border)] bg-[var(--color-bg-card)] hover:border-[var(--color-primary)]/60 hover:-translate-y-1'
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-3xl">🏆</span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-1 rounded-full border border-[var(--color-primary-border)]">
-                  Inscrições Abertas
-                </span>
-              </div>
-              <h3 className="text-base sm:text-lg font-black text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition">
-                🏆 Próximos Torneios
-              </h3>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1.5 leading-relaxed font-medium">
-                Confira o calendário oficial de brackets, eliminatórias regionais e copas de artes marciais. Inscreva-se em chaves oficiais e compita pelo pódio.
-              </p>
-            </div>
-            <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-between">
-              <span className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1 group-hover:underline">
-                <span>{abaAtiva === 'torneios' ? 'Visualizando Módulo' : 'Saiba mais'}</span>
-                <span className="group-hover:translate-x-1 transition font-bold">{"->"}</span>
-              </span>
-            </div>
-          </div>
+        {/* CONTEÚDO COMPETITIVO & NAVEGAÇÃO POLIMÓRFICA POR PRESET DO ALUNO */}
+        {(() => {
+          const allStudentTabs = [
+            { id: 'torneios', num: '01', icon: '🏆', label: 'Torneios & Brackets', accent: 'primary' },
+            { id: 'ranking', num: '02', icon: '🌍', label: 'Ranking Global', accent: 'primary' },
+            { id: 'desempenho', num: '03', icon: '📊', label: 'Desempenho & Analytics', accent: 'primary' },
+            { id: 'treinos', num: '04', icon: '🥊', label: 'Treinos & Check-in', accent: 'default' },
+            { id: 'frequencia', num: '05', icon: '📅', label: 'Minha Frequência & %', accent: 'default' },
+            {
+              id: 'conquistas',
+              num: '06',
+              icon: '🎖️',
+              label: `Conquistas ${gamificacao?.rankAtual ? `(${isImageSource(gamificacao.rankAtual.badge_icon_url) ? '🥇' : gamificacao.rankAtual.badge_icon_url})` : ''}`,
+              accent: 'gold'
+            },
+            { id: 'recompensas', num: '07', icon: '🪙', label: 'Loja de Points', accent: 'green' },
+            { id: 'contratos', num: '08', icon: '📄', label: 'Meus Contratos', accent: 'default' },
+            { id: 'avisos', num: '09', icon: '📢', label: `Avisos (${avisos.length})`, accent: 'default' },
+            { id: 'mercado', num: '10', icon: '🛍️', label: 'Loja & Lanches', accent: 'default' },
+            {
+              id: 'financeiro',
+              num: '11',
+              icon: '💳',
+              label: alunoLogado?.is_bolsista ? 'Bolsa & Acesso' : isDiariaOuConvenio(alunoLogado?.plano) ? 'Status Acesso' : 'Mensalidade',
+              accent: 'default'
+            }
+          ];
 
-          {/* Card 2: Ranking Global */}
-          <div 
-            onClick={() => setAbaAtiva('ranking')}
-            className={`group cursor-pointer rounded-2xl p-5 border transition-all duration-300 shadow-xl flex flex-col justify-between ${
-              abaAtiva === 'ranking' 
-                ? 'border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30 bg-[var(--color-bg-card-alt)]' 
-                : 'border-[var(--color-border)] bg-[var(--color-bg-card)] hover:border-[var(--color-primary)]/60 hover:-translate-y-1'
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-3xl">🌍</span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-1 rounded-full border border-[var(--color-primary-border)]">
-                  MMR Atualizado
-                </span>
-              </div>
-              <h3 className="text-base sm:text-lg font-black text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition">
-                🌍 Ranking Global
-              </h3>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1.5 leading-relaxed font-medium">
-                Classificação geral por divisão de peso, graduação e taxa de finalizações. Veja quem lidera o ranking do tatame e compare seus pontos com atletas de todo o circuito.
-              </p>
-            </div>
-            <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-between">
-              <span className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1 group-hover:underline">
-                <span>{abaAtiva === 'ranking' ? 'Visualizando Módulo' : 'Saiba mais'}</span>
-                <span className="group-hover:translate-x-1 transition font-bold">{"->"}</span>
-              </span>
-            </div>
-          </div>
+          const pillars = [
+            {
+              id: 'torneios',
+              icon: '🏆',
+              tag: 'Inscrições Abertas',
+              title: 'Próximos Torneios',
+              desc: 'Confira o calendário oficial de brackets, eliminatórias regionais e copas de artes marciais.',
+              stat: 'Temporada Ativa',
+              progress: 82
+            },
+            {
+              id: 'ranking',
+              icon: '🌍',
+              tag: 'MMR Atualizado',
+              title: 'Ranking Global',
+              desc: 'Classificação geral por divisão de peso, graduação e aproveitamento no circuito.',
+              stat: `${gamificacao?.xpTotal || alunoLogado?.total_xp || 0} XP`,
+              progress: 68
+            },
+            {
+              id: 'desempenho',
+              icon: '📊',
+              tag: 'Analytics Ao Vivo',
+              title: 'Estatísticas de Desempenho',
+              desc: 'Métricas de assiduidade, sequência de treinos e aproveitamento técnico semanal.',
+              stat: `${gamificacao?.progressoMeta || 0}% da Meta`,
+              progress: Number(gamificacao?.progressoMeta || 45)
+            }
+          ];
 
-          {/* Card 3: Estatísticas de Desempenho */}
-          <div 
-            onClick={() => setAbaAtiva('desempenho')}
-            className={`group cursor-pointer rounded-2xl p-5 border transition-all duration-300 shadow-xl flex flex-col justify-between ${
-              abaAtiva === 'desempenho' 
-                ? 'border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30 bg-[var(--color-bg-card-alt)]' 
-                : 'border-[var(--color-border)] bg-[var(--color-bg-card)] hover:border-[var(--color-primary)]/60 hover:-translate-y-1'
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-3xl">📊</span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-1 rounded-full border border-[var(--color-primary-border)]">
-                  Analytics Ao Vivo
-                </span>
-              </div>
-              <h3 className="text-base sm:text-lg font-black text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition">
-                📊 Estatísticas de Desempenho
-              </h3>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1.5 leading-relaxed font-medium">
-                Métricas de assiduidade, aproveitamento de golpes, taxa de vitórias e frequência semanal. Dados consolidados para impulsionar sua evolução física e técnica.
-              </p>
-            </div>
-            <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-between">
-              <span className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1 group-hover:underline">
-                <span>{abaAtiva === 'desempenho' ? 'Visualizando Módulo' : 'Saiba mais'}</span>
-                <span className="group-hover:translate-x-1 transition font-bold">{"->"}</span>
-              </span>
-            </div>
-          </div>
-        </section>
+          if (studentPreset === 'tatame_express') {
+            return (
+              <>
+                {/* LAYOUT 1: BOLETIM ESCOLAR COM RETÂNGULOS-PÍLULA & CARIMBO ACADÊMICO */}
+                <section
+                  style={{
+                    padding: '1.15rem',
+                    borderRadius: '24px',
+                    background: 'var(--bg-surface-1)',
+                    border: '2px solid var(--border-subtle)',
+                    boxShadow: 'var(--shadow-card)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.9rem' }}>
+                    <div>
+                      <span style={{ fontSize: '0.64rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary)' }}>
+                        📚 DIÁRIO ESCOLAR COMPETITIVO & RENDIMENTO
+                      </span>
+                      <h2 style={{ margin: '0.15rem 0 0', fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
+                        Ficha Rápida do Atleta · {alunoLogado?.prajied || 'Cordão Branco'}
+                      </h2>
+                    </div>
+                    <span
+                      style={{
+                        padding: '0.3rem 0.8rem',
+                        borderRadius: '999px',
+                        background: 'var(--color-primary-light)',
+                        color: 'var(--color-primary)',
+                        border: '1px solid var(--color-primary-border)',
+                        fontSize: '0.68rem',
+                        fontWeight: 900
+                      }}
+                    >
+                      🎓 Turma Regular · {aulas.length} aulas hoje
+                    </span>
+                  </div>
 
-        {/* NAVEGAÇÃO DE ABAS NO DESKTOP */}
-        <div className="hidden sm:flex gap-2 border-b border-zinc-800 pb-3 overflow-x-auto boru-scrollbar">
-          <button 
-            onClick={() => setAbaAtiva('torneios')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'torneios' ? 'bg-[var(--color-primary)] text-[var(--color-btn-text)] shadow-md' : 'bg-[var(--color-bg-card)] text-[var(--color-text-muted)] hover:text-white border border-[var(--color-border)]'
-            }`}
-          >
-            🏆 Torneios & Brackets
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('ranking')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'ranking' ? 'bg-[var(--color-primary)] text-[var(--color-btn-text)] shadow-md' : 'bg-[var(--color-bg-card)] text-[var(--color-text-muted)] hover:text-white border border-[var(--color-border)]'
-            }`}
-          >
-            🌍 Ranking Global
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('desempenho')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'desempenho' ? 'bg-[var(--color-primary)] text-[var(--color-btn-text)] shadow-md' : 'bg-[var(--color-bg-card)] text-[var(--color-text-muted)] hover:text-white border border-[var(--color-border)]'
-            }`}
-          >
-            📊 Desempenho & Analytics
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('treinos')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'treinos' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
-          >
-            🥊 Treinos & Check-in
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('frequencia')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'frequencia' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
-          >
-            📅 Minha Frequência & %
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('conquistas')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'conquistas' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-500/40'
-            }`}
-          >
-            🏆 Minhas Conquistas {gamificacao?.rankAtual ? `(${isImageSource(gamificacao.rankAtual.badge_icon_url) ? '🥇' : gamificacao.rankAtual.badge_icon_url} ${gamificacao.rankAtual.name})` : ''}
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('recompensas')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'recompensas' ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'bg-[#141416] text-emerald-400 hover:text-white border border-emerald-500/40'
-            }`}
-          >
-            🪙 Loja de Points & Prêmios
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('contratos')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'contratos' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
-          >
-            📄 Meus Contratos
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('avisos')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'avisos' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
-          >
-            📢 Mural de Avisos ({avisos.length})
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('mercado')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'mercado' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
-          >
-            🛍️ Loja & Lanches (Beta)
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('financeiro')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'financeiro' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
-          >
-            {alunoLogado?.is_bolsista ? '🎓 Bolsa & Acesso' : isDiariaOuConvenio(alunoLogado?.plano) ? '🎫 Status do Acesso (Diária/Convênio)' : '💳 Mensalidade'}
-          </button>
-        </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 230px), 1fr))', gap: '0.75rem' }}>
+                    {pillars.map(p => {
+                      const active = abaAtiva === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setAbaAtiva(p.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.85rem',
+                            textAlign: 'left',
+                            padding: '0.9rem 1.05rem',
+                            borderRadius: '999px',
+                            background: active ? 'var(--color-primary)' : 'var(--bg-background)',
+                            color: active ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                            border: active ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '44px',
+                              height: '44px',
+                              borderRadius: '50%',
+                              background: active ? 'rgba(255,255,255,0.2)' : 'var(--color-primary-light)',
+                              color: active ? 'var(--text-primary-foreground)' : 'var(--color-primary)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.25rem',
+                              flexShrink: 0
+                            }}
+                          >
+                            {p.icon}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase', opacity: 0.85 }}>
+                              {p.tag}
+                            </div>
+                            <div style={{ fontSize: '0.88rem', fontWeight: 900, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {p.title}
+                            </div>
+                            <div style={{ fontSize: '0.7rem', fontWeight: 700, opacity: 0.9 }}>
+                              {p.stat} →
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Navegação em Pílulas Escolares para Mobile / Tablet */}
+                  <div className="flex lg:hidden gap-2 overflow-x-auto boru-scrollbar mt-4 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                    {allStudentTabs.map(t => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setAbaAtiva(t.id)}
+                        style={{
+                          padding: '0.45rem 0.9rem',
+                          borderRadius: '999px',
+                          whiteSpace: 'nowrap',
+                          fontSize: '0.74rem',
+                          fontWeight: 900,
+                          cursor: 'pointer',
+                          background: abaAtiva === t.id ? 'var(--color-primary)' : 'var(--bg-background)',
+                          color: abaAtiva === t.id ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                          border: '1px solid var(--border-subtle)'
+                        }}
+                      >
+                        {t.icon} {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              </>
+            );
+          }
+
+          if (studentPreset === 'gamified_journey') {
+            return (
+              <>
+                {/* LAYOUT 2: COCKPIT ARENA HUD TÁTICO COM BARRAS DE TELEMETRIA & HOTKEYS */}
+                <section className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  {pillars.map(p => {
+                    const active = abaAtiva === p.id;
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => setAbaAtiva(p.id)}
+                        style={{
+                          cursor: 'pointer',
+                          padding: '1.1rem',
+                          borderRadius: '10px',
+                          background: active ? 'var(--bg-surface-2)' : 'var(--bg-surface-1)',
+                          border: active ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                          borderBottom: '4px solid var(--color-primary)',
+                          boxShadow: 'var(--shadow-card)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: '0.75rem'
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                            <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)' }}>
+                              [{p.tag.toUpperCase()}]
+                            </span>
+                            <span style={{ fontSize: '1.25rem' }}>{p.icon}</span>
+                          </div>
+                          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: 'var(--text-foreground)', textTransform: 'uppercase' }}>
+                            {p.title}
+                          </h3>
+                          <p style={{ margin: '0.35rem 0 0', fontSize: '0.74rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
+                            {p.desc}
+                          </p>
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', fontWeight: 900, marginBottom: '0.25rem' }}>
+                            <span style={{ color: 'var(--text-muted-foreground)' }}>TELEMETRIA</span>
+                            <span style={{ color: 'var(--color-primary)' }}>{p.stat}</span>
+                          </div>
+                          <div style={{ height: '6px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)', borderRadius: '3px', overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.min(100, Math.max(12, p.progress))}%`, height: '100%', background: 'var(--color-primary)' }} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </section>
+
+                {/* Deck Tático de Seleção de Módulos [01..11] */}
+                <div
+                  style={{
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    background: 'var(--bg-surface-1)',
+                    border: '1px solid var(--border-subtle)',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 155px), 1fr))',
+                    gap: '0.45rem'
+                  }}
+                >
+                  {allStudentTabs.map(t => {
+                    const active = abaAtiva === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setAbaAtiva(t.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          padding: '0.55rem 0.7rem',
+                          borderRadius: '6px',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          background: active ? 'var(--color-primary)' : 'var(--bg-background)',
+                          color: active ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                          border: active ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                          fontSize: '0.72rem',
+                          fontWeight: 900
+                        }}
+                      >
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.65rem', opacity: 0.75 }}>{t.num}</span>
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {t.icon} {t.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            );
+          }
+
+          if (studentPreset === 'agenda_control') {
+            return (
+              <>
+                {/* LAYOUT 3: DOSSIÊ EXECUTIVO B2B (0PX FORMAL TABULAR MATRIX) */}
+                <section
+                  style={{
+                    borderRadius: '0px',
+                    background: 'var(--bg-surface-1)',
+                    border: '1px solid var(--border-subtle)',
+                    borderTop: '4px solid var(--color-primary)',
+                    padding: '1.15rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.9rem' }}>
+                    <div>
+                      <div style={{ fontSize: '0.64rem', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '0.12em', color: 'var(--color-primary)' }}>
+                        DOSSIÊ CORPORATIVO DO ATLETA · REGISTRO #{String(alunoLogado?.id || '').slice(0, 8)}
+                      </div>
+                      <h2 style={{ margin: '0.15rem 0 0', fontSize: '1.15rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-foreground)' }}>
+                        Sumário Executivo, Performance & Competitivo
+                      </h2>
+                    </div>
+                    <span
+                      style={{
+                        padding: '0.25rem 0.65rem',
+                        border: '1px solid var(--border-subtle)',
+                        background: 'var(--bg-background)',
+                        fontSize: '0.7rem',
+                        fontWeight: 900,
+                        fontFamily: 'monospace',
+                        color: 'var(--status-available)'
+                      }}
+                    >
+                      STATUS: MATRÍCULA ATIVA
+                    </span>
+                  </div>
+
+                  {/* Tabela Executiva 0px Clicável */}
+                  <div style={{ overflowX: 'auto', border: '1px solid var(--border-subtle)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.78rem' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg-background)', borderBottom: '2px solid var(--color-primary)' }}>
+                          <th style={{ padding: '0.65rem 0.85rem' }}>MÓDULO COMPETITIVO</th>
+                          <th style={{ padding: '0.65rem 0.85rem' }}>CATEGORIA</th>
+                          <th style={{ padding: '0.65rem 0.85rem' }}>INDICADOR ATUAL</th>
+                          <th style={{ padding: '0.65rem 0.85rem', textAlign: 'right' }}>AÇÃO</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pillars.map((p, idx) => {
+                          const active = abaAtiva === p.id;
+                          return (
+                            <tr
+                              key={p.id}
+                              onClick={() => setAbaAtiva(p.id)}
+                              style={{
+                                cursor: 'pointer',
+                                borderBottom: '1px solid var(--border-subtle)',
+                                background: active
+                                  ? 'var(--color-primary-light)'
+                                  : idx % 2 === 0
+                                  ? 'var(--bg-surface-1)'
+                                  : 'var(--bg-background)'
+                              }}
+                            >
+                              <td style={{ padding: '0.65rem 0.85rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
+                                {p.icon} {p.title}
+                              </td>
+                              <td style={{ padding: '0.65rem 0.85rem', fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--text-muted-foreground)' }}>
+                                {p.tag}
+                              </td>
+                              <td style={{ padding: '0.65rem 0.85rem', fontWeight: 900, color: 'var(--color-primary)' }}>
+                                {p.stat}
+                              </td>
+                              <td style={{ padding: '0.65rem 0.85rem', textAlign: 'right', fontWeight: 900 }}>
+                                <span style={{ color: active ? 'var(--color-primary)' : 'var(--text-foreground)' }}>
+                                  {active ? '[ EM VISUALIZAÇÃO ]' : 'ABRIR MÓDULO →'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Índice Formal com Borda Inferior Reta 0px */}
+                  <div
+                    className="flex gap-1 overflow-x-auto boru-scrollbar mt-4"
+                    style={{ borderBottom: '2px solid var(--border-subtle)' }}
+                  >
+                    {allStudentTabs.map(t => {
+                      const active = abaAtiva === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setAbaAtiva(t.id)}
+                          style={{
+                            padding: '0.6rem 0.9rem',
+                            borderRadius: '0px',
+                            whiteSpace: 'nowrap',
+                            fontSize: '0.74rem',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            cursor: 'pointer',
+                            background: active ? 'var(--color-primary)' : 'transparent',
+                            color: active ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                            border: 'none',
+                            borderBottom: active ? '3px solid var(--color-primary)' : '3px solid transparent'
+                          }}
+                        >
+                          {t.num}. {t.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              </>
+            );
+          }
+
+          /* LAYOUT 4: CLÁSSICO TOUCH ADAPTADO 100% ÀS VARIÁVEIS DE COR DO TEMA ATIVO */
+          return (
+            <>
+              <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {pillars.map(p => {
+                  const active = abaAtiva === p.id;
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => setAbaAtiva(p.id)}
+                      className="group cursor-pointer rounded-2xl p-5 transition-all duration-300 shadow-xl flex flex-col justify-between"
+                      style={{
+                        background: active ? 'var(--bg-surface-2)' : 'var(--bg-surface-1)',
+                        border: active ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)'
+                      }}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-3xl">{p.icon}</span>
+                          <span
+                            className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
+                            style={{
+                              background: 'var(--color-primary-light)',
+                              color: 'var(--color-primary)',
+                              border: '1px solid var(--color-primary-border)'
+                            }}
+                          >
+                            {p.tag}
+                          </span>
+                        </div>
+                        <h3 className="text-base sm:text-lg font-black transition" style={{ color: 'var(--text-foreground)' }}>
+                          {p.icon} {p.title}
+                        </h3>
+                        <p className="text-xs mt-1.5 leading-relaxed font-medium" style={{ color: 'var(--text-muted-foreground)' }}>
+                          {p.desc}
+                        </p>
+                      </div>
+                      <div className="mt-4 pt-3 flex items-center justify-between" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                        <span className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
+                          <span>{active ? 'Visualizando Módulo' : 'Saiba mais'}</span>
+                          <span className="group-hover:translate-x-1 transition font-bold">{"->"}</span>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </section>
+
+              <div
+                className="flex gap-2 pb-3 overflow-x-auto boru-scrollbar"
+                style={{ borderBottom: '1px solid var(--border-subtle)' }}
+              >
+                {allStudentTabs.map(t => {
+                  const active = abaAtiva === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setAbaAtiva(t.id)}
+                      className="px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer"
+                      style={{
+                        background: active ? 'var(--color-primary)' : 'var(--bg-surface-1)',
+                        color: active ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                        border: active ? '1px solid var(--color-primary)' : '1px solid var(--border-subtle)'
+                      }}
+                    >
+                      <span>{t.icon}</span>
+                      <span>{t.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          );
+        })()}
 
         {/* BARRA DE ATALHOS RÁPIDOS NO MOBILE (ACESSO DIRETO AO CALENDÁRIO E CONQUISTAS) */}
         <div className="flex sm:hidden items-center gap-2 overflow-x-auto boru-scrollbar pb-1">
@@ -1955,9 +2526,10 @@ export default function PortalAluno() {
 
           </div>
 
-          {/* COLUNA DIREITA FIXA QUANDO EM LAYOUT 3 (EXECUTIVO SPLIT-VIEW 2 COLUNAS) */}
-          {preferences.layoutPreset.student === 'agenda_control' && (
+          {/* COLUNA DIREITA FIXA QUANDO EM LAYOUT 3 (EXECUTIVO SPLIT-VIEW 2 COLUNAS 0PX) */}
+          {studentPreset === 'agenda_control' && (
             <aside
+              className="responsive-portal-aside"
               style={{
                 position: 'sticky',
                 top: '16px',
@@ -1969,9 +2541,10 @@ export default function PortalAluno() {
               <div
                 style={{
                   padding: '1.15rem',
-                  borderRadius: '10px',
+                  borderRadius: '0px',
                   background: 'var(--bg-surface-1)',
-                  border: '1px solid var(--border-subtle)'
+                  border: '1px solid var(--border-subtle)',
+                  borderTop: '3px solid var(--color-primary)'
                 }}
               >
                 <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
@@ -1993,9 +2566,10 @@ export default function PortalAluno() {
               <div
                 style={{
                   padding: '1.15rem',
-                  borderRadius: '10px',
+                  borderRadius: '0px',
                   background: 'var(--bg-surface-1)',
-                  border: '1px solid var(--border-subtle)'
+                  border: '1px solid var(--border-subtle)',
+                  borderTop: '3px solid var(--color-primary)'
                 }}
               >
                 <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
