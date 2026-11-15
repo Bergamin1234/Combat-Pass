@@ -1115,7 +1115,7 @@ export default function AdminDashboard() {
   // ==========================================
   return (
     <div className="min-h-screen text-zinc-100 font-sans p-3 sm:p-6 pb-20 relative z-10">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className={`${preferences.layoutPreset.admin === 'complete_erp' ? 'max-w-7xl' : 'max-w-[1560px]'} mx-auto space-y-6`}>
 
         {/* BARRA SUPERIOR & PERFIL DO USUÁRIO */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
@@ -1208,16 +1208,155 @@ export default function AdminDashboard() {
         {/* MOTOR MULTI-LAYOUT & ESTÚDIO DE CUSTOMIZAÇÃO DO ADMINISTRADOR */}
         <JourneyLayoutToolbar journey="admin" />
 
-        <div style={{ marginBottom: '0.75rem' }}>
-          <DynamicNavBuilder
-            journey="admin"
-            activeId={abaAtiva}
-            onSelect={(tab) => setAbaAtiva(tab)}
-            variant="horizontal"
-          />
-        </div>
+        {/* SHELL POLIMÓRFICO DO ADMINISTRADOR:
+            Layout 1 (executive): Sistema Escolar / ERP com Aba Lateral Fixa à Esquerda (290px + 1fr)
+            Layout 2 (operational_360): Command Center 360° Split-Deck (Recepção/Busca 360 + Módulo ERP)
+            Layout 3 (customizer_studio): Estúdio White-Label + ERP Completo
+            Layout 4 (complete_erp): Clássico em Abas Horizontais */}
+        <div
+          style={
+            preferences.layoutPreset.admin === 'executive'
+              ? { display: 'grid', gridTemplateColumns: 'minmax(255px, 290px) 1fr', gap: '1.25rem', alignItems: 'start' }
+              : preferences.layoutPreset.admin === 'operational_360'
+              ? { display: 'grid', gridTemplateColumns: 'minmax(300px, 345px) 1fr', gap: '1.25rem', alignItems: 'start' }
+              : { display: 'block' }
+          }
+        >
+          {/* ABA LATERAL FIXA DO SISTEMA ESCOLAR / ERP (QUANDO LAYOUT 1 ESTÁ ATIVO) */}
+          {preferences.layoutPreset.admin === 'executive' && (
+            <aside
+              style={{
+                position: 'sticky',
+                top: '16px',
+                borderRadius: '18px',
+                background: 'var(--bg-surface-1)',
+                border: '2px solid var(--border-subtle)',
+                padding: '1.1rem',
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.85rem'
+              }}
+            >
+              <div
+                style={{
+                  padding: '0.9rem',
+                  borderRadius: '14px',
+                  background: 'var(--bg-surface-2)',
+                  border: '1px solid var(--color-primary)'
+                }}
+              >
+                <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  🎓 DIRETORIA ACADÊMICA & ERP
+                </div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-foreground)', marginTop: '0.2rem' }}>
+                  {usuarioLogado?.nome}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted-foreground)', marginTop: '0.1rem' }}>
+                  Cargo: <strong style={{ color: 'var(--color-primary)' }}>{usuarioLogado?.cargo}</strong> · {usuarioLogado?.prajied || 'Coordenação'}
+                </div>
+              </div>
 
-        {(abaAtiva === 'aparencia_layouts' || preferences.layoutPreset.admin !== 'complete_erp') && (
+              {[
+                {
+                  group: '🎓 1. Secretaria & Alunos',
+                  items: [
+                    { id: 'alunos', icon: '👥', label: 'Todos os Alunos (Visão 360)' },
+                    { id: 'chamada_diaria', icon: '✅', label: 'Chamada & Frequência' },
+                    { id: 'avaliacoes', icon: '🏅', label: 'Avaliações & Exames' },
+                    { id: 'agendamentos', icon: '🎯', label: 'Leads & Aulas Exp.' }
+                  ]
+                },
+                {
+                  group: '💰 2. Financeiro & Contratos',
+                  items: [
+                    { id: 'financeiro_gestao', icon: '💰', label: 'Gestão Financeira' },
+                    { id: 'caixa_diario', icon: '💵', label: 'Caixa Diário (PDV)' },
+                    { id: 'planos_contratos', icon: '📄', label: 'Planos & Contratos' },
+                    { id: 'comissoes', icon: '🥋', label: 'Comissões Professores' }
+                  ]
+                },
+                {
+                  group: '🏆 3. Competitivo & Loja',
+                  items: [
+                    { id: 'gamificacao', icon: '🏆', label: 'Gamificação (30 Medalhas)' },
+                    { id: 'torneios_gestao', icon: '🏅', label: 'Torneios & Brackets' },
+                    { id: 'resgates_loja', icon: '🎟️', label: 'Vouchers & Loja Points' },
+                    { id: 'ocupacao', icon: '🔥', label: 'Ocupação & Unidades' }
+                  ]
+                },
+                {
+                  group: '⚙️ 4. Equipe, Estoque & Layouts',
+                  items: [
+                    { id: 'professores', icon: '👑', label: 'Professores & Equipe' },
+                    { id: 'loja', icon: '🛍️', label: 'Loja Física & Estoque' },
+                    { id: 'avisos', icon: '📢', label: 'Mural de Avisos' },
+                    { id: 'aparencia_layouts', icon: '🎨', label: 'Estúdio de Layouts & Cores' },
+                    { id: 'auditoria_logs', icon: '🛡️', label: 'Logs de Auditoria' }
+                  ]
+                }
+              ].map(section => (
+                <div key={section.group}>
+                  <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>
+                    {section.group}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.22rem' }}>
+                    {section.items.map(it => (
+                      <button
+                        key={it.id}
+                        type="button"
+                        onClick={() => setAbaAtiva(it.id as any)}
+                        style={{
+                          width: '100%',
+                          padding: '0.55rem 0.7rem',
+                          borderRadius: '9px',
+                          border: abaAtiva === it.id ? '1px solid var(--color-primary)' : '1px solid transparent',
+                          borderLeft: abaAtiva === it.id ? '4px solid var(--color-primary)' : '4px solid transparent',
+                          background: abaAtiva === it.id ? 'var(--color-primary-light)' : 'transparent',
+                          color: abaAtiva === it.id ? 'var(--color-primary)' : 'var(--text-foreground)',
+                          fontSize: '0.74rem',
+                          fontWeight: abaAtiva === it.id ? 900 : 700,
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.45rem'
+                        }}
+                      >
+                        <span>{it.icon}</span>
+                        <span>{it.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </aside>
+          )}
+
+          {/* DECK LATERAL DE RECEPÇÃO 360° (QUANDO LAYOUT 2 ESTÁ ATIVO) */}
+          {preferences.layoutPreset.admin === 'operational_360' && (
+            <aside
+              style={{
+                position: 'sticky',
+                top: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.9rem'
+              }}
+            >
+              <AdminLayoutStudio
+                usuarioLogado={usuarioLogado}
+                alunos={alunos}
+                onOpenStudent360={(id) => setAluno360Id(id)}
+                onSelectAdminTab={(tab) => setAbaAtiva(tab)}
+              />
+            </aside>
+          )}
+
+          {/* COLUNA PRINCIPAL DO ERP ADMINISTRATIVO */}
+          <div className="space-y-6 min-w-0">
+
+        {(abaAtiva === 'aparencia_layouts' || preferences.layoutPreset.admin === 'customizer_studio') && (
           <AdminLayoutStudio
             usuarioLogado={usuarioLogado}
             alunos={alunos}
@@ -2942,6 +3081,8 @@ export default function AdminDashboard() {
           <AdminStoreRedemptionsTab usuarioLogado={usuarioLogado} />
         )}
 
+          </div>
+        </div>
       </div>
 
       {/* MODAL NOVO ALUNO */}

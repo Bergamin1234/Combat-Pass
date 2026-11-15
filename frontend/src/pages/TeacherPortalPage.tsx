@@ -907,16 +907,6 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
         {/* Toolbar de Arquitetura Visual & Ordem de Módulos/Seções */}
         <JourneyLayoutToolbar journey="teacher" />
 
-        {/* Navegação Dinâmica Reordenável do Professor */}
-        <div style={{ marginBottom: '1rem' }}>
-          <DynamicNavBuilder
-            journey="teacher"
-            activeId={activeNavTab}
-            onSelect={tab => setActiveNavTab(tab)}
-            variant="horizontal"
-          />
-        </div>
-
         {feedbackMsg && (
           <div
             style={{
@@ -950,8 +940,103 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
           </div>
         )}
 
-        {/* Renderização Dinâmica Respeitando a Ordem Configurada pelo Professor/Admin */}
-        <DynamicSectionRenderer journey="teacher" sectionsMap={sectionsMap} />
+        {/* SHELL POLIMÓRFICO DO PROFESSOR:
+            Layout 1 (tatame_fast): Sistema Escolar Docente com Aba Lateral Fixa (285px + 1fr)
+            Layout 2 (technical_perf): Split-View Técnico 2 Colunas Lado a Lado
+            Layout 3 (partner_portal): Executivo Ortogonal de Comissões + Operação
+            Layout 4 (classic_teacher): Clássico Touch-First em Abas Horizontais */}
+        {activePreset === 'tatame_fast' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 285px) 1fr', gap: '1.25rem', alignItems: 'start' }}>
+            <aside
+              style={{
+                position: 'sticky',
+                top: '16px',
+                borderRadius: '18px',
+                background: 'var(--bg-surface-1)',
+                border: '2px solid var(--border-subtle)',
+                padding: '1.1rem',
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.85rem'
+              }}
+            >
+              <div style={{ padding: '0.9rem', borderRadius: '14px', background: 'var(--bg-surface-2)', border: '1px solid var(--color-primary)' }}>
+                <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  🎓 PORTAL DOCENTE · ABA LATERAL ESCOLAR
+                </div>
+                <div style={{ fontSize: '0.98rem', fontWeight: 900, color: 'var(--text-foreground)', marginTop: '0.2rem' }}>
+                  Mestre / Instrutor Credenciado
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)', marginTop: '0.1rem' }}>
+                  Turma Ativa: <strong style={{ color: 'var(--color-primary)' }}>{selectedHorario} ({selectedModalidade})</strong>
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--status-available)', fontWeight: 800, marginTop: '0.35rem' }}>
+                  ● {totalConfirmadosOuAgendados}/{limiteVagas} alunos no tatame
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                  📂 Módulos do Professor
+                </div>
+                <DynamicNavBuilder
+                  journey="teacher"
+                  activeId={activeNavTab}
+                  onSelect={tab => setActiveNavTab(tab)}
+                  variant="sidebar"
+                />
+              </div>
+
+              <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', display: 'grid', gap: '0.4rem' }}>
+                <Link to="/portal" style={{ padding: '0.6rem', borderRadius: '9px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.74rem', fontWeight: 800, textDecoration: 'none', textAlign: 'center' }}>
+                  🥊 Ver Portal do Aluno
+                </Link>
+                <Link to="/admin" style={{ padding: '0.6rem', borderRadius: '9px', background: 'var(--bg-background)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', fontSize: '0.74rem', fontWeight: 900, textDecoration: 'none', textAlign: 'center' }}>
+                  👑 Abrir ERP Admin
+                </Link>
+              </div>
+            </aside>
+
+            <div>
+              <DynamicSectionRenderer journey="teacher" sectionsMap={sectionsMap} />
+            </div>
+          </div>
+        ) : activePreset === 'technical_perf' ? (
+          <div>
+            <div style={{ marginBottom: '1rem' }}>
+              <DynamicNavBuilder
+                journey="teacher"
+                activeId={activeNavTab}
+                onSelect={tab => setActiveNavTab(tab)}
+                variant="horizontal"
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
+              <div>
+                {sectionsMap.ongoing_class}
+                {sectionsMap.touch_rollcall}
+              </div>
+              <div>
+                {sectionsMap.bonus_merit}
+                {sectionsMap.weekly_schedule}
+                {sectionsMap.commissions_summary}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ marginBottom: '1rem' }}>
+              <DynamicNavBuilder
+                journey="teacher"
+                activeId={activeNavTab}
+                onSelect={tab => setActiveNavTab(tab)}
+                variant="horizontal"
+              />
+            </div>
+            <DynamicSectionRenderer journey="teacher" sectionsMap={sectionsMap} />
+          </div>
+        )}
       </div>
     </div>
   );

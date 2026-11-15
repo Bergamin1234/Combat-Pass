@@ -1,515 +1,368 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   useLayoutEngine,
-  LandingPresetId,
-  DynamicNavBuilder
+  JourneyLayoutToolbar,
+  LOADING_STYLE_META,
+  LoadingStyleId,
+  LandingPresetId
 } from '../config/layoutEngine';
-import { THEMES_LIST } from '../config/themeConfig';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import { InteractiveCombatCalendar } from '../components/InteractiveCombatCalendar';
 import { PublicQuickCheckinCard } from '../components/QuickCheckinWidget';
-import { publicApi } from '../services/api';
+import { publicApi, studentApi } from '../services/api';
+import { ACADEMY_CONFIG } from '../config/academyConfig';
+import { CompleteSiteModules } from '../components/CompleteSiteModules';
 
-interface PartnerCenter {
-  id: string;
-  nome: string;
-  bairro: string;
-  cidade: string;
-  distancia: string;
-  modalidades: string[];
-  passeMinimo: 'SILVER' | 'GOLD' | 'BLACK';
-  nota: string;
-  avaliacoes: number;
-  vagasHoje: number;
-  statusHoje: 'DISPONIVEL' | 'ULTIMAS_VAGAS' | 'LOTADO';
-  destaque: string;
-  imagem: string;
-  proximaAula: string;
-  mestreResponsavel: string;
-}
-
-const DEFAULT_PARTNER_CTS: PartnerCenter[] = [
+const FALLBACK_ACADEMIES = [
   {
-    id: 'ct-boru-matriz',
-    nome: 'CT Borü Centro de Combate (Unidade Matriz)',
-    bairro: 'Centro / Arena',
+    id: 'ct-boru',
+    nome: 'CT Borü Centro de Combate (Unidade Credenciada)',
     cidade: 'São Paulo - SP',
+    bairro: 'Centro / Arena',
     distancia: '1.2 km',
     modalidades: ['Muay Thai', 'Boxe', 'Sparring Técnico', 'Clinch'],
-    passeMinimo: 'SILVER',
-    nota: '4.98',
-    avaliacoes: 342,
+    rating: 4.9,
     vagasHoje: 12,
-    statusHoje: 'DISPONIVEL',
-    destaque: 'Octógono Oficial & Mestres Federados',
-    imagem: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800&auto=format&fit=crop&q=80',
-    proximaAula: '19:00 · Muay Thai Geral',
-    mestreResponsavel: 'Mestre Felipe Borü'
+    tierMinimo: 'SILVER',
+    imagem: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=700&auto=format&fit=crop&q=80',
+    destaque: 'Octógono Oficial & Mestres Federados'
   },
   {
-    id: 'ct-iron-bjj',
-    nome: 'Iron Lotus Jiu-Jitsu & Grappling Hub',
+    id: 'ct-gracie-hub',
+    nome: 'Alliance / Gracie Grappling Arena',
+    cidade: 'São Paulo - SP',
     bairro: 'Jardins',
-    cidade: 'São Paulo - SP',
     distancia: '2.4 km',
-    modalidades: ['Jiu-Jitsu (Gi)', 'No-Gi Submission', 'Wrestling'],
-    passeMinimo: 'GOLD',
-    nota: '5.00',
-    avaliacoes: 218,
-    vagasHoje: 4,
-    statusHoje: 'ULTIMAS_VAGAS',
-    destaque: 'Tatame Olímpico & Turmas Competição',
-    imagem: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=800&auto=format&fit=crop&q=80',
-    proximaAula: '18:30 · Jiu-Jitsu Competição',
-    mestreResponsavel: 'Prof. Ricardo Lotus'
+    modalidades: ['Jiu-Jitsu (Gi)', 'No-Gi Submission', 'Judô', 'Defesa Pessoal'],
+    rating: 4.9,
+    vagasHoje: 8,
+    tierMinimo: 'GOLD',
+    imagem: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=700&auto=format&fit=crop&q=80',
+    destaque: 'Tatame Olímpico 400m² Climatizado'
   },
   {
-    id: 'ct-apex-mma',
-    nome: 'Apex Pro Fight & Performance Lab',
+    id: 'ct-iron-boxing',
+    nome: 'Iron Gloves Boxing & MMA Lab',
+    cidade: 'São Paulo - SP',
     bairro: 'Vila Olímpia',
-    cidade: 'São Paulo - SP',
     distancia: '3.1 km',
-    modalidades: ['MMA Pro', 'Muay Thai', 'Boxe Olímpico', 'Preparação Física'],
-    passeMinimo: 'BLACK',
-    nota: '4.95',
-    avaliacoes: 189,
-    vagasHoje: 9,
-    statusHoje: 'DISPONIVEL',
-    destaque: 'Cage Oficial & Bioimpedância',
-    imagem: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80',
-    proximaAula: '20:00 · MMA & Wrestling',
-    mestreResponsavel: 'Coach Rafael Apex'
+    modalidades: ['Boxe Olímpico', 'MMA Pro', 'Wrestling', 'Condicionamento'],
+    rating: 4.8,
+    vagasHoje: 5,
+    tierMinimo: 'SILVER',
+    imagem: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=700&auto=format&fit=crop&q=80',
+    destaque: 'Ringue Oficial & Preparação Física'
   },
   {
-    id: 'ct-krabi-thai',
+    id: 'ct-nak-muay',
     nome: 'Krabi Stadium Muay Thai & Kickboxing',
+    cidade: 'São Paulo - SP',
     bairro: 'Pinheiros',
-    cidade: 'São Paulo - SP',
     distancia: '3.8 km',
-    modalidades: ['Muay Thai Tradicional', 'Kickboxing K-1', 'Kids Martial'],
-    passeMinimo: 'SILVER',
-    nota: '4.89',
-    avaliacoes: 156,
-    vagasHoje: 0,
-    statusHoje: 'LOTADO',
-    destaque: 'Treino Tradicional Tailandês',
-    imagem: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=800&auto=format&fit=crop&q=80',
-    proximaAula: '19:30 · Kickboxing K-1 [LOTADO]',
-    mestreResponsavel: 'Kru Somchai / Equipe'
-  },
-  {
-    id: 'ct-valhalla-boxe',
-    nome: 'Valhalla Noble Art Boxing Club',
-    bairro: 'Moema',
-    cidade: 'São Paulo - SP',
-    distancia: '4.5 km',
-    modalidades: ['Boxe Olímpico', 'Boxe Executivo', 'Condicionamento'],
-    passeMinimo: 'GOLD',
-    nota: '4.94',
-    avaliacoes: 274,
-    vagasHoje: 7,
-    statusHoje: 'DISPONIVEL',
-    destaque: 'Ringue Oficial & Saco Inteligente',
-    imagem: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800&auto=format&fit=crop&q=80',
-    proximaAula: '18:00 · Boxe Nobre Arte',
-    mestreResponsavel: 'Treinador Viktor'
-  },
-  {
-    id: 'ct-bushido-dojo',
-    nome: 'Bushido Kodokan Judo & Karatê Kyokushin',
-    bairro: 'Liberdade',
-    cidade: 'São Paulo - SP',
-    distancia: '5.0 km',
-    modalidades: ['Judô Kodokan', 'Karatê Kyokushin', 'Defesa Pessoal'],
-    passeMinimo: 'SILVER',
-    nota: '4.97',
-    avaliacoes: 310,
-    vagasHoje: 15,
-    statusHoje: 'DISPONIVEL',
-    destaque: 'Tradição Marcial & Formação de Faixas',
-    imagem: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=800&auto=format&fit=crop&q=80',
-    proximaAula: '19:00 · Karatê Kyokushin',
-    mestreResponsavel: 'Sensei Kenji Takeda'
+    modalidades: ['Muay Thai Tradicional', 'Kickboxing K-1', 'Kids Marcial'],
+    rating: 4.8,
+    vagasHoje: 14,
+    tierMinimo: 'SILVER',
+    imagem: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=700&auto=format&fit=crop&q=80',
+    destaque: 'Metodologia Tailandesa & Turmas Kids'
   }
 ];
 
-const REWARDS_SHOWCASE_ITEMS = [
-  {
-    id: 'rw-1',
-    nome: 'Luva Oficial Combat-Pass Pro 14oz',
-    categoria: 'Equipamento Oficial',
-    pontos: 2400,
-    icone: '🥊',
-    estoque: 'Disponível em 18 CTs'
-  },
-  {
-    id: 'rw-2',
-    nome: 'Kimono Trançado Ultra-Light BJJ',
-    categoria: 'Armadura de Tatame',
-    pontos: 3800,
-    icone: '🥋',
-    estoque: 'Disponível em 12 CTs'
-  },
-  {
-    id: 'rw-3',
-    nome: 'Bandagem Elástica 5m + Protetor Bucal',
-    categoria: 'Kit Proteção',
-    pontos: 650,
-    icone: '🩹',
-    estoque: 'Retirada Imediata na Recepção'
-  },
-  {
-    id: 'rw-4',
-    nome: 'Prajied / Faixa Bordada Personalizada',
-    categoria: 'Graduação & Honra',
-    pontos: 1200,
-    icone: '🏅',
-    estoque: 'Sob Encomenda Oficial'
-  }
+const FALLBACK_REWARDS = [
+  { id: 'r1', nome: 'Luva Oficial Combat-Pass 14oz Pro', categoria: 'EQUIPAMENTO', custoPoints: 1200, estoque: 8, icone: '🥊' },
+  { id: 'r2', nome: 'Bandagem Elástica 5m (Par Oficial)', categoria: 'ACESSÓRIO', custoPoints: 280, estoque: 25, icone: '🩹' },
+  { id: 'r3', nome: 'Kimono Trançado BJJ Ultra-Light', categoria: 'EQUIPAMENTO', custoPoints: 1850, estoque: 5, icone: '🥋' },
+  { id: 'r4', nome: 'Upgrade 30 Dias Passe BLACK Ilimitado', categoria: 'PASSE', custoPoints: 650, estoque: 50, icone: '🎫' },
+  { id: 'r5', nome: 'Caneleira Muay Thai Alta Densidade', categoria: 'EQUIPAMENTO', custoPoints: 950, estoque: 10, icone: '🛡️' },
+  { id: 'r6', nome: 'Rashguard No-Gi Compressão Térmica', categoria: 'VESTUÁRIO', custoPoints: 520, estoque: 16, icone: '👕' }
+];
+
+const SCHOOL_SIDEBAR_SECTIONS = [
+  { id: 'ALL', icon: '📚', label: 'Visão Completa (Todos os 12 Módulos)', badge: '100%' },
+  { id: 'o_que_e_ct', icon: '🛡️', label: 'O Que É o CT & Academias', badge: 'Rede' },
+  { id: 'competitivo', icon: '🏆', label: 'Torneios, Ranking & Stats', badge: 'Ao Vivo' },
+  { id: 'modalidades', icon: '🥋', label: '8 Modalidades de Luta', badge: '8 Cursos' },
+  { id: 'horarios', icon: '📅', label: 'Grade Semanal & Check-in', badge: 'Vagas' },
+  { id: 'planos', icon: '🎫', label: 'Planos & Passes Unificados', badge: '4 Planos' },
+  { id: 'estrutura', icon: '🏛️', label: 'Estrutura & Instalações', badge: '6 Áreas' },
+  { id: 'professores', icon: '👨‍🏫', label: 'Corpo Docente & Mestres', badge: '4 Mestres' },
+  { id: 'gamificacao', icon: '🥇', label: 'Pódio, 30 Medalhas & Loja', badge: 'XP' },
+  { id: 'ecossistema', icon: '⚙️', label: 'Ecossistema de Módulos', badge: '6 Sistemas' },
+  { id: 'galeria', icon: '📸', label: 'Galeria do Tatame', badge: '6 Fotos' },
+  { id: 'faq', icon: '❓', label: 'Dúvidas Frequentes (FAQ)', badge: '6 Respostas' },
+  { id: 'localizacao', icon: '📍', label: 'Localização, Mapa & Parceria', badge: 'GPS' }
 ];
 
 export const LandingHubPage: React.FC = () => {
-  const navigate = useNavigate();
   const {
     preferences,
     setJourneyPreset,
-    setPalette,
     setLoadingStyle,
-    moveSectionItem,
-    toggleSectionVisibility,
-    moveRouteItem,
-    toggleRouteVisibility,
     triggerLoadingDemo
   } = useLayoutEngine();
 
   const activePreset = preferences.layoutPreset.landing;
 
-  // Painel Visual "Central de Escolha do Cliente" (Showroom / Launchpad)
-  const [showExperienceHub, setShowExperienceHub] = useState(false);
-  const [showOrderBuilderModal, setShowOrderBuilderModal] = useState(false);
-
-  // Estados Layout A (Marketplace Split-Screen App)
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedModality, setSelectedModality] = useState('TODAS');
-  const [selectedPassFilter, setSelectedPassFilter] = useState('TODOS');
-  const [selectedCity, setSelectedCity] = useState('São Paulo - SP');
-  const [selectedCenter, setSelectedCenter] = useState<PartnerCenter>(DEFAULT_PARTNER_CTS[0]);
-  const [marketplaceRightTab, setMarketplaceRightTab] = useState<'radar' | 'checkin' | 'passes'>('radar');
-
-  // Estados Layout B (Corporativo & Institucional B2B)
-  const [corpEcosystemTab, setCorpEcosystemTab] = useState<'empresas' | 'academias' | 'atletas'>('empresas');
-  const [credenciamentoForm, setCredenciamentoForm] = useState({
-    nomeAcademia: '',
-    cidadeBairro: '',
-    modalidades: '',
-    cnpjOuResponsavel: '',
-    whatsapp: ''
-  });
-  const [credenciamentoStatus, setCredenciamentoStatus] = useState('');
-
-  // Estados Layout C (Arena Tatame HUD / Command Center)
-  const [arenaClock, setArenaClock] = useState<string>(new Date().toLocaleTimeString('pt-BR'));
-  const [aulasHoje, setAulasHoje] = useState<any[]>([]);
+  const [academies, setAcademies] = useState<any[]>(FALLBACK_ACADEMIES);
+  const [rewardsCatalog, setRewardsCatalog] = useState<any[]>(FALLBACK_REWARDS);
+  const [corporateTab, setCorporateTab] = useState<'empresas' | 'academias' | 'atletas'>('empresas');
+  const [schoolSectionFilter, setSchoolSectionFilter] = useState<string>('ALL');
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [showExperienceLauncher, setShowExperienceLauncher] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setArenaClock(new Date().toLocaleTimeString('pt-BR'));
-    }, 1000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
+    let mounted = true;
     publicApi
-      .getTodayClasses()
-      .then((res: any) => {
-        if (Array.isArray(res?.data?.aulas)) setAulasHoje(res.data.aulas);
+      .getAcademies()
+      .then(res => {
+        if (mounted && Array.isArray(res.data) && res.data.length > 0) {
+          setAcademies(res.data);
+        }
       })
       .catch(() => {});
+
+    studentApi
+      .getRewardStoreItems()
+      .then(res => {
+        if (mounted && Array.isArray(res.data?.itens) && res.data.itens.length > 0) {
+          setRewardsCatalog(res.data.itens);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
+  // Controla a visibilidade do HTML original quando o Layout 4 ("classic") está ativo
   useEffect(() => {
-    if (activePreset === 'classic') {
-      document.body.classList.remove('react-active');
-    } else {
-      document.body.classList.add('react-active');
+    const origRoot = document.getElementById('original-landing-root');
+    if (origRoot) {
+      if (activePreset === 'classic') {
+        origRoot.style.display = 'block';
+        try {
+          if ((window as any).lucide) {
+            (window as any).lucide.createIcons();
+          }
+        } catch (e) {}
+      } else {
+        origRoot.style.display = 'none';
+      }
     }
+    return () => {
+      if (origRoot) {
+        origRoot.style.display = 'none';
+      }
+    };
   }, [activePreset]);
 
-  const filteredCenters = DEFAULT_PARTNER_CTS.filter(ct => {
-    const matchText =
-      !searchQuery.trim() ||
-      ct.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ct.bairro.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ct.modalidades.some(m => m.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchModality =
-      selectedModality === 'TODAS' ||
-      ct.modalidades.some(m => m.toLowerCase().includes(selectedModality.toLowerCase()));
-    const matchPass = selectedPassFilter === 'TODOS' || ct.passeMinimo === selectedPassFilter;
-    return matchText && matchModality && matchPass;
-  });
-
-  const handleNavSelect = (routeOrTab: string) => {
-    if (routeOrTab.startsWith('/')) {
-      navigate(routeOrTab);
-      return;
-    }
-    const cleanId = routeOrTab.replace('#', '');
-    const el = document.getElementById(`landing-sec-${cleanId}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   const handleSelectLayout = (presetId: LandingPresetId, label: string) => {
-    triggerLoadingDemo(`Ativando arquitetura: ${label}...`, undefined, 600);
     setJourneyPreset('landing', presetId);
-    setShowExperienceHub(false);
-  };
-
-  const handleCredenciarSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!credenciamentoForm.nomeAcademia || !credenciamentoForm.whatsapp) {
-      setCredenciamentoStatus('Informe a Razão Social / Nome do CT e o WhatsApp comercial.');
-      return;
-    }
-    triggerLoadingDemo('Enviando dossiê de credenciamento B2B...', 'step_progress', 1400);
-    setCredenciamentoStatus(
-      `✅ Proposta da unidade "${credenciamentoForm.nomeAcademia}" protocolada! Nosso time de expansão B2B entrará em contato.`
-    );
-    setCredenciamentoForm({
-      nomeAcademia: '',
-      cidadeBairro: '',
-      modalidades: '',
-      cnpjOuResponsavel: '',
-      whatsapp: ''
-    });
+    setShowExperienceLauncher(false);
+    triggerLoadingDemo(`Ativando ${label}...`, undefined, 500);
   };
 
   // ============================================================================
-  // DOCK SUPERIOR GLOBAL DE EXPERIÊNCIA (VISÍVEL EM TODOS OS 4 LAYOUTS)
-  // Permite escolher o layout com miniaturas visuais, trocar paleta, ordenar páginas
-  // ou ir direto para qualquer módulo da versão anterior ou nova!
+  // BARRA GLOBAL DE EXPERIÊNCIA & ACESSO COMPLETO (NO TOPO DE TODOS OS 4 LAYOUTS)
   // ============================================================================
-  const renderGlobalExperienceDock = () => (
+  const GlobalExperienceDock = (
     <div
       style={{
-        position: activePreset === 'classic' ? 'fixed' : 'sticky',
-        top: activePreset === 'classic' ? '5.2rem' : '0',
-        left: 0,
-        right: 0,
-        zIndex: 9990,
+        position: 'sticky',
+        top: 0,
+        zIndex: 9999,
         background: 'var(--bg-surface-1)',
         borderBottom: '2px solid var(--color-primary)',
         boxShadow: 'var(--shadow-card)',
-        padding: '0.55rem clamp(0.75rem, 2vw, 1.75rem)'
+        padding: '0.5rem 1rem'
       }}
     >
       <div
         style={{
-          maxWidth: '1600px',
+          maxWidth: '1480px',
           margin: '0 auto',
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
+          justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '0.65rem'
+          gap: '0.6rem'
         }}
       >
-        {/* Seletor Direto dos 4 Layouts Completamente Diferentes */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+        {/* Seletor Rápido dos 4 Layouts Completos */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
           <button
             type="button"
-            onClick={() => setShowExperienceHub(prev => !prev)}
+            onClick={() => setShowExperienceLauncher(true)}
             style={{
-              padding: '0.48rem 0.9rem',
-              borderRadius: '10px',
+              padding: '0.45rem 0.85rem',
+              borderRadius: '999px',
+              border: '1px solid var(--color-primary)',
               background: 'var(--color-primary)',
               color: 'var(--text-primary-foreground)',
-              border: 'none',
-              fontSize: '0.74rem',
+              fontSize: '0.73rem',
               fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: 'var(--shadow-glow)'
+              gap: '0.35rem',
+              boxShadow: 'var(--shadow-card)'
             }}
           >
             <span>🎛️</span>
-            <span>Escolher O Que Ver / Vitrine de Layouts</span>
+            <span>Escolher Layout / O Que Ver</span>
           </button>
 
           {(
             [
-              { id: 'marketplace', icon: '🗺️', label: '1. App Marketplace & Mapa' },
-              { id: 'corporate', icon: '🏢', label: '2. Executivo & B2B Editorial' },
-              { id: 'tatame', icon: '⚡', label: '3. Arena Tatame HUD (Ao Vivo)' },
-              { id: 'classic', icon: '🏛️', label: '4. Site Clássico Original' }
-            ] as Array<{ id: LandingPresetId; icon: string; label: string }>
+              { id: 'marketplace', icon: '🎓', short: '1. Sistema Escolar (Aba Lateral)' },
+              { id: 'corporate', icon: '🏛️', short: '2. Editorial & B2B' },
+              { id: 'tatame', icon: '⚡', short: '3. Arena HUD 3 Colunas' },
+              { id: 'classic', icon: '📜', short: '4. Clássico Original' }
+            ] as Array<{ id: LandingPresetId; icon: string; short: string }>
           ).map(item => {
-            const isCurrent = activePreset === item.id;
+            const isActive = activePreset === item.id;
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => handleSelectLayout(item.id, item.label)}
+                onClick={() => handleSelectLayout(item.id, item.short)}
                 style={{
-                  padding: '0.44rem 0.8rem',
-                  borderRadius: '10px',
-                  background: isCurrent ? 'var(--bg-surface-2)' : 'var(--bg-background)',
-                  color: 'var(--text-foreground)',
-                  border: isCurrent
-                    ? '2px solid var(--color-primary)'
-                    : '1px solid var(--border-subtle)',
-                  fontSize: '0.73rem',
-                  fontWeight: isCurrent ? 900 : 700,
+                  padding: '0.4rem 0.72rem',
+                  borderRadius: '9px',
+                  border: isActive ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+                  background: isActive ? 'var(--bg-surface-2)' : 'var(--bg-background)',
+                  color: isActive ? 'var(--color-primary)' : 'var(--text-foreground)',
+                  fontSize: '0.72rem',
+                  fontWeight: isActive ? 900 : 700,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.35rem'
+                  gap: '0.3rem'
                 }}
               >
                 <span>{item.icon}</span>
-                <span>{item.label}</span>
-                {isCurrent && (
-                  <span
-                    style={{
-                      width: '7px',
-                      height: '7px',
-                      borderRadius: '999px',
-                      background: 'var(--status-available)'
-                    }}
-                  />
-                )}
+                <span>{item.short}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Atalhos Rápidos para Todos os Módulos (Antigos e Novos) + Ordenador */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={() => setShowOrderBuilderModal(true)}
+        {/* Todos os Acessos Diretos (Torneios, Ranking, Stats, Aluno, Professor, Admin, Cores) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+          <Link
+            to="/portal?tab=torneios"
             style={{
-              padding: '0.42rem 0.75rem',
-              borderRadius: '8px',
-              background: 'var(--bg-surface-2)',
-              color: 'var(--color-primary)',
-              border: '1px solid var(--color-primary)',
-              fontSize: '0.72rem',
-              fontWeight: 900,
-              cursor: 'pointer'
-            }}
-          >
-            🔀 Ordenar Menu & Seções
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/portal?tab=torneios')}
-            style={{
-              padding: '0.42rem 0.7rem',
+              padding: '0.36rem 0.6rem',
               borderRadius: '8px',
               background: 'var(--bg-background)',
               color: 'var(--text-foreground)',
               border: '1px solid var(--border-subtle)',
-              fontSize: '0.72rem',
+              fontSize: '0.7rem',
               fontWeight: 800,
-              cursor: 'pointer'
+              textDecoration: 'none'
             }}
           >
             🏆 Torneios
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/portal?tab=ranking')}
+          </Link>
+          <Link
+            to="/portal?tab=ranking"
             style={{
-              padding: '0.42rem 0.7rem',
+              padding: '0.36rem 0.6rem',
               borderRadius: '8px',
               background: 'var(--bg-background)',
               color: 'var(--text-foreground)',
               border: '1px solid var(--border-subtle)',
-              fontSize: '0.72rem',
+              fontSize: '0.7rem',
               fontWeight: 800,
-              cursor: 'pointer'
+              textDecoration: 'none'
             }}
           >
             🌍 Ranking
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/portal?tab=desempenho')}
+          </Link>
+          <Link
+            to="/portal?tab=desempenho"
             style={{
-              padding: '0.42rem 0.7rem',
+              padding: '0.36rem 0.6rem',
               borderRadius: '8px',
               background: 'var(--bg-background)',
               color: 'var(--text-foreground)',
               border: '1px solid var(--border-subtle)',
-              fontSize: '0.72rem',
+              fontSize: '0.7rem',
               fontWeight: 800,
-              cursor: 'pointer'
+              textDecoration: 'none'
             }}
           >
             📊 Stats
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/portal')}
+          </Link>
+          <Link
+            to="/portal"
             style={{
-              padding: '0.42rem 0.75rem',
+              padding: '0.36rem 0.65rem',
               borderRadius: '8px',
               background: 'var(--bg-surface-2)',
               color: 'var(--text-foreground)',
               border: '1px solid var(--border-subtle)',
-              fontSize: '0.72rem',
-              fontWeight: 900,
-              cursor: 'pointer'
+              fontSize: '0.7rem',
+              fontWeight: 800,
+              textDecoration: 'none'
             }}
           >
-            🥊 Aluno
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/professor')}
+            🥊 Área do Aluno
+          </Link>
+          <Link
+            to="/professor"
             style={{
-              padding: '0.42rem 0.75rem',
+              padding: '0.36rem 0.65rem',
               borderRadius: '8px',
               background: 'var(--bg-surface-2)',
               color: 'var(--text-foreground)',
               border: '1px solid var(--border-subtle)',
-              fontSize: '0.72rem',
-              fontWeight: 900,
-              cursor: 'pointer'
+              fontSize: '0.7rem',
+              fontWeight: 800,
+              textDecoration: 'none'
             }}
           >
             🥋 Professor
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/admin')}
+          </Link>
+          <Link
+            to="/admin"
             style={{
-              padding: '0.42rem 0.75rem',
+              padding: '0.36rem 0.65rem',
               borderRadius: '8px',
               background: 'var(--bg-surface-2)',
               color: 'var(--color-primary)',
               border: '1px solid var(--color-primary)',
-              fontSize: '0.72rem',
+              fontSize: '0.7rem',
               fontWeight: 900,
-              cursor: 'pointer'
+              textDecoration: 'none'
             }}
           >
             👑 Admin
+          </Link>
+          <button
+            type="button"
+            onClick={() => setShowOrderModal(true)}
+            style={{
+              padding: '0.36rem 0.6rem',
+              borderRadius: '8px',
+              background: 'var(--bg-background)',
+              color: 'var(--text-foreground)',
+              border: '1px solid var(--border-subtle)',
+              fontSize: '0.7rem',
+              fontWeight: 800,
+              cursor: 'pointer'
+            }}
+          >
+            🔀 Ordenar
           </button>
-
           <ThemeSwitcher />
         </div>
       </div>
@@ -517,1508 +370,733 @@ export const LandingHubPage: React.FC = () => {
   );
 
   // ============================================================================
-  // MODAL SHOWROOM INTERATIVO: "CENTRAL DE ESCOLHA VISUAL DO CLIENTE"
-  // Exibe miniaturas arquiteturais desenhadas (Wireframes Vivos) de cada layout,
-  // escolha de páginas/módulos e troca de paleta em tempo real.
+  // MODAL SHOWROOM VISUAL: ESCOLHER LAYOUT DO SITE OU DOS PORTAIS
   // ============================================================================
-  const renderExperienceHubModal = () => {
-    if (!showExperienceHub) return null;
-
-    return (
+  const ExperienceShowroomModal = showExperienceLauncher && (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10005,
+        background: 'rgba(0,0,0,0.82)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem'
+      }}
+      onClick={() => setShowExperienceLauncher(false)}
+    >
       <div
-        onClick={e => {
-          if (e.target === e.currentTarget) setShowExperienceHub(false);
-        }}
+        onClick={e => e.stopPropagation()}
         style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 99999,
-          background: 'rgba(0, 0, 0, 0.82)',
-          backdropFilter: 'blur(10px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1.25rem',
-          overflowY: 'auto'
+          width: '100%',
+          maxWidth: '1180px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          borderRadius: '24px',
+          background: 'var(--bg-surface-1)',
+          border: '2px solid var(--color-primary)',
+          padding: '1.75rem',
+          color: 'var(--text-foreground)',
+          boxShadow: 'var(--shadow-card)'
         }}
       >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
+          <div>
+            <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              🎛️ CENTRAL DE ARQUITETURAS VISUAIS · TODAS AS FUNÇÕES EM DIFERENTES LAYOUTS
+            </span>
+            <h2 style={{ margin: '0.25rem 0', fontSize: '1.65rem', fontWeight: 900 }}>
+              Escolha o Layout do Site Principal ou Acesse os Portais (Aluno, Professor, Admin)
+            </h2>
+            <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-muted-foreground)' }}>
+              Todos os 4 layouts possuem <strong>100% das informações e funções do 4º layout</strong> (8 Modalidades, Grade de Horários, Check-in, 4 Planos, 4 Professores, 6 Estruturas, Pódio/30 Conquistas, Ecossistema, Galeria, FAQ e Mapa), porém organizados em arquiteturas totalmente diferentes.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowExperienceLauncher(false)}
+            style={{
+              padding: '0.5rem 0.9rem',
+              borderRadius: '10px',
+              border: '1px solid var(--border-subtle)',
+              background: 'var(--bg-surface-2)',
+              color: 'var(--text-foreground)',
+              fontWeight: 900,
+              cursor: 'pointer'
+            }}
+          >
+            ✕ Fechar
+          </button>
+        </div>
+
+        {/* 4 CARDS COM DESENHO ESTRUTURAL (MINI-WIREFRAME) DE CADA LAYOUT */}
         <div
           style={{
-            width: '100%',
-            maxWidth: '1280px',
-            background: 'var(--bg-surface-1)',
-            color: 'var(--text-foreground)',
-            border: '2px solid var(--color-primary)',
-            borderRadius: '24px',
-            padding: '1.75rem',
-            boxShadow: 'var(--shadow-card)',
-            maxHeight: '92vh',
-            overflowY: 'auto'
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(255px, 1fr))',
+            gap: '1rem',
+            marginBottom: '1.5rem'
           }}
         >
-          {/* Cabeçalho do Hub de Escolha */}
+          {/* Card 1: Sistema Escolar (Aba Lateral) */}
           <div
+            onClick={() => handleSelectLayout('marketplace', 'Layout 1: Sistema Escolar com Aba Lateral')}
             style={{
+              cursor: 'pointer',
+              padding: '1.15rem',
+              borderRadius: '18px',
+              background: activePreset === 'marketplace' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
+              border: activePreset === 'marketplace' ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
               display: 'flex',
+              flexDirection: 'column',
               justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              gap: '1rem',
-              marginBottom: '1.5rem',
-              paddingBottom: '1rem',
-              borderBottom: '1px solid var(--border-subtle)'
+              gap: '0.85rem'
             }}
           >
             <div>
-              <span
-                style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
-                  color: 'var(--color-primary)'
-                }}
-              >
-                🎛️ CENTRAL DE ESCOLHA VISUAL · ARQUITETURAS & JORNADAS COMBAT-PASS
-              </span>
-              <h2
-                style={{
-                  margin: '0.25rem 0',
-                  fontSize: 'clamp(1.35rem, 2.5vw, 1.9rem)',
-                  fontWeight: 900,
-                  fontFamily: 'var(--font-display)',
-                  textTransform: 'uppercase'
-                }}
-              >
-                O Que Você Deseja Visualizar Agora?
-              </h2>
-              <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-muted-foreground)' }}>
-                Escolha abaixo um dos <strong>4 Layouts Completamente Diferentes</strong> para a Página Inicial, navegue diretamente para qualquer módulo do sistema ou altere a paleta de cores ativa.
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: 900, padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)' }}>
+                  ABA LATERAL / SISTEMA ESCOLAR
+                </span>
+                {activePreset === 'marketplace' && <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)' }}>● ATIVO</span>}
+              </div>
+              <div style={{ height: '78px', borderRadius: '10px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)', padding: '0.45rem', display: 'grid', gridTemplateColumns: '0.9fr 2.1fr', gap: '0.35rem', marginBottom: '0.75rem' }}>
+                <div style={{ background: 'var(--color-primary)', opacity: 0.35, borderRadius: '6px' }} />
+                <div style={{ display: 'grid', gap: '0.25rem' }}>
+                  <div style={{ height: '14px', borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem' }}>
+                    <div style={{ borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
+                    <div style={{ borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
+                  </div>
+                </div>
+              </div>
+              <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.02rem', fontWeight: 900 }}>
+                🎓 1. Sistema de Escola / Aba Lateral
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
+                Menu vertical fixo na esquerda (estilo sistema escolar/acadêmico) com filtro instantâneo por módulo ou visão completa de todas as 12 seções.
               </p>
             </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
+              Ativar Arquitetura Escolar →
+            </div>
+          </div>
 
-            <button
-              type="button"
-              onClick={() => setShowExperienceHub(false)}
+          {/* Card 2: Corporativo & Editorial B2B */}
+          <div
+            onClick={() => handleSelectLayout('corporate', 'Layout 2: Editorial & Corporativo B2B')}
+            style={{
+              cursor: 'pointer',
+              padding: '1.15rem',
+              borderRadius: '18px',
+              background: activePreset === 'corporate' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
+              border: activePreset === 'corporate' ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '0.85rem'
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: 900, padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)' }}>
+                  EDITORIAL / FORMAL B2B
+                </span>
+                {activePreset === 'corporate' && <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)' }}>● ATIVO</span>}
+              </div>
+              <div style={{ height: '78px', borderRadius: '4px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)', padding: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '0.3rem', height: '34px' }}>
+                  <div style={{ background: 'var(--bg-surface-2)' }} />
+                  <div style={{ background: 'var(--color-primary)', opacity: 0.25 }} />
+                </div>
+                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.25rem' }}>
+                  <div style={{ background: 'var(--bg-surface-2)' }} />
+                  <div style={{ background: 'var(--bg-surface-2)' }} />
+                  <div style={{ background: 'var(--bg-surface-2)' }} />
+                  <div style={{ background: 'var(--bg-surface-2)' }} />
+                </div>
+              </div>
+              <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.02rem', fontWeight: 900 }}>
+                🏛️ 2. Editorial & Corporativo B2B
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
+                Geometria ortogonal com bordas retas, abas executivas, matriz comparativa em tabela formal e todos os 12 módulos em estilo editorial.
+              </p>
+            </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
+              Ativar Arquitetura Editorial →
+            </div>
+          </div>
+
+          {/* Card 3: Arena Tatame HUD */}
+          <div
+            onClick={() => handleSelectLayout('tatame', 'Layout 3: Arena Tatame HUD')}
+            style={{
+              cursor: 'pointer',
+              padding: '1.15rem',
+              borderRadius: '18px',
+              background: activePreset === 'tatame' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
+              border: activePreset === 'tatame' ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '0.85rem'
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: 900, padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)' }}>
+                  HUD 3 COLUNAS / TATAME
+                </span>
+                {activePreset === 'tatame' && <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)' }}>● ATIVO</span>}
+              </div>
+              <div style={{ height: '78px', borderRadius: '10px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)', padding: '0.45rem', display: 'grid', gridTemplateColumns: '1fr 1.6fr 1fr', gap: '0.3rem', marginBottom: '0.75rem' }}>
+                <div style={{ borderRadius: '5px', background: 'var(--color-primary)', opacity: 0.3 }} />
+                <div style={{ borderRadius: '5px', background: 'var(--bg-surface-2)' }} />
+                <div style={{ borderRadius: '5px', background: 'var(--bg-surface-2)' }} />
+              </div>
+              <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.02rem', fontWeight: 900 }}>
+                ⚡ 3. Arena Tatame HUD
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
+                Placar eletrônico ao vivo no topo + 3 colunas operacionais (Check-in Expresso + Grade ao Vivo + Competitivo) + todas as 12 seções em HUD.
+              </p>
+            </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
+              Ativar Arquitetura HUD →
+            </div>
+          </div>
+
+          {/* Card 4: Site Clássico Original */}
+          <div
+            onClick={() => handleSelectLayout('classic', 'Layout 4: Site Clássico Original')}
+            style={{
+              cursor: 'pointer',
+              padding: '1.15rem',
+              borderRadius: '18px',
+              background: activePreset === 'classic' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
+              border: activePreset === 'classic' ? '2px solid var(--color-primary)' : '1px solid var(--border-subtle)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '0.85rem'
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: 900, padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)' }}>
+                  CLÁSSICO ORIGINAL (4º)
+                </span>
+                {activePreset === 'classic' && <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)' }}>● ATIVO</span>}
+              </div>
+              <div style={{ height: '78px', borderRadius: '10px', background: 'var(--bg-surface-1)', border: '1px solid var(--border-subtle)', padding: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.75rem' }}>
+                <div style={{ height: '32px', borderRadius: '5px', background: 'var(--color-primary)', opacity: 0.25 }} />
+                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.3rem' }}>
+                  <div style={{ borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
+                  <div style={{ borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
+                  <div style={{ borderRadius: '4px', background: 'var(--bg-surface-2)' }} />
+                </div>
+              </div>
+              <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.02rem', fontWeight: 900 }}>
+                📜 4. Site Clássico Original
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
+                O site institucional original completo (Hero, Torneios, Ranking, Planos, Grade, Estrutura, Mestres, 8 Modalidades, Galeria, FAQ e Mapa).
+              </p>
+            </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
+              Ativar Site Clássico →
+            </div>
+          </div>
+        </div>
+
+        {/* ACESSO DIRETO AOS PORTAIS (QUE TAMBÉM TÊM SEUS PRÓPRIOS LAYOUTS COM ABA LATERAL ESCOLAR, HUD, SPLIT-VIEW E ABAS) */}
+        <div
+          style={{
+            padding: '1.15rem',
+            borderRadius: '16px',
+            background: 'var(--bg-background)',
+            border: '1px solid var(--border-subtle)'
+          }}
+        >
+          <div style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+            🚀 PORTAIS DO SISTEMA (CADA PORTAL TAMBÉM POSSUI LAYOUT ESCOLAR COM ABA LATERAL, HUD, EXECUTIVO E CLÁSSICO)
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: '0.65rem' }}>
+            {[
+              { icon: '🥊', label: 'Portal do Aluno (4 Layouts)', to: '/portal' },
+              { icon: '🥋', label: 'Portal do Professor (4 Layouts)', to: '/professor' },
+              { icon: '👑', label: 'Painel Admin ERP (4 Layouts)', to: '/admin' },
+              { icon: '🏆', label: 'Próximos Torneios', to: '/portal?tab=torneios' },
+              { icon: '🌍', label: 'Ranking Global MMR', to: '/portal?tab=ranking' },
+              { icon: '📊', label: 'Estatísticas & Analytics', to: '/portal?tab=desempenho' },
+              { icon: '🔥', label: 'Aula Experimental', to: '/agendar' }
+            ].map(link => (
+              <Link
+                key={link.label}
+                to={link.to}
+                style={{
+                  padding: '0.7rem 0.85rem',
+                  borderRadius: '12px',
+                  background: 'var(--bg-surface-1)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-foreground)',
+                  textDecoration: 'none',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem'
+                }}
+              >
+                <span style={{ fontSize: '1.1rem' }}>{link.icon}</span>
+                <span>{link.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ============================================================================
+  // MODAL DO ORDENADOR DE PÁGINAS & BLOCOS
+  // ============================================================================
+  const OrderBuilderModal = showOrderModal && (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10006,
+        background: 'rgba(0,0,0,0.8)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem'
+      }}
+      onClick={() => setShowOrderModal(false)}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: '980px',
+          maxHeight: '88vh',
+          overflowY: 'auto',
+          borderRadius: '20px',
+          background: 'var(--bg-surface-1)',
+          border: '2px solid var(--color-primary)',
+          padding: '1.5rem',
+          color: 'var(--text-foreground)'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900 }}>
+              🔀 Ordenador Dinâmico de Páginas, Menus e Telas de Carregamento
+            </h3>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted-foreground)' }}>
+              Defina a ordem dos itens de menu e o estilo de loading da plataforma.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <select
+              value={preferences.loadingStyle}
+              onChange={e => {
+                const st = e.target.value as LoadingStyleId;
+                setLoadingStyle(st);
+                triggerLoadingDemo('Testando estilo de carregamento...', st, 700);
+              }}
               style={{
-                padding: '0.5rem 0.9rem',
-                borderRadius: '10px',
+                padding: '0.45rem 0.7rem',
+                borderRadius: '8px',
                 background: 'var(--bg-surface-2)',
                 color: 'var(--text-foreground)',
                 border: '1px solid var(--border-subtle)',
-                fontSize: '0.8rem',
-                fontWeight: 900,
-                cursor: 'pointer'
+                fontSize: '0.75rem',
+                fontWeight: 700
               }}
             >
-              ✕ Fechar Vitrine
-            </button>
-          </div>
-
-          {/* 4 CARDS COM MINIATURAS VISUAIS (WIREFRAMES DIFERENTES) DOS 4 LAYOUTS */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(275px, 1fr))',
-              gap: '1.1rem',
-              marginBottom: '1.75rem'
-            }}
-          >
-            {/* Card 1: App Marketplace & Mapa Split-View */}
-            <div
-              onClick={() => handleSelectLayout('marketplace', 'App Marketplace & Mapa Split-View')}
-              style={{
-                padding: '1.15rem',
-                borderRadius: '18px',
-                background:
-                  activePreset === 'marketplace' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
-                border:
-                  activePreset === 'marketplace'
-                    ? '2px solid var(--color-primary)'
-                    : '1px solid var(--border-subtle)',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '0.85rem'
-              }}
-            >
-              <div>
-                {/* Miniatura Visual Desenhada: Split-Screen App */}
-                <div
-                  style={{
-                    height: '110px',
-                    borderRadius: '12px',
-                    background: 'var(--bg-surface-1)',
-                    border: '1px solid var(--border-subtle)',
-                    padding: '0.55rem',
-                    marginBottom: '0.85rem',
-                    display: 'grid',
-                    gridTemplateColumns: '1.6fr 1fr',
-                    gap: '0.45rem'
-                  }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    <div
-                      style={{
-                        height: '16px',
-                        borderRadius: '999px',
-                        background: 'var(--color-primary)',
-                        opacity: 0.85
-                      }}
-                    />
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem', flex: 1 }}>
-                      <div style={{ borderRadius: '6px', background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)' }} />
-                      <div style={{ borderRadius: '6px', background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)' }} />
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      borderRadius: '8px',
-                      background: 'var(--bg-surface-2)',
-                      border: '1px dashed var(--color-primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.25rem'
-                    }}
-                  >
-                    🗺️
-                  </div>
-                </div>
-
-                <span
-                  style={{
-                    fontSize: '0.66rem',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    color: 'var(--color-primary)'
-                  }}
-                >
-                  ARQUITETURA 1 · ESTILO APP / GYMPASS / AIRBNB
-                </span>
-                <h3 style={{ margin: '0.2rem 0 0.35rem 0', fontSize: '1.05rem', fontWeight: 900 }}>
-                  🗺️ Marketplace Split-Screen & Radar
-                </h3>
-                <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
-                  Tela dividida estilo aplicativo: barra de categorias em ícones no topo, catálogo visual de academias à esquerda e Radar Interativo / Check-in fixo à direita.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                style={{
-                  width: '100%',
-                  padding: '0.6rem',
-                  borderRadius: '10px',
-                  background:
-                    activePreset === 'marketplace' ? 'var(--color-primary)' : 'var(--bg-surface-1)',
-                  color:
-                    activePreset === 'marketplace'
-                      ? 'var(--text-primary-foreground)'
-                      : 'var(--text-foreground)',
-                  border: '1px solid var(--color-primary)',
-                  fontSize: '0.76rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
-                }}
-              >
-                {activePreset === 'marketplace' ? '✓ Layout Ativo Agora' : 'Ativar Layout 1 →'}
-              </button>
-            </div>
-
-            {/* Card 2: Corporativo & Editorial B2B */}
-            <div
-              onClick={() => handleSelectLayout('corporate', 'Corporativo & Editorial B2B')}
-              style={{
-                padding: '1.15rem',
-                borderRadius: '18px',
-                background:
-                  activePreset === 'corporate' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
-                border:
-                  activePreset === 'corporate'
-                    ? '2px solid var(--color-primary)'
-                    : '1px solid var(--border-subtle)',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '0.85rem'
-              }}
-            >
-              <div>
-                {/* Miniatura Visual Desenhada: Editorial B2B */}
-                <div
-                  style={{
-                    height: '110px',
-                    borderRadius: '4px',
-                    background: 'var(--bg-surface-1)',
-                    border: '1px solid var(--border-subtle)',
-                    padding: '0.55rem',
-                    marginBottom: '0.85rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.4rem', flex: 1 }}>
-                    <div style={{ borderRight: '1px solid var(--border-subtle)', paddingRight: '0.4rem' }}>
-                      <div style={{ width: '75%', height: '10px', background: 'var(--text-foreground)', marginBottom: '6px' }} />
-                      <div style={{ width: '95%', height: '6px', background: 'var(--text-muted-foreground)', opacity: 0.5, marginBottom: '4px' }} />
-                      <div style={{ width: '60%', height: '14px', background: 'var(--color-primary)', marginTop: '8px' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div style={{ flex: 1, background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)' }} />
-                      <div style={{ flex: 1, background: 'var(--bg-surface-2)', border: '1px solid var(--border-subtle)' }} />
-                    </div>
-                  </div>
-                  <div style={{ height: '18px', borderTop: '1px solid var(--border-subtle)', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', paddingTop: '4px' }}>
-                    <div style={{ background: 'var(--bg-surface-2)' }} />
-                    <div style={{ background: 'var(--bg-surface-2)' }} />
-                    <div style={{ background: 'var(--bg-surface-2)' }} />
-                    <div style={{ background: 'var(--bg-surface-2)' }} />
-                  </div>
-                </div>
-
-                <span
-                  style={{
-                    fontSize: '0.66rem',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    color: 'var(--color-primary)'
-                  }}
-                >
-                  ARQUITETURA 2 · ESTILO STRIPE / ENTERPRISE B2B
-                </span>
-                <h3 style={{ margin: '0.2rem 0 0.35rem 0', fontSize: '1.05rem', fontWeight: 900 }}>
-                  🏢 Portal Executivo, RH & Redes B2B
-                </h3>
-                <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
-                  Design editorial de linhas retas e divisórias formais: manifesto corporativo, matriz comparativa auditável de planos e dossiê de credenciamento de redes.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                style={{
-                  width: '100%',
-                  padding: '0.6rem',
-                  borderRadius: '10px',
-                  background:
-                    activePreset === 'corporate' ? 'var(--color-primary)' : 'var(--bg-surface-1)',
-                  color:
-                    activePreset === 'corporate'
-                      ? 'var(--text-primary-foreground)'
-                      : 'var(--text-foreground)',
-                  border: '1px solid var(--color-primary)',
-                  fontSize: '0.76rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
-                }}
-              >
-                {activePreset === 'corporate' ? '✓ Layout Ativo Agora' : 'Ativar Layout 2 →'}
-              </button>
-            </div>
-
-            {/* Card 3: Arena Tatame HUD (Command Center) */}
-            <div
-              onClick={() => handleSelectLayout('tatame', 'Arena Tatame HUD (Command Center)')}
-              style={{
-                padding: '1.15rem',
-                borderRadius: '18px',
-                background:
-                  activePreset === 'tatame' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
-                border:
-                  activePreset === 'tatame'
-                    ? '2px solid var(--color-primary)'
-                    : '1px solid var(--border-subtle)',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '0.85rem'
-              }}
-            >
-              <div>
-                {/* Miniatura Visual Desenhada: HUD Esportivo 3 Colunas */}
-                <div
-                  style={{
-                    height: '110px',
-                    borderRadius: '12px',
-                    background: 'var(--bg-surface-1)',
-                    border: '2px solid var(--color-primary)',
-                    padding: '0.45rem',
-                    marginBottom: '0.85rem',
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1.6fr 1fr',
-                    gap: '0.35rem'
-                  }}
-                >
-                  <div style={{ borderRadius: '6px', background: 'var(--bg-surface-2)', padding: '4px', fontSize: '0.6rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-                    ⚡ CHECK-IN
-                  </div>
-                  <div style={{ borderRadius: '6px', background: 'var(--bg-background)', border: '1px solid var(--status-available)', padding: '4px', fontSize: '0.6rem', fontWeight: 900, color: 'var(--status-available)' }}>
-                    📅 GRADE AO VIVO
-                  </div>
-                  <div style={{ borderRadius: '6px', background: 'var(--bg-surface-2)', padding: '4px', fontSize: '0.6rem', fontWeight: 900, color: 'var(--color-accent)' }}>
-                    🏆 RANKING
-                  </div>
-                </div>
-
-                <span
-                  style={{
-                    fontSize: '0.66rem',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    color: 'var(--color-primary)'
-                  }}
-                >
-                  ARQUITETURA 3 · ESTILO UFC FIGHT PASS / HUD TÁTICO
-                </span>
-                <h3 style={{ margin: '0.2rem 0 0.35rem 0', fontSize: '1.05rem', fontWeight: 900 }}>
-                  ⚡ Arena Command Center (Ao Vivo)
-                </h3>
-                <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
-                  Painel de controle esportivo em 3 colunas simultâneas sem rolagem longa: Placar ao vivo no topo, Check-in Expresso à esquerda, Grade no centro e Torneios/Ranking à direita.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                style={{
-                  width: '100%',
-                  padding: '0.6rem',
-                  borderRadius: '10px',
-                  background:
-                    activePreset === 'tatame' ? 'var(--color-primary)' : 'var(--bg-surface-1)',
-                  color:
-                    activePreset === 'tatame'
-                      ? 'var(--text-primary-foreground)'
-                      : 'var(--text-foreground)',
-                  border: '1px solid var(--color-primary)',
-                  fontSize: '0.76rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
-                }}
-              >
-                {activePreset === 'tatame' ? '✓ Layout Ativo Agora' : 'Ativar Layout 3 →'}
-              </button>
-            </div>
-
-            {/* Card 4: Site Institucional Clássico Original */}
-            <div
-              onClick={() => handleSelectLayout('classic', 'Site Clássico Original')}
-              style={{
-                padding: '1.15rem',
-                borderRadius: '18px',
-                background:
-                  activePreset === 'classic' ? 'var(--bg-surface-2)' : 'var(--bg-background)',
-                border:
-                  activePreset === 'classic'
-                    ? '2px solid var(--color-primary)'
-                    : '1px solid var(--border-subtle)',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '0.85rem'
-              }}
-            >
-              <div>
-                {/* Miniatura Visual Desenhada: Clássico Hero + Foto */}
-                <div
-                  style={{
-                    height: '110px',
-                    borderRadius: '12px',
-                    background: 'var(--bg-surface-1)',
-                    border: '1px solid var(--border-subtle)',
-                    padding: '0.55rem',
-                    marginBottom: '0.85rem',
-                    display: 'grid',
-                    gridTemplateColumns: '1.3fr 1fr',
-                    gap: '0.45rem',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div>
-                    <div style={{ height: '12px', width: '90%', background: 'var(--color-primary)', borderRadius: '4px', marginBottom: '6px' }} />
-                    <div style={{ height: '8px', width: '70%', background: 'var(--text-foreground)', borderRadius: '4px', marginBottom: '8px' }} />
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <div style={{ height: '16px', width: '45%', background: 'var(--color-primary)', borderRadius: '4px' }} />
-                      <div style={{ height: '16px', width: '45%', background: 'var(--bg-surface-2)', borderRadius: '4px' }} />
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      height: '100%',
-                      borderRadius: '8px',
-                      background: 'var(--bg-surface-2)',
-                      border: '1px solid var(--border-subtle)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.3rem'
-                    }}
-                  >
-                    🥊
-                  </div>
-                </div>
-
-                <span
-                  style={{
-                    fontSize: '0.66rem',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    color: 'var(--color-primary)'
-                  }}
-                >
-                  ARQUITETURA 4 · LANDING PAGE ORIGINAL COMPLETA
-                </span>
-                <h3 style={{ margin: '0.2rem 0 0.35rem 0', fontSize: '1.05rem', fontWeight: 900 }}>
-                  🏛️ Site Institucional Clássico
-                </h3>
-                <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted-foreground)', lineHeight: 1.45 }}>
-                  A versão institucional clássica completa do Centro de Combate com Estrutura 180m², Modalidades, Corpo Docente, Galeria, FAQ e Destaques Competitivos.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                style={{
-                  width: '100%',
-                  padding: '0.6rem',
-                  borderRadius: '10px',
-                  background:
-                    activePreset === 'classic' ? 'var(--color-primary)' : 'var(--bg-surface-1)',
-                  color:
-                    activePreset === 'classic'
-                      ? 'var(--text-primary-foreground)'
-                      : 'var(--text-foreground)',
-                  border: '1px solid var(--color-primary)',
-                  fontSize: '0.76rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
-                }}
-              >
-                {activePreset === 'classic' ? '✓ Layout Ativo Agora' : 'Ativar Layout 4 →'}
-              </button>
-            </div>
-          </div>
-
-          {/* ACESSO RÁPIDO A TODAS AS PÁGINAS E JORNADAS DO SISTEMA */}
-          <div
-            style={{
-              padding: '1.15rem',
-              borderRadius: '16px',
-              background: 'var(--bg-background)',
-              border: '1px solid var(--border-subtle)',
-              marginBottom: '1.25rem'
-            }}
-          >
-            <div
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                color: 'var(--color-primary)',
-                marginBottom: '0.75rem'
-              }}
-            >
-              🚀 Ir Direto Para Qualquer Página ou Portal do Ecossistema:
-            </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))',
-                gap: '0.6rem'
-              }}
-            >
-              {[
-                { label: '🥊 Portal do Aluno', desc: 'Check-in, Frequência & XP', route: '/portal' },
-                { label: '🥋 Portal do Professor', desc: 'Chamada 1-Toque & Comissões', route: '/professor' },
-                { label: '👑 ERP Admin & Studio', desc: 'Caixa, Visão 360 & Layouts', route: '/admin' },
-                { label: '🏆 Torneios & Brackets', desc: 'Chaves e Copas Oficiais', route: '/portal?tab=torneios' },
-                { label: '🌍 Ranking Global', desc: 'Leaderboard MMR de Atletas', route: '/portal?tab=ranking' },
-                { label: '📊 Estatísticas Ao Vivo', desc: 'Performance & Assiduidade', route: '/portal?tab=desempenho' },
-                { label: '🪙 Loja de Points', desc: 'Resgatar Luvas e Kimonos', route: '/portal?tab=recompensas' },
-                { label: '🔥 Aula Experimental', desc: 'Agendar Primeiro Treino', route: '/agendar' }
-              ].map((dest, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    setShowExperienceHub(false);
-                    navigate(dest.route);
-                  }}
-                  style={{
-                    padding: '0.7rem 0.85rem',
-                    borderRadius: '12px',
-                    background: 'var(--bg-surface-1)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-foreground)',
-                    textAlign: 'left',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ fontSize: '0.8rem', fontWeight: 900 }}>{dest.label}</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', marginTop: '2px' }}>
-                    {dest.desc}
-                  </div>
-                </button>
+              {LOADING_STYLE_META.map(l => (
+                <option key={l.id} value={l.id}>
+                  {l.icon} {l.title}
+                </option>
               ))}
-            </div>
-          </div>
-
-          {/* SELETOR RÁPIDO DAS 14 PALETAS DE CORES */}
-          <div
-            style={{
-              padding: '1rem 1.15rem',
-              borderRadius: '16px',
-              background: 'var(--bg-background)',
-              border: '1px solid var(--border-subtle)'
-            }}
-          >
-            <div
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                color: 'var(--color-primary)',
-                marginBottom: '0.65rem'
-              }}
-            >
-              🎨 Testar Qualquer Uma das 14 Paletas de Cores Existentes no Layout Escolhido:
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
-              {THEMES_LIST.map(t => {
-                const isSelected = preferences.activePaletteId === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setPalette(t.id)}
-                    style={{
-                      padding: '0.38rem 0.7rem',
-                      borderRadius: '999px',
-                      background: isSelected ? 'var(--bg-surface-2)' : 'var(--bg-surface-1)',
-                      border: isSelected
-                        ? '2px solid var(--color-primary)'
-                        : '1px solid var(--border-subtle)',
-                      color: 'var(--text-foreground)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: '12px',
-                        height: '12px',
-                        borderRadius: '999px',
-                        background: t.preview[0],
-                        border: `2px solid ${t.preview[1] || '#fff'}`
-                      }}
-                    />
-                    <span>{t.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // ============================================================================
-  // MODAL ORDENADOR DE PÁGINAS (MENU) & BLOCOS (SEÇÕES)
-  // ============================================================================
-  const renderOrderBuilderModal = () => {
-    if (!showOrderBuilderModal) return null;
-
-    return (
-      <div
-        onClick={e => {
-          if (e.target === e.currentTarget) setShowOrderBuilderModal(false);
-        }}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 99999,
-          background: 'rgba(0, 0, 0, 0.82)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1.25rem'
-        }}
-      >
-        <div
-          style={{
-            width: '100%',
-            maxWidth: '960px',
-            background: 'var(--bg-surface-1)',
-            color: 'var(--text-foreground)',
-            border: '2px solid var(--color-primary)',
-            borderRadius: '22px',
-            padding: '1.5rem',
-            maxHeight: '90vh',
-            overflowY: 'auto'
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.25rem',
-              paddingBottom: '0.85rem',
-              borderBottom: '1px solid var(--border-subtle)'
-            }}
-          >
-            <div>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900 }}>
-                🔀 Ordenador Dinâmico de Páginas (Menu) e Seções da Tela
-              </h3>
-              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted-foreground)' }}>
-                Defina qual item vem primeiro na barra de navegação e a ordem/visibilidade dos blocos internos.
-              </p>
-            </div>
+            </select>
             <button
               type="button"
-              onClick={() => setShowOrderBuilderModal(false)}
+              onClick={() => setShowOrderModal(false)}
               style={{
                 padding: '0.45rem 0.85rem',
                 borderRadius: '8px',
-                background: 'var(--color-primary)',
-                color: 'var(--text-primary-foreground)',
-                border: 'none',
-                fontSize: '0.78rem',
-                fontWeight: 900,
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-surface-2)',
+                color: 'var(--text-foreground)',
+                fontWeight: 800,
                 cursor: 'pointer'
               }}
             >
-              ✓ Concluir
+              ✕ Fechar
             </button>
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
-            {/* Coluna 1: Ordem dos Itens de Navegação */}
-            <div>
-              <h4 style={{ margin: '0 0 0.65rem 0', fontSize: '0.86rem', color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-                1. Ordem das Páginas no Menu
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                {preferences.routeOrder.landing.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    style={{
-                      padding: '0.55rem 0.75rem',
-                      borderRadius: '10px',
-                      background: 'var(--bg-background)',
-                      border: '1px solid var(--border-subtle)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      opacity: item.visible ? 1 : 0.45
-                    }}
-                  >
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800 }}>
-                      #{idx + 1} · {item.icon} {item.label}
-                    </span>
-                    <div style={{ display: 'flex', gap: '0.3rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => moveRouteItem('landing', idx, 'up')}
-                        style={{ padding: '0.2rem 0.45rem', borderRadius: '6px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveRouteItem('landing', idx, 'down')}
-                        style={{ padding: '0.2rem 0.45rem', borderRadius: '6px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toggleRouteVisibility('landing', item.id)}
-                        style={{
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '6px',
-                          background: item.visible ? 'var(--status-available-bg)' : 'var(--bg-surface-2)',
-                          color: item.visible ? 'var(--status-available)' : 'var(--text-muted-foreground)',
-                          border: '1px solid var(--border-subtle)',
-                          fontSize: '0.68rem',
-                          fontWeight: 900,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {item.visible ? 'Visível' : 'Oculto'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Coluna 2: Ordem das Seções da Página */}
-            <div>
-              <h4 style={{ margin: '0 0 0.65rem 0', fontSize: '0.86rem', color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-                2. Ordem dos Blocos da Página
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                {preferences.sectionOrder.landing.map((sec, idx) => (
-                  <div
-                    key={sec.id}
-                    style={{
-                      padding: '0.55rem 0.75rem',
-                      borderRadius: '10px',
-                      background: 'var(--bg-background)',
-                      border: '1px solid var(--border-subtle)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      opacity: sec.visible ? 1 : 0.45
-                    }}
-                  >
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800 }}>
-                      #{idx + 1} · {sec.icon} {sec.label}
-                    </span>
-                    <div style={{ display: 'flex', gap: '0.3rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => moveSectionItem('landing', idx, 'up')}
-                        style={{ padding: '0.2rem 0.45rem', borderRadius: '6px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveSectionItem('landing', idx, 'down')}
-                        style={{ padding: '0.2rem 0.45rem', borderRadius: '6px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toggleSectionVisibility('landing', sec.id)}
-                        style={{
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '6px',
-                          background: sec.visible ? 'var(--status-available-bg)' : 'var(--bg-surface-2)',
-                          color: sec.visible ? 'var(--status-available)' : 'var(--text-muted-foreground)',
-                          border: '1px solid var(--border-subtle)',
-                          fontSize: '0.68rem',
-                          fontWeight: 900,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {sec.visible ? 'Visível' : 'Oculto'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
+        <JourneyLayoutToolbar journey="landing" />
       </div>
-    );
-  };
+    </div>
+  );
 
   // ============================================================================
-  // SE O USUÁRIO ESTIVER NO LAYOUT 4 ("CLASSIC" - HTML ORIGINAL DO INDEX.HTML)
+  // LAYOUT 4: SITE CLÁSSICO ORIGINAL (HTML COMPLETO DE INDEX.HTML)
   // ============================================================================
   if (activePreset === 'classic') {
     return (
-      <>
-        {renderGlobalExperienceDock()}
-        {renderExperienceHubModal()}
-        {renderOrderBuilderModal()}
-      </>
+      <div style={{ position: 'relative', zIndex: 40 }}>
+        {GlobalExperienceDock}
+        {ExperienceShowroomModal}
+        {OrderBuilderModal}
+      </div>
     );
   }
 
   // ============================================================================
-  // LAYOUT 1: "MARKETPLACE SPLIT-SCREEN & RADAR" (ESTILO AIRBNB / GYMPASS APP)
-  // Arquitetura 100% diferente:
-  // - Top Bar estilo App de Busca com pílula central arredondada
-  // - Barra de Categorias Marcial em Ícones Horizontais
-  // - Split-View de Tela Cheia: Catálogo Fotográfico à Esquerda (60%) + Painel Fixo
-  //   de Radar / Mapa / Check-in Expresso / Passes à Direita (40%)
+  // LAYOUT 1: ARQUITETURA SISTEMA ESCOLAR / ACADÊMICO COM ABA LATERAL FIXA
+  // (Possui 100% das informações do 4º layout organizadas em um Portal Escolar com Sidebar)
   // ============================================================================
   if (activePreset === 'marketplace') {
     return (
-      <div style={{ minHeight: '100vh', color: 'var(--text-foreground)' }}>
-        {renderGlobalExperienceDock()}
-        {renderExperienceHubModal()}
-        {renderOrderBuilderModal()}
+      <div style={{ minHeight: '100vh', color: 'var(--text-foreground)', display: 'flex', flexDirection: 'column' }}>
+        {GlobalExperienceDock}
+        {ExperienceShowroomModal}
+        {OrderBuilderModal}
 
-        {/* App Sub-Header com Pílula de Busca Central (Estilo Airbnb / Wellhub) */}
+        {/* CORPO EM 2 COLUNAS: ABA LATERAL ESCOLAR FIXA (ESQUERDA) + ÁREA ACADÊMICA COMPLETA (DIREITA) */}
         <div
           style={{
-            background: 'var(--bg-surface-1)',
-            borderBottom: '1px solid var(--border-subtle)',
-            padding: '0.85rem clamp(1rem, 2.5vw, 2rem)'
-          }}
-        >
-          <div
-            style={{
-              maxWidth: '1600px',
-              margin: '0 auto',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1rem'
-            }}
-          >
-            {/* Brand */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '999px',
-                  background: 'var(--color-primary)',
-                  color: 'var(--text-primary-foreground)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 900,
-                  fontSize: '1rem'
-                }}
-              >
-                🗺️
-              </div>
-              <div>
-                <div style={{ fontWeight: 900, fontSize: '1.05rem', letterSpacing: '-0.02em' }}>
-                  combat<span style={{ color: 'var(--color-primary)' }}>pass</span>.explore
-                </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)' }}>
-                  Marketplace Multi-Academias & Reserva Instantânea
-                </div>
-              </div>
-            </div>
-
-            {/* Pílula Central de Busca Inteligente */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.35rem 0.45rem 0.35rem 1rem',
-                borderRadius: '999px',
-                background: 'var(--bg-background)',
-                border: '2px solid var(--border-subtle)',
-                flex: '1',
-                maxWidth: '640px',
-                boxShadow: 'var(--shadow-card)'
-              }}
-            >
-              <span style={{ fontSize: '0.9rem' }}>🔍</span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Buscar CT, bairro (ex: Jardins, Pinheiros) ou arte marcial..."
-                style={{
-                  flex: 1,
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  color: 'var(--text-foreground)',
-                  fontSize: '0.82rem',
-                  fontWeight: 700
-                }}
-              />
-              <select
-                value={selectedCity}
-                onChange={e => setSelectedCity(e.target.value)}
-                style={{
-                  padding: '0.35rem 0.65rem',
-                  borderRadius: '999px',
-                  background: 'var(--bg-surface-2)',
-                  color: 'var(--text-foreground)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.72rem',
-                  fontWeight: 800
-                }}
-              >
-                <option value="São Paulo - SP">📍 São Paulo</option>
-                <option value="Campinas - SP">📍 Campinas</option>
-                <option value="Rio de Janeiro - RJ">📍 Rio de Janeiro</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => setMarketplaceRightTab('checkin')}
-                style={{
-                  padding: '0.45rem 0.95rem',
-                  borderRadius: '999px',
-                  background: 'var(--color-primary)',
-                  color: 'var(--text-primary-foreground)',
-                  border: 'none',
-                  fontSize: '0.74rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
-                }}
-              >
-                Check-in Rápido
-              </button>
-            </div>
-
-            {/* Filtro de Categoria de Passe */}
-            <div style={{ display: 'flex', gap: '0.35rem' }}>
-              {(['TODOS', 'SILVER', 'GOLD', 'BLACK'] as const).map(tier => (
-                <button
-                  key={tier}
-                  type="button"
-                  onClick={() => setSelectedPassFilter(tier)}
-                  style={{
-                    padding: '0.4rem 0.75rem',
-                    borderRadius: '999px',
-                    background:
-                      selectedPassFilter === tier ? 'var(--color-primary)' : 'var(--bg-surface-2)',
-                    color:
-                      selectedPassFilter === tier
-                        ? 'var(--text-primary-foreground)'
-                        : 'var(--text-foreground)',
-                    border: '1px solid var(--border-subtle)',
-                    fontSize: '0.7rem',
-                    fontWeight: 900,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {tier === 'TODOS' ? '🎫 Todos Passes' : tier}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Barra de Ícones de Categorias Estilo Airbnb */}
-          <div
-            style={{
-              maxWidth: '1600px',
-              margin: '0.75rem auto 0',
-              paddingTop: '0.65rem',
-              borderTop: '1px solid var(--border-subtle)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.75rem',
-              overflowX: 'auto'
-            }}
-          >
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {[
-                { id: 'TODAS', icon: '🔥', label: 'Em Alta Hoje' },
-                { id: 'Muay Thai', icon: '🥊', label: 'Muay Thai' },
-                { id: 'Jiu-Jitsu', icon: '🥋', label: 'Jiu-Jitsu BJJ' },
-                { id: 'Boxe', icon: '🥊', label: 'Boxe Nobre' },
-                { id: 'MMA', icon: '⛓️', label: 'MMA & Cage' },
-                { id: 'Judô', icon: '⛩️', label: 'Judô & Karatê' }
-              ].map(cat => {
-                const active = selectedModality === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setSelectedModality(cat.id)}
-                    style={{
-                      padding: '0.45rem 0.9rem',
-                      borderRadius: '12px',
-                      background: active ? 'var(--bg-surface-2)' : 'transparent',
-                      borderBottom: active ? '3px solid var(--color-primary)' : '3px solid transparent',
-                      color: active ? 'var(--color-primary)' : 'var(--text-muted-foreground)',
-                      fontSize: '0.76rem',
-                      fontWeight: 900,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    <span style={{ fontSize: '1.05rem' }}>{cat.icon}</span>
-                    <span>{cat.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted-foreground)', fontWeight: 700, whiteSpace: 'nowrap' }}>
-              Mostrando <strong>{filteredCenters.length} CTs credenciados</strong> em {selectedCity}
-            </div>
-          </div>
-        </div>
-
-        {/* CORPO SPLIT-VIEW: CATÁLOGO DE CARDS COM FOTOS (ESQUERDA) + PAINEL INTERATIVO FIXO (DIREITA) */}
-        <div
-          style={{
-            maxWidth: '1600px',
+            maxWidth: '1520px',
+            width: '100%',
             margin: '0 auto',
-            padding: '1.25rem clamp(1rem, 2.5vw, 2rem)',
+            padding: '1rem',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-            gap: '1.5rem',
-            alignItems: 'start'
+            gridTemplateColumns: 'minmax(260px, 295px) 1fr',
+            gap: '1.25rem',
+            alignItems: 'start',
+            flex: 1
           }}
         >
-          {/* COLUNA ESQUERDA (CATÁLOGO VISUAL DE ACADEMIAS + LOJA DE POINTS) */}
-          <div style={{ gridColumn: 'span 1' }}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))',
-                gap: '1.1rem',
-                marginBottom: '1.75rem'
-              }}
-            >
-              {filteredCenters.map(ct => {
-                const isSelected = selectedCenter.id === ct.id;
-                return (
-                  <div
-                    key={ct.id}
-                    onClick={() => {
-                      setSelectedCenter(ct);
-                      setMarketplaceRightTab('radar');
-                    }}
-                    style={{
-                      borderRadius: '18px',
-                      overflow: 'hidden',
-                      background: 'var(--bg-surface-1)',
-                      border: isSelected
-                        ? '2px solid var(--color-primary)'
-                        : '1px solid var(--border-subtle)',
-                      boxShadow: 'var(--shadow-card)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      transition: 'transform 0.2s ease'
-                    }}
-                  >
-                    <div>
-                      {/* Foto do CT com Badges Flutuantes */}
-                      <div style={{ position: 'relative', height: '155px', overflow: 'hidden' }}>
-                        <img
-                          src={ct.imagem}
-                          alt={ct.nome}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                        <div
-                          style={{
-                            position: 'absolute',
-                            top: '0.6rem',
-                            left: '0.6rem',
-                            padding: '0.22rem 0.6rem',
-                            borderRadius: '999px',
-                            background: 'var(--bg-surface-1)',
-                            color: 'var(--color-primary)',
-                            border: '1px solid var(--color-primary)',
-                            fontSize: '0.66rem',
-                            fontWeight: 900
-                          }}
-                        >
-                          PASSE {ct.passeMinimo}+
-                        </div>
-                        <div
-                          style={{
-                            position: 'absolute',
-                            top: '0.6rem',
-                            right: '0.6rem',
-                            padding: '0.22rem 0.55rem',
-                            borderRadius: '999px',
-                            background: 'var(--bg-surface-1)',
-                            color: 'var(--text-foreground)',
-                            fontSize: '0.68rem',
-                            fontWeight: 900
-                          }}
-                        >
-                          ★ {ct.nota} ({ct.avaliacoes})
-                        </div>
-                        <div
-                          style={{
-                            position: 'absolute',
-                            bottom: '0.5rem',
-                            left: '0.6rem',
-                            padding: '0.2rem 0.55rem',
-                            borderRadius: '6px',
-                            background:
-                              ct.statusHoje === 'LOTADO'
-                                ? 'var(--status-full)'
-                                : 'var(--status-available)',
-                            color: 'var(--text-primary-foreground)',
-                            fontSize: '0.65rem',
-                            fontWeight: 900
-                          }}
-                        >
-                          {ct.statusHoje === 'LOTADO'
-                            ? '🔴 LOTADO HOJE'
-                            : `🟢 HÁ ${ct.vagasHoje} VAGAS HOJE`}
-                        </div>
-                      </div>
-
-                      {/* Corpo do Card */}
-                      <div style={{ padding: '0.95rem 1rem' }}>
-                        <div
-                          style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 800,
-                            color: 'var(--text-muted-foreground)',
-                            marginBottom: '0.2rem'
-                          }}
-                        >
-                          📍 {ct.bairro} · {ct.distancia} de você
-                        </div>
-                        <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '0.96rem', fontWeight: 900 }}>
-                          {ct.nome}
-                        </h3>
-                        <div
-                          style={{
-                            fontSize: '0.73rem',
-                            color: 'var(--color-primary)',
-                            fontWeight: 800,
-                            marginBottom: '0.55rem'
-                          }}
-                        >
-                          ⏰ Próx. Turma: {ct.proximaAula}
-                        </div>
-
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
-                          {ct.modalidades.map(m => (
-                            <span
-                              key={m}
-                              style={{
-                                padding: '0.15rem 0.45rem',
-                                borderRadius: '6px',
-                                background: 'var(--bg-background)',
-                                border: '1px solid var(--border-subtle)',
-                                fontSize: '0.65rem',
-                                fontWeight: 700
-                              }}
-                            >
-                              {m}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        padding: '0.65rem 1rem',
-                        borderTop: '1px solid var(--border-subtle)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: 'var(--bg-background)'
-                      }}
-                    >
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
-                        {ct.mestreResponsavel}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={e => {
-                          e.stopPropagation();
-                          navigate('/portal');
-                        }}
-                        style={{
-                          padding: '0.35rem 0.75rem',
-                          borderRadius: '8px',
-                          background: 'var(--color-primary)',
-                          color: 'var(--text-primary-foreground)',
-                          border: 'none',
-                          fontSize: '0.7rem',
-                          fontWeight: 900,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Reservar Vaga →
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Faixa Compacta da Loja de Points dentro do Marketplace */}
-            <div
-              style={{
-                padding: '1.15rem',
-                borderRadius: '18px',
-                background: 'var(--bg-surface-1)',
-                border: '1px solid var(--border-subtle)'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
-                <div>
-                  <span style={{ fontSize: '0.66rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-                    RECOMPENSAS DO MARKETPLACE
-                  </span>
-                  <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900 }}>
-                    🪙 Troque seus Check-ins por Equipamentos Oficiais
-                  </h4>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/portal?tab=recompensas')}
-                  style={{
-                    padding: '0.4rem 0.8rem',
-                    borderRadius: '8px',
-                    background: 'var(--bg-surface-2)',
-                    color: 'var(--color-primary)',
-                    border: '1px solid var(--color-primary)',
-                    fontSize: '0.72rem',
-                    fontWeight: 900,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Abrir Loja →
-                </button>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.65rem' }}>
-                {REWARDS_SHOWCASE_ITEMS.map(rw => (
-                  <div
-                    key={rw.id}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: '12px',
-                      background: 'var(--bg-background)',
-                      border: '1px solid var(--border-subtle)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.65rem'
-                    }}
-                  >
-                    <span style={{ fontSize: '1.5rem' }}>{rw.icone}</span>
-                    <div>
-                      <div style={{ fontSize: '0.76rem', fontWeight: 800 }}>{rw.nome}</div>
-                      <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-                        🪙 {rw.pontos} pts
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* COLUNA DIREITA FIXA (STICKY): RADAR DO CT SELECIONADO + GRADE DO DIA + CHECK-IN EXPRESSO */}
-          <div
+          {/* ABA LATERAL FIXA (ESTILO SISTEMA DE ESCOLA / UNIVERSIDADE / LMS MARCIAL) */}
+          <aside
             style={{
               position: 'sticky',
-              top: '4.5rem',
+              top: '68px',
+              maxHeight: 'calc(100vh - 84px)',
+              overflowY: 'auto',
               borderRadius: '20px',
               background: 'var(--bg-surface-1)',
               border: '2px solid var(--border-subtle)',
+              padding: '1.15rem',
               boxShadow: 'var(--shadow-card)',
-              overflow: 'hidden'
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.9rem'
             }}
           >
-            {/* Abas do Painel Lateral Direito */}
+            {/* Identificação da Escola / Centro de Treinamento */}
             <div
               style={{
+                padding: '0.9rem',
+                borderRadius: '14px',
+                background: 'var(--bg-surface-2)',
+                border: '1px solid var(--color-primary)',
                 display: 'flex',
-                borderBottom: '1px solid var(--border-subtle)',
-                background: 'var(--bg-background)'
+                alignItems: 'center',
+                gap: '0.75rem'
               }}
             >
-              {(
-                [
-                  { id: 'radar', label: '🗺️ Radar & Grade da Unidade' },
-                  { id: 'checkin', label: '⚡ Check-in Expresso' },
-                  { id: 'passes', label: '🎫 Comparar Passes' }
-                ] as const
-              ).map(tab => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setMarketplaceRightTab(tab.id)}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem 0.5rem',
-                    border: 'none',
-                    borderBottom:
-                      marketplaceRightTab === tab.id
-                        ? '3px solid var(--color-primary)'
-                        : '3px solid transparent',
-                    background:
-                      marketplaceRightTab === tab.id ? 'var(--bg-surface-1)' : 'transparent',
-                    color:
-                      marketplaceRightTab === tab.id
-                        ? 'var(--color-primary)'
-                        : 'var(--text-muted-foreground)',
-                    fontSize: '0.74rem',
-                    fontWeight: 900,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              <img
+                src={ACADEMY_CONFIG.logoUrl}
+                alt="Logo"
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  border: '2px solid var(--color-primary)',
+                  objectFit: 'contain',
+                  background: 'var(--bg-background)',
+                  padding: '2px'
+                }}
+              />
+              <div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  🎓 PORTAL ACADÊMICO MARCIAL
+                </div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
+                  CENTRO DE COMBATE
+                </div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--status-available)', fontWeight: 800 }}>
+                  ● Período Letivo & Tatames Abertos
+                </div>
+              </div>
             </div>
 
-            <div style={{ padding: '1.25rem' }}>
-              {marketplaceRightTab === 'radar' && (
-                <div>
-                  <div
-                    style={{
-                      padding: '1rem',
-                      borderRadius: '14px',
-                      background: 'var(--bg-background)',
-                      border: '1px solid var(--border-subtle)',
-                      marginBottom: '1rem'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-                        UNIDADE SELECIONADA NO MAPA
-                      </span>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--status-available)' }}>
-                        📍 {selectedCenter.distancia}
-                      </span>
-                    </div>
-                    <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.05rem', fontWeight: 900 }}>
-                      {selectedCenter.nome}
-                    </h3>
-                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted-foreground)', marginBottom: '0.75rem' }}>
-                      {selectedCenter.destaque} · Responsável: {selectedCenter.mestreResponsavel}
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => navigate('/portal')}
-                        style={{
-                          flex: 1,
-                          padding: '0.55rem',
-                          borderRadius: '8px',
-                          background: 'var(--color-primary)',
-                          color: 'var(--text-primary-foreground)',
-                          border: 'none',
-                          fontSize: '0.74rem',
-                          fontWeight: 900,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        🥊 Agendar Horário Aqui
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => navigate('/agendar')}
-                        style={{
-                          padding: '0.55rem 0.85rem',
-                          borderRadius: '8px',
-                          background: 'var(--bg-surface-2)',
-                          color: 'var(--text-foreground)',
-                          border: '1px solid var(--border-subtle)',
-                          fontSize: '0.74rem',
-                          fontWeight: 800,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        🔥 Aula Exp.
-                      </button>
-                    </div>
-                  </div>
+            {/* Resumo Rápido de Indicadores da Escola */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.4rem', textAlign: 'center' }}>
+              <div style={{ padding: '0.5rem 0.25rem', borderRadius: '10px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--color-primary)' }}>+500</div>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>Alunos</div>
+              </div>
+              <div style={{ padding: '0.5rem 0.25rem', borderRadius: '10px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-foreground)' }}>8</div>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>Cursos/Lutas</div>
+              </div>
+              <div style={{ padding: '0.5rem 0.25rem', borderRadius: '10px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--color-accent)' }}>180m²</div>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>Tatame</div>
+              </div>
+            </div>
 
-                  {/* Calendário Oficial Embutido no Painel Direito */}
-                  <InteractiveCombatCalendar userRole="ALUNO" />
-                </div>
-              )}
-
-              {marketplaceRightTab === 'checkin' && <PublicQuickCheckinCard />}
-
-              {marketplaceRightTab === 'passes' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {[
-                    { tier: 'SILVER', price: 'R$ 189/mês', desc: '12 check-ins/mês · Unidades Silver' },
-                    { tier: 'GOLD PRO', price: 'R$ 269/mês', desc: 'Check-in diário · Unidades Silver & Gold + 1.5x Points' },
-                    { tier: 'BLACK UNLIMITED', price: 'R$ 389/mês', desc: 'Acesso 100% da rede + Sparring Labs + 2x Points' }
-                  ].map(p => (
-                    <div
-                      key={p.tier}
+            {/* Menu Vertical de Módulos (Estilo Sistema de Escola) */}
+            <div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.45rem', paddingLeft: '0.3rem' }}>
+                📂 Menu Curricular & Módulos do CT
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                {SCHOOL_SIDEBAR_SECTIONS.map(sec => {
+                  const active = schoolSectionFilter === sec.id;
+                  return (
+                    <button
+                      key={sec.id}
+                      type="button"
+                      onClick={() => {
+                        setSchoolSectionFilter(sec.id);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
                       style={{
-                        padding: '0.95rem',
-                        borderRadius: '12px',
-                        background: 'var(--bg-background)',
-                        border: '1px solid var(--border-subtle)',
+                        width: '100%',
+                        padding: '0.62rem 0.75rem',
+                        borderRadius: '10px',
+                        border: active ? '1px solid var(--color-primary)' : '1px solid transparent',
+                        borderLeft: active ? '4px solid var(--color-primary)' : '4px solid transparent',
+                        background: active ? 'var(--color-primary-light)' : 'transparent',
+                        color: active ? 'var(--color-primary)' : 'var(--text-foreground)',
+                        fontSize: '0.76rem',
+                        fontWeight: active ? 900 : 700,
+                        textAlign: 'left',
+                        cursor: 'pointer',
                         display: 'flex',
                         justifyContent: 'space-between',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        gap: '0.4rem'
                       }}
                     >
-                      <div>
-                        <div style={{ fontSize: '0.84rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-                          Combat-Pass {p.tier}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)' }}>{p.desc}</div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.95rem', fontWeight: 900 }}>{p.price}</div>
-                        <button
-                          type="button"
-                          onClick={() => navigate('/checkout')}
-                          style={{
-                            marginTop: '4px',
-                            padding: '0.28rem 0.65rem',
-                            borderRadius: '6px',
-                            background: 'var(--color-primary)',
-                            color: 'var(--text-primary-foreground)',
-                            border: 'none',
-                            fontSize: '0.68rem',
-                            fontWeight: 900,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Assinar →
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <span>{sec.icon}</span>
+                        <span>{sec.label}</span>
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.6rem',
+                          fontWeight: 900,
+                          padding: '0.12rem 0.4rem',
+                          borderRadius: '999px',
+                          background: active ? 'var(--color-primary)' : 'var(--bg-background)',
+                          color: active ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                          border: '1px solid var(--border-subtle)'
+                        }}
+                      >
+                        {sec.badge}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+
+            {/* Acesso Rápido à Secretaria / Portais */}
+            <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', display: 'grid', gap: '0.45rem' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                🔐 Secretaria & Portais Logados
+              </div>
+              <Link
+                to="/portal"
+                style={{
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: '10px',
+                  background: 'var(--color-primary)',
+                  color: 'var(--text-primary-foreground)',
+                  fontWeight: 900,
+                  fontSize: '0.76rem',
+                  textDecoration: 'none',
+                  textAlign: 'center'
+                }}
+              >
+                🥊 Entrar no Portal do Aluno
+              </Link>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                <Link
+                  to="/professor"
+                  style={{
+                    padding: '0.55rem',
+                    borderRadius: '8px',
+                    background: 'var(--bg-background)',
+                    color: 'var(--text-foreground)',
+                    border: '1px solid var(--border-subtle)',
+                    fontWeight: 800,
+                    fontSize: '0.7rem',
+                    textDecoration: 'none',
+                    textAlign: 'center'
+                  }}
+                >
+                  🥋 Docente
+                </Link>
+                <Link
+                  to="/admin"
+                  style={{
+                    padding: '0.55rem',
+                    borderRadius: '8px',
+                    background: 'var(--bg-background)',
+                    color: 'var(--color-primary)',
+                    border: '1px solid var(--color-primary)',
+                    fontWeight: 900,
+                    fontSize: '0.7rem',
+                    textDecoration: 'none',
+                    textAlign: 'center'
+                  }}
+                >
+                  👑 Diretoria
+                </Link>
+              </div>
+              <Link
+                to="/agendar"
+                style={{
+                  padding: '0.6rem 0.85rem',
+                  borderRadius: '10px',
+                  background: 'var(--bg-surface-2)',
+                  color: 'var(--text-foreground)',
+                  border: '1px solid var(--border-subtle)',
+                  fontWeight: 900,
+                  fontSize: '0.74rem',
+                  textDecoration: 'none',
+                  textAlign: 'center'
+                }}
+              >
+                🔥 Agendar Aula Experimental
+              </Link>
+            </div>
+          </aside>
+
+          {/* PAINEL PRINCIPAL DIREITO (CONTEÚDO ACADÊMICO COMPLETO) */}
+          <main style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: 0 }}>
+            {/* Banner Superior Acadêmico */}
+            <div
+              style={{
+                padding: '1.75rem',
+                borderRadius: '20px',
+                background: 'linear-gradient(135deg, var(--bg-surface-1) 0%, var(--bg-surface-2) 100%)',
+                border: '1px solid var(--border-subtle)',
+                boxShadow: 'var(--shadow-card)',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '1.5rem',
+                alignItems: 'center'
+              }}
+            >
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.28rem 0.75rem', borderRadius: '999px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase' }}>
+                  🎓 LAYOUT 1 · SISTEMA ESCOLAR / PORTAL ACADÊMICO COM ABA LATERAL
+                </div>
+                <h1 style={{ margin: '0.65rem 0', fontSize: 'clamp(1.65rem, 3vw, 2.55rem)', fontWeight: 900, lineHeight: 1.08, textTransform: 'uppercase' }}>
+                  Mais Que Um Treino, <span style={{ color: 'var(--color-primary)' }}>Uma Transformação</span>.
+                </h1>
+                <p style={{ margin: '0 0 1.1rem 0', fontSize: '0.88rem', color: 'var(--text-muted-foreground)', lineHeight: 1.55 }}>
+                  Navegue pela aba lateral esquerda como em um sistema acadêmico ou visualize abaixo <strong>todas as 12 seções completas do Centro de Combate</strong>: 8 Modalidades, Grade de Horários, Check-in Expresso, 4 Planos, 4 Mestres, 6 Estruturas, Pódio/Conquistas, Galeria, FAQ e Mapa.
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
+                  <Link
+                    to="/agendar"
+                    style={{
+                      padding: '0.8rem 1.35rem',
+                      borderRadius: '12px',
+                      background: 'var(--color-primary)',
+                      color: 'var(--text-primary-foreground)',
+                      fontWeight: 900,
+                      fontSize: '0.8rem',
+                      textDecoration: 'none',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    🔥 Agendar Aula Gratuita
+                  </Link>
+                  {schoolSectionFilter !== 'ALL' && (
+                    <button
+                      type="button"
+                      onClick={() => setSchoolSectionFilter('ALL')}
+                      style={{
+                        padding: '0.8rem 1.2rem',
+                        borderRadius: '12px',
+                        background: 'var(--bg-background)',
+                        color: 'var(--color-primary)',
+                        border: '1px solid var(--color-primary)',
+                        fontWeight: 900,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📚 Mostrar Todos os 12 Módulos Juntos
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Card de Matrícula & Check-in Rápido */}
+              <div
+                style={{
+                  padding: '1.15rem',
+                  borderRadius: '16px',
+                  background: 'var(--bg-background)',
+                  border: '1px solid var(--border-subtle)'
+                }}
+              >
+                <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
+                  ⚡ SECRETARIA DIGITAL · CHECK-IN EXPRESSO POR HORÁRIO
+                </div>
+                <PublicQuickCheckinCard />
+              </div>
+            </div>
+
+            {/* TODOS OS 12 MÓDULOS COMPLETOS DO CENTRO DE COMBATE */}
+            <CompleteSiteModules
+              variant="school_sidebar"
+              academies={academies}
+              rewardsCatalog={rewardsCatalog}
+              activeSectionFilter={schoolSectionFilter}
+            />
+          </main>
         </div>
       </div>
     );
   }
 
   // ============================================================================
-  // LAYOUT 2: "CORPORATIVO & EDITORIAL B2B" (ESTILO STRIPE / ENTERPRISE / REDES)
-  // Arquitetura 100% diferente:
-  // - Geometria ortogonal executiva (cantos retos/sharp 4px, divisórias 1px)
-  // - Manifesto Assimétrico em Colunas Verticais + Tabela de Governança e Compliance
-  // - Matriz Comparativa de Planos Corporativos/Individuais em Tabela Formal
-  // - Dossiê de Credenciamento B2B para Academias e RH de Empresas
+  // LAYOUT 2: ARQUITETURA CORPORATIVA & EDITORIAL B2B (ESTILO STRIPE / ENTERPRISE)
+  // (Geometria ortogonal, tabelas formais + TODOS os 12 módulos completos)
   // ============================================================================
   if (activePreset === 'corporate') {
     return (
-      <div style={{ minHeight: '100vh', color: 'var(--text-foreground)' }}>
-        {renderGlobalExperienceDock()}
-        {renderExperienceHubModal()}
-        {renderOrderBuilderModal()}
+      <div style={{ minHeight: '100vh', color: 'var(--text-foreground)', paddingBottom: '4rem' }}>
+        {GlobalExperienceDock}
+        {ExperienceShowroomModal}
+        {OrderBuilderModal}
 
-        <div
-          style={{
-            maxWidth: '1360px',
-            margin: '2rem auto',
-            background: 'var(--bg-surface-1)',
-            border: '1px solid var(--border-subtle)',
-            boxShadow: 'var(--shadow-card)'
-          }}
-        >
-          {/* Cabeçalho Executivo Formal */}
+        {/* CABEÇALHO EXECUTIVO EM DUAS FAIXAS ORTOGONAIS */}
+        <header style={{ background: 'var(--bg-surface-1)', borderBottom: '1px solid var(--border-subtle)' }}>
           <div
             style={{
-              padding: '1.25rem 2rem',
-              borderBottom: '1px solid var(--border-subtle)',
+              maxWidth: '1400px',
+              margin: '0 auto',
+              padding: '0.9rem 1.5rem',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -2027,683 +1105,340 @@ export const LandingHubPage: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <span
+              <div
                 style={{
-                  padding: '0.3rem 0.65rem',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '4px',
                   background: 'var(--color-primary)',
                   color: 'var(--text-primary-foreground)',
-                  fontSize: '0.7rem',
-                  fontWeight: 900,
-                  letterSpacing: '0.14em'
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 900
                 }}
               >
-                COMBAT-PASS ENTERPRISE
-              </span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted-foreground)', fontWeight: 600 }}>
-                Infraestrutura B2B de Benefícios Corporativos & Gestão Multi-Unidades
-              </span>
+                CP
+              </div>
+              <div>
+                <div style={{ fontSize: '0.98rem', fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  CENTRO DE COMBATE · CORPORATE & INSTITUCIONAL
+                </div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)' }}>
+                  Infraestrutura Unificada de Artes Marciais, Benefícios Corporativos, Graduações e ERP
+                </div>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button
-                type="button"
-                onClick={() => navigate('/admin')}
+            <div style={{ display: 'flex', gap: '1.15rem', alignItems: 'center', flexWrap: 'wrap', fontSize: '0.76rem', fontWeight: 800 }}>
+              <a href="#o-que-e-o-ct-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>01. O CT & Rede</a>
+              <a href="#modalidades-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>02. 8 Modalidades</a>
+              <a href="#horarios-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>03. Horários</a>
+              <a href="#planos-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>04. Planos</a>
+              <a href="#professores-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>05. Mestres</a>
+              <a href="#faq-react" style={{ color: 'var(--text-foreground)', textDecoration: 'none' }}>06. FAQ</a>
+              <Link
+                to="/agendar"
                 style={{
                   padding: '0.5rem 1rem',
-                  background: 'transparent',
-                  color: 'var(--text-foreground)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  cursor: 'pointer'
-                }}
-              >
-                Acessar Console ERP →
-              </button>
-              <button
-                type="button"
-                onClick={() => handleNavSelect('#credenciamento')}
-                style={{
-                  padding: '0.5rem 1.15rem',
+                  borderRadius: '4px',
                   background: 'var(--color-primary)',
                   color: 'var(--text-primary-foreground)',
-                  border: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
+                  textDecoration: 'none',
+                  fontWeight: 900
                 }}
               >
-                Credenciar Empresa / Academia
-              </button>
+                AGENDAR VISITA / AULA →
+              </Link>
             </div>
           </div>
+        </header>
 
-          {/* Manifesto Editorial Assimétrico em 2 Colunas com Divisória Vertical */}
-          <div
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '2.25rem' }}>
+          {/* MANIFESTO ASSIMÉTRICO + ABAS EXECUTIVAS */}
+          <section
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-              borderBottom: '1px solid var(--border-subtle)'
+              border: '1px solid var(--border-subtle)',
+              background: 'var(--bg-surface-1)'
             }}
           >
-            <div
-              style={{
-                padding: '3rem 2.5rem',
-                borderRight: '1px solid var(--border-subtle)'
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 900,
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'var(--color-primary)',
-                  marginBottom: '1rem'
-                }}
-              >
-                01 // GOVERNANÇA, SAÚDE CORPORATIVA & ALTA PERFORMANCE
+            <div style={{ padding: '2.25rem', borderRight: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-primary)', marginBottom: '0.75rem' }}>
+                ARQUITETURA 02 · EDITORIAL & CORPORATIVO B2B
               </div>
-              <h1
-                style={{
-                  margin: '0 0 1.25rem 0',
-                  fontSize: 'clamp(2rem, 3.4vw, 3rem)',
-                  fontWeight: 900,
-                  lineHeight: 1.06,
-                  letterSpacing: '-0.02em'
-                }}
-              >
-                Unificamos Benefícios Corporativos, Redes de CTs e ERP Financeiro Auditável.
+              <h1 style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.75rem)', fontWeight: 900, lineHeight: 1.08, margin: '0 0 1rem 0', textTransform: 'uppercase' }}>
+                Mais Que Um Treino, Uma Transformação Institucional.
               </h1>
-              <p
-                style={{
-                  margin: '0 0 2rem 0',
-                  fontSize: '0.96rem',
-                  color: 'var(--text-muted-foreground)',
-                  lineHeight: 1.7
-                }}
-              >
-                Para departamentos de RH, oferecemos redução comprovada de estresse e absenteísmo através de artes marciais supervisionadas. Para redes de academias e dojos, entregamos ocupação de horários ociosos, repasse automático por check-in validado e controle completo de caixa e comissões.
+              <p style={{ fontSize: '0.92rem', color: 'var(--text-muted-foreground)', lineHeight: 1.65, marginBottom: '1.5rem' }}>
+                Todas as informações oficiais do Centro de Combate — 8 Modalidades, Corpo Docente, Grade de Horários, Planos, Estrutura Olímpica, Gamificação e ERP — apresentadas em layout executivo de alta precisão.
               </p>
 
-              <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => navigate('/checkout')}
-                  style={{
-                    padding: '0.85rem 1.5rem',
-                    background: 'var(--color-primary)',
-                    color: 'var(--text-primary-foreground)',
-                    border: 'none',
-                    fontSize: '0.8rem',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Contratar Plano Corporativo / Individual
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/portal')}
-                  style={{
-                    padding: '0.85rem 1.5rem',
-                    background: 'var(--bg-background)',
-                    color: 'var(--text-foreground)',
-                    border: '1px solid var(--border-subtle)',
-                    fontSize: '0.8rem',
-                    fontWeight: 800,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Portal do Colaborador / Aluno →
-                </button>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderTop: '1px solid var(--border-subtle)', paddingTop: '1.15rem', gap: '0.75rem' }}>
+                <div>
+                  <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--color-primary)' }}>+500</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>ALUNOS ATIVOS</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '1.45rem', fontWeight: 900 }}>100%</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>MESTRES GRADUADOS</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '1.45rem', fontWeight: 900 }}>180m²</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>TATAME CLIMATIZADO</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--status-available)' }}>8</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>MODALIDADES</div>
+                </div>
               </div>
             </div>
 
-            {/* Coluna Direita: Dossiê em Abas Executivas */}
-            <div style={{ padding: '2.5rem', background: 'var(--bg-background)' }}>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  border: '1px solid var(--border-subtle)',
-                  marginBottom: '1.5rem'
-                }}
-              >
-                {(
-                  [
-                    { id: 'empresas', label: 'PARA EMPRESAS (RH)' },
-                    { id: 'academias', label: 'PARA REDES DE CTs' },
-                    { id: 'atletas', label: 'PARA PRATICANTES' }
-                  ] as const
-                ).map(tab => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setCorpEcosystemTab(tab.id)}
-                    style={{
-                      padding: '0.75rem 0.5rem',
-                      border: 'none',
-                      background:
-                        corpEcosystemTab === tab.id ? 'var(--color-primary)' : 'var(--bg-surface-1)',
-                      color:
-                        corpEcosystemTab === tab.id
-                          ? 'var(--text-primary-foreground)'
-                          : 'var(--text-muted-foreground)',
-                      fontSize: '0.68rem',
-                      fontWeight: 900,
-                      letterSpacing: '0.06em',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {corpEcosystemTab === 'empresas' && (
-                <div>
-                  <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.2rem', fontWeight: 900 }}>
-                    Relatórios de Frequência, Subsídio Flexível & Fatura Única B2B
-                  </h3>
-                  <p style={{ fontSize: '0.84rem', color: 'var(--text-muted-foreground)', lineHeight: 1.65 }}>
-                    Gerencie elegibilidade de colaboradores por CPF, acompanhe indicadores mensais de utilização de passes e receba faturamento corporativo consolidado com nota fiscal única.
-                  </p>
-                </div>
-              )}
-
-              {corpEcosystemTab === 'academias' && (
-                <div>
-                  <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.2rem', fontWeight: 900 }}>
-                    Repasse Automático por Check-in & ERP Multi-Unidades Incluso
-                  </h3>
-                  <p style={{ fontSize: '0.84rem', color: 'var(--text-muted-foreground)', lineHeight: 1.65 }}>
-                    Cada presença validada pelo professor gera crédito imediato no extrato da unidade parceira. Inclui módulo de Caixa Diário, Comissões Dinâmicas e Visão 360° de Alunos.
-                  </p>
-                </div>
-              )}
-
-              {corpEcosystemTab === 'atletas' && (
-                <div>
-                  <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.2rem', fontWeight: 900 }}>
-                    Passe Unificado em 42+ Unidades com Graduação & Loja de Points
-                  </h3>
-                  <p style={{ fontSize: '0.84rem', color: 'var(--text-muted-foreground)', lineHeight: 1.65 }}>
-                    Acesso livre a Muay Thai, Jiu-Jitsu, Boxe, Judô e MMA. Seu histórico de presenças conta para exames oficiais de faixa/Prajied e gera pontos trocáveis na recepção.
-                  </p>
-                </div>
-              )}
-
-              {/* Tabela de Indicadores Auditados */}
-              <div
-                style={{
-                  marginTop: '1.5rem',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  border: '1px solid var(--border-subtle)'
-                }}
-              >
-                {[
-                  { k: 'UNIDADES CREDENCIADAS', v: '42 Centros' },
-                  { k: 'CHECK-INS AUDITADOS/MÊS', v: '18.400+' },
-                  { k: 'TAXA DE RETENÇÃO ANUAL', v: '94.8%' },
-                  { k: 'MODALIDADES COBERTAS', v: '14 Artes Marciais' }
-                ].map((m, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: '1rem',
-                      borderBottom: i < 2 ? '1px solid var(--border-subtle)' : 'none',
-                      borderRight: i % 2 === 0 ? '1px solid var(--border-subtle)' : 'none',
-                      background: 'var(--bg-surface-1)'
-                    }}
-                  >
-                    <div style={{ fontSize: '0.64rem', fontWeight: 800, color: 'var(--text-muted-foreground)' }}>
-                      {m.k}
-                    </div>
-                    <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--color-primary)', marginTop: '4px' }}>
-                      {m.v}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Matriz Formal de Planos Corporativos e Individuais (Tabela Estruturada) */}
-          <div style={{ padding: '2.5rem', borderBottom: '1px solid var(--border-subtle)' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 900, letterSpacing: '0.15em', color: 'var(--color-primary)', marginBottom: '0.4rem' }}>
-              02 // MATRIZ COMPARATIVA DE PASSES & CONTRATOS CORPORATIVOS
-            </div>
-            <h2 style={{ margin: '0 0 1.25rem 0', fontSize: '1.5rem', fontWeight: 900 }}>
-              Tabela Oficial de Assinaturas e Cobertura de Rede
-            </h2>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table
-                style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.82rem'
-                }}
-              >
-                <thead>
-                  <tr style={{ background: 'var(--bg-background)', textAlign: 'left' }}>
-                    <th style={{ padding: '0.9rem 1rem', borderBottom: '1px solid var(--border-subtle)' }}>Critério / Cobertura</th>
-                    <th style={{ padding: '0.9rem 1rem', borderBottom: '1px solid var(--border-subtle)' }}>SILVER PASS (R$ 189)</th>
-                    <th style={{ padding: '0.9rem 1rem', borderBottom: '1px solid var(--border-subtle)', color: 'var(--color-primary)' }}>GOLD PRO (R$ 269)</th>
-                    <th style={{ padding: '0.9rem 1rem', borderBottom: '1px solid var(--border-subtle)' }}>BLACK UNLIMITED (R$ 389)</th>
-                    <th style={{ padding: '0.9rem 1rem', borderBottom: '1px solid var(--border-subtle)' }}>ENTERPRISE B2B (Sob Medida)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ['Franquia Mensal de Treinos', '12 Check-ins / mês', '30 Check-ins / mês (Diário)', 'Ilimitado (Inclusive 2x/dia)', 'Customizado por Colaborador'],
-                    ['Unidades Credenciadas Aceitas', 'Rede Silver (22 CTs)', 'Redes Silver + Gold (35 CTs)', '100% da Rede + Labs (42 CTs)', 'Rede Completa Nacional'],
-                    ['Cancelamento de Vaga Pendente', '✓ Sem multa antes da chamada', '✓ Sem multa antes da chamada', '✓ Prioridade + Sem multa', '✓ Gestão Flexível RH'],
-                    ['Acúmulo de Combat Points', '1.0x Pontos por Treino', '1.5x Pontos por Treino', '2.0x Pontos + Convidado VIP', 'Relatório ESG & Engajamento']
-                  ].map((row, rIdx) => (
-                    <tr key={rIdx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 800 }}>{row[0]}</td>
-                      <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted-foreground)' }}>{row[1]}</td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: 'var(--text-foreground)' }}>{row[2]}</td>
-                      <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted-foreground)' }}>{row[3]}</td>
-                      <td style={{ padding: '0.85rem 1rem', color: 'var(--color-primary)', fontWeight: 800 }}>{row[4]}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Seção Formal de Credenciamento de Novas Academias & Empresas */}
-          <div id="landing-sec-credenciamento" style={{ padding: '2.5rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', alignItems: 'center' }}>
+            <div style={{ padding: '2.25rem', background: 'var(--bg-background)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 900, letterSpacing: '0.15em', color: 'var(--color-primary)', marginBottom: '0.4rem' }}>
-                  03 // EXPANSÃO DE REDE & CREDENCIAMENTO OFICIAL
+                <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.25rem' }}>
+                  {(
+                    [
+                      { id: 'empresas', label: '01. EMPRESAS & RH' },
+                      { id: 'academias', label: '02. REDE DE CTS' },
+                      { id: 'atletas', label: '03. PRATICANTES' }
+                    ] as const
+                  ).map(tab => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setCorporateTab(tab.id)}
+                      style={{
+                        flex: 1,
+                        padding: '0.75rem 0.5rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderBottom: corporateTab === tab.id ? '3px solid var(--color-primary)' : '3px solid transparent',
+                        color: corporateTab === tab.id ? 'var(--color-primary)' : 'var(--text-muted-foreground)',
+                        fontWeight: 900,
+                        fontSize: '0.72rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
-                <h2 style={{ margin: '0 0 0.65rem 0', fontSize: '1.45rem', fontWeight: 900 }}>
-                  Protocolo de Credenciamento de CTs & Empresas Parceiras
-                </h2>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted-foreground)', lineHeight: 1.65 }}>
-                  Submeta os dados da sua academia ou empresa para homologação técnica e liberação do painel administrativo multi-unidades.
-                </p>
-              </div>
 
-              <form onSubmit={handleCredenciarSubmit} style={{ display: 'grid', gap: '0.75rem', padding: '1.5rem', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <input
-                    type="text"
-                    placeholder="Razão Social / Nome do CT *"
-                    value={credenciamentoForm.nomeAcademia}
-                    onChange={e => setCredenciamentoForm({ ...credenciamentoForm, nomeAcademia: e.target.value })}
-                    style={{ padding: '0.65rem', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.8rem' }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Cidade / UF"
-                    value={credenciamentoForm.cidadeBairro}
-                    onChange={e => setCredenciamentoForm({ ...credenciamentoForm, cidadeBairro: e.target.value })}
-                    style={{ padding: '0.65rem', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.8rem' }}
-                  />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <input
-                    type="text"
-                    placeholder="CNPJ ou Responsável Técnico"
-                    value={credenciamentoForm.cnpjOuResponsavel}
-                    onChange={e => setCredenciamentoForm({ ...credenciamentoForm, cnpjOuResponsavel: e.target.value })}
-                    style={{ padding: '0.65rem', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.8rem' }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="WhatsApp Corporativo *"
-                    value={credenciamentoForm.whatsapp}
-                    onChange={e => setCredenciamentoForm({ ...credenciamentoForm, whatsapp: e.target.value })}
-                    style={{ padding: '0.65rem', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.8rem' }}
-                  />
-                </div>
-                {credenciamentoStatus && (
-                  <div style={{ padding: '0.5rem', background: 'var(--status-available-bg)', color: 'var(--status-available)', fontSize: '0.76rem', fontWeight: 800 }}>
-                    {credenciamentoStatus}
+                {corporateTab === 'empresas' && (
+                  <div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: 900 }}>
+                      Saúde Corporativa, Redução de Estresse e Alta Performance
+                    </h3>
+                    <p style={{ fontSize: '0.84rem', color: 'var(--text-muted-foreground)', lineHeight: 1.6 }}>
+                      Planos corporativos e aceitação integral de Wellhub (Gympass), TotalPass e Combat-Pass com relatórios de frequência auditáveis.
+                    </p>
                   </div>
                 )}
-                <button
-                  type="submit"
-                  style={{
-                    padding: '0.75rem',
-                    background: 'var(--color-primary)',
-                    color: 'var(--text-primary-foreground)',
-                    border: 'none',
-                    fontSize: '0.8rem',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Protocolar Credenciamento B2B →
-                </button>
-              </form>
+                {corporateTab === 'academias' && (
+                  <div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: 900 }}>
+                      ERP Multi-Academias, Caixa Diário (PDV) & Comissões
+                    </h3>
+                    <p style={{ fontSize: '0.84rem', color: 'var(--text-muted-foreground)', lineHeight: 1.6 }}>
+                      Controle de lotação por horário, contratos com assinatura eletrônica, fechamento de caixa e repasse automático por check-in.
+                    </p>
+                  </div>
+                )}
+                {corporateTab === 'atletas' && (
+                  <div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: 900 }}>
+                      Do Iniciante Zero ao Atleta de Competição
+                    </h3>
+                    <p style={{ fontSize: '0.84rem', color: 'var(--text-muted-foreground)', lineHeight: 1.6 }}>
+                      Metodologia gradual sem machucados, 8 artes marciais, trilha de 30 conquistas e Loja de Recompensas por Combat Points.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', marginTop: '1.25rem' }}>
+                <Link to="/portal" style={{ padding: '0.7rem 1.15rem', borderRadius: '4px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', fontWeight: 900, fontSize: '0.76rem', textDecoration: 'none' }}>
+                  ACESSAR PORTAL DO ALUNO →
+                </Link>
+                <Link to="/admin" style={{ padding: '0.7rem 1.15rem', borderRadius: '4px', background: 'var(--bg-surface-1)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontWeight: 800, fontSize: '0.76rem', textDecoration: 'none' }}>
+                  ABRIR ERP ADMINISTRATIVO →
+                </Link>
+              </div>
             </div>
-          </div>
+          </section>
+
+          {/* TODOS OS 12 MÓDULOS COMPLETOS EM ESTILO EDITORIAL ORTOGONAL */}
+          <CompleteSiteModules
+            variant="corporate_editorial"
+            academies={academies}
+            rewardsCatalog={rewardsCatalog}
+          />
         </div>
       </div>
     );
   }
 
   // ============================================================================
-  // LAYOUT 3: "ARENA TATAME HUD / COMMAND CENTER" (ESTILO UFC FIGHT PASS / AO VIVO)
-  // Arquitetura 100% diferente:
-  // - Painel Tático Esportivo de Alta Densidade em 3 Colunas Simultâneas (Bento HUD)
-  // - Placar Eletrônico Superior com Relógio de Round Ao Vivo e Status dos Tatames
-  // - Coluna Esquerda: Check-in Expresso Sem Fricção + Atalhos de Portais
-  // - Coluna Central: Grade Oficial de Horários ao Vivo ([HÁ VAGAS] / [LOTADO])
-  // - Coluna Direita: Os 3 Pilares Competitivos (Torneios, Ranking, Stats) + Loja Points
+  // LAYOUT 3: ARENA TATAME HUD / COMMAND CENTER (3 COLUNAS + TODOS OS 12 MÓDULOS)
   // ============================================================================
   return (
-    <div style={{ minHeight: '100vh', color: 'var(--text-foreground)' }}>
-      {renderGlobalExperienceDock()}
-      {renderExperienceHubModal()}
-      {renderOrderBuilderModal()}
+    <div style={{ minHeight: '100vh', color: 'var(--text-foreground)', paddingBottom: '3rem' }}>
+      {GlobalExperienceDock}
+      {ExperienceShowroomModal}
+      {OrderBuilderModal}
 
-      <div style={{ maxWidth: '1640px', margin: '0 auto', padding: '1rem clamp(0.75rem, 2vw, 1.75rem)' }}>
-        {/* PLACAR ELETRÔNICO DE ARENA (SCOREBOARD HUD SUPERIOR) */}
+      {/* PLACAR ELETRÔNICO DE ARENA AO VIVO */}
+      <div
+        style={{
+          background: 'var(--bg-surface-2)',
+          borderBottom: '1px solid var(--border-subtle)',
+          padding: '0.65rem 1.25rem'
+        }}
+      >
         <div
           style={{
-            padding: '0.9rem 1.35rem',
-            marginBottom: '1.15rem',
-            borderRadius: '16px',
-            background: 'var(--bg-surface-1)',
-            border: '2px solid var(--color-primary)',
-            boxShadow: 'var(--shadow-glow)',
+            maxWidth: '1480px',
+            margin: '0 auto',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: '1rem'
+            gap: '0.75rem'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <div
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span
               style={{
-                padding: '0.4rem 0.8rem',
-                borderRadius: '8px',
+                padding: '0.25rem 0.65rem',
+                borderRadius: '6px',
                 background: 'var(--color-primary)',
                 color: 'var(--text-primary-foreground)',
-                fontFamily: 'var(--font-display)',
+                fontSize: '0.7rem',
                 fontWeight: 900,
-                fontSize: '0.95rem',
                 letterSpacing: '0.08em'
               }}
             >
-              ⚡ ARENA LIVE HUD · {arenaClock}
-            </div>
-            <div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 900, textTransform: 'uppercase', fontFamily: 'var(--font-display)' }}>
-                CENTRAL DE OPERAÇÕES DE TATAME & CHECK-IN IMEDIATO
-              </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
-                Selecione seu horário na grade central, bata seu ponto expresso à esquerda ou acesse o ranking competitivo à direita
-              </div>
-            </div>
+              🔴 LIVE TATAME HUD · COMMAND CENTER
+            </span>
+            <span style={{ fontSize: '0.84rem', fontWeight: 900, fontFamily: 'monospace' }}>
+              ⏱️ {currentTime.toLocaleTimeString('pt-BR')}
+            </span>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-            <span
-              style={{
-                padding: '0.35rem 0.75rem',
-                borderRadius: '8px',
-                background: 'var(--status-available-bg)',
-                border: '1px solid var(--status-available-border)',
-                color: 'var(--status-available)',
-                fontSize: '0.72rem',
-                fontWeight: 900
-              }}
-            >
-              🟢 5 TATAMES COM VAGAS AGORA
+          <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', fontSize: '0.74rem', fontWeight: 900 }}>
+            <span style={{ padding: '0.25rem 0.65rem', borderRadius: '6px', background: 'var(--status-available-bg)', color: 'var(--status-available)', border: '1px solid var(--status-available-border)' }}>
+              🟢 +500 Alunos · 8 Modalidades · 180m² Tatame
             </span>
-            <span
-              style={{
-                padding: '0.35rem 0.75rem',
-                borderRadius: '8px',
-                background: 'var(--status-full-bg)',
-                border: '1px solid var(--status-full-border)',
-                color: 'var(--status-full)',
-                fontSize: '0.72rem',
-                fontWeight: 900
-              }}
-            >
-              🔴 1 TURMA LOTADA
-            </span>
+            <Link to="/agendar" style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', textDecoration: 'none' }}>
+              🔥 Agendar Aula Experimental
+            </Link>
           </div>
         </div>
+      </div>
 
-        {/* GRID TÁTICO EM 3 COLUNAS SIMULTÂNEAS (COMMAND CENTER) */}
+      {/* DECK OPERACIONAL EM 3 COLUNAS SIMULTÂNEAS NO TOPO */}
+      <div
+        style={{
+          maxWidth: '1480px',
+          margin: '1.15rem auto',
+          padding: '0 1rem',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '1rem',
+          alignItems: 'start'
+        }}
+      >
+        {/* Coluna 1: Check-in Expresso */}
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))',
-            gap: '1.15rem',
-            alignItems: 'start'
+            padding: '1.15rem',
+            borderRadius: '14px',
+            background: 'var(--bg-surface-1)',
+            border: '2px solid var(--color-primary)',
+            boxShadow: 'var(--shadow-card)'
           }}
         >
-          {/* COLUNA 1 (ESQUERDA): CHECK-IN EXPRESSO + PORTAIS OPERACIONAIS */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <PublicQuickCheckinCard />
-
-            <div
-              style={{
-                padding: '1.15rem',
-                borderRadius: '18px',
-                background: 'var(--bg-surface-1)',
-                border: '1px solid var(--border-subtle)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.6rem'
-              }}
-            >
-              <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-                ⚡ TERMINAIS DE ACESSO DIRETO
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/portal')}
-                style={{
-                  padding: '0.75rem 1rem',
-                  borderRadius: '12px',
-                  background: 'var(--color-primary)',
-                  color: 'var(--text-primary-foreground)',
-                  border: 'none',
-                  fontSize: '0.82rem',
-                  fontWeight: 900,
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between'
-                }}
-              >
-                <span>🥊 Entrar no Portal do Aluno</span>
-                <span>→</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/professor')}
-                style={{
-                  padding: '0.7rem 1rem',
-                  borderRadius: '12px',
-                  background: 'var(--bg-background)',
-                  color: 'var(--text-foreground)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.8rem',
-                  fontWeight: 800,
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between'
-                }}
-              >
-                <span>🥋 Terminal de Chamada do Professor</span>
-                <span>→</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/agendar')}
-                style={{
-                  padding: '0.7rem 1rem',
-                  borderRadius: '12px',
-                  background: 'var(--bg-background)',
-                  color: 'var(--text-foreground)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.8rem',
-                  fontWeight: 800,
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between'
-                }}
-              >
-                <span>🔥 Agendar Aula Experimental Gratuita</span>
-                <span>→</span>
-              </button>
-            </div>
+          <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            ⚡ TERMINAL DE ENTRADA · BATER PONTO DE PRESENÇA
           </div>
-
-          {/* COLUNA 2 (CENTRAL): GRADE OFICIAL DE HORÁRIOS AO VIVO */}
-          <div
-            style={{
-              padding: '1.25rem',
-              borderRadius: '20px',
-              background: 'var(--bg-surface-1)',
-              border: '1px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-card)'
-            }}
-          >
-            <InteractiveCombatCalendar userRole="ALUNO" />
-          </div>
-
-          {/* COLUNA 3 (DIREITA): OS 3 PILARES COMPETITIVOS + DROPS DA LOJA DE POINTS */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div
-              style={{
-                padding: '1.15rem',
-                borderRadius: '18px',
-                background: 'var(--bg-surface-1)',
-                border: '1px solid var(--border-subtle)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.7rem'
-              }}
-            >
-              <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-                🏆 CIRCUITO COMPETITIVO & ANALYTICS
-              </div>
-
-              {[
-                {
-                  icon: '🏆',
-                  title: 'Próximos Torneios & Brackets',
-                  sub: 'Inscrições abertas para chaves oficiais',
-                  route: '/portal?tab=torneios'
-                },
-                {
-                  icon: '🌍',
-                  title: 'Ranking Global MMR',
-                  sub: 'Leaderboard oficial por divisão e faixa',
-                  route: '/portal?tab=ranking'
-                },
-                {
-                  icon: '📊',
-                  title: 'Estatísticas de Desempenho',
-                  sub: 'Assiduidade, vitórias e evolução semanal',
-                  route: '/portal?tab=desempenho'
-                }
-              ].map((c, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => navigate(c.route)}
-                  style={{
-                    padding: '0.85rem',
-                    borderRadius: '12px',
-                    background: 'var(--bg-background)',
-                    border: '1px solid var(--border-subtle)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '0.75rem'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <span style={{ fontSize: '1.45rem' }}>{c.icon}</span>
-                    <div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 900 }}>{c.title}</div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted-foreground)' }}>{c.sub}</div>
-                    </div>
-                  </div>
-                  <span style={{ color: 'var(--color-primary)', fontWeight: 900 }}>→</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Vitrine Compacta de Recompensas no HUD */}
-            <div
-              style={{
-                padding: '1.15rem',
-                borderRadius: '18px',
-                background: 'var(--bg-surface-1)',
-                border: '1px solid var(--border-subtle)'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-                  🪙 LOJA DE COMBAT POINTS
-                </span>
-                <button
-                  type="button"
-                  onClick={() => navigate('/portal?tab=recompensas')}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--color-primary)',
-                    fontSize: '0.72rem',
-                    fontWeight: 900,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Resgatar →
-                </button>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {REWARDS_SHOWCASE_ITEMS.slice(0, 3).map(item => (
-                  <div
-                    key={item.id}
-                    style={{
-                      padding: '0.65rem 0.8rem',
-                      borderRadius: '10px',
-                      background: 'var(--bg-background)',
-                      border: '1px solid var(--border-subtle)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <span style={{ fontSize: '0.76rem', fontWeight: 800 }}>
-                      {item.icone} {item.nome}
-                    </span>
-                    <strong style={{ fontSize: '0.74rem', color: 'var(--color-primary)' }}>
-                      {item.pontos} pts
-                    </strong>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <PublicQuickCheckinCard />
         </div>
+
+        {/* Coluna 2: Calendário Ao Vivo */}
+        <div
+          style={{
+            padding: '1.15rem',
+            borderRadius: '14px',
+            background: 'var(--bg-surface-1)',
+            border: '1px solid var(--border-subtle)',
+            boxShadow: 'var(--shadow-card)'
+          }}
+        >
+          <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            📅 GRADE INTERATIVA EM TEMPO REAL ([HÁ VAGAS] / [LOTADO])
+          </div>
+          <InteractiveCombatCalendar userRole="ALUNO" />
+        </div>
+
+        {/* Coluna 3: Atalhos Competitivos & Portais */}
+        <div
+          style={{
+            padding: '1.15rem',
+            borderRadius: '14px',
+            background: 'var(--bg-surface-1)',
+            border: '1px solid var(--border-subtle)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.65rem'
+          }}
+        >
+          <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+            🏆 TELEMETRIA & ACESSO RÁPIDO AOS MÓDULOS
+          </div>
+          {[
+            { icon: '🏆', title: 'Próximos Torneios & Brackets', sub: 'Chaves oficiais abertas', to: '/portal?tab=torneios' },
+            { icon: '🌍', title: 'Ranking Global de Atletas', sub: 'Leaderboard MMR ao vivo', to: '/portal?tab=ranking' },
+            { icon: '📊', title: 'Estatísticas de Lutador', sub: 'Frequência & aproveitamento', to: '/portal?tab=desempenho' },
+            { icon: '🥊', title: 'Portal Completo do Aluno', sub: 'Check-in, Contratos e 30 Conquistas', to: '/portal' },
+            { icon: '🥋', title: 'Acesso do Professor', sub: 'Chamada de Tatame & Comissões', to: '/professor' },
+            { icon: '👑', title: 'ERP Admin & Layout Studio', sub: 'Gestão 360, Caixa e Customizer', to: '/admin' }
+          ].map(card => (
+            <Link
+              key={card.title}
+              to={card.to}
+              style={{
+                padding: '0.7rem 0.85rem',
+                borderRadius: '10px',
+                background: 'var(--bg-background)',
+                border: '1px solid var(--border-subtle)',
+                textDecoration: 'none',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>{card.icon}</span>
+                <div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--text-foreground)' }}>{card.title}</div>
+                  <div style={{ fontSize: '0.66rem', color: 'var(--text-muted-foreground)' }}>{card.sub}</div>
+                </div>
+              </div>
+              <span style={{ color: 'var(--color-primary)', fontWeight: 900 }}>→</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* TODOS OS 12 MÓDULOS COMPLETOS ABAIXO EM ESTILO ARENA HUD */}
+      <div style={{ maxWidth: '1480px', margin: '0 auto', padding: '0 1rem' }}>
+        <CompleteSiteModules
+          variant="arena_hud"
+          academies={academies}
+          rewardsCatalog={rewardsCatalog}
+        />
       </div>
     </div>
   );

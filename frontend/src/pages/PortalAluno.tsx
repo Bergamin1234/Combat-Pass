@@ -547,7 +547,7 @@ export default function PortalAluno() {
         }}
       />
 
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className={`${preferences.layoutPreset.student === 'complete_tabs' ? 'max-w-5xl' : 'max-w-[1500px]'} mx-auto space-y-5`}>
 
         {/* FEEDBACK DE CHECK-IN COM SUCESSO (ESTÍMULO VISUAL) */}
         {checkinSucessoAnim && (
@@ -563,8 +563,8 @@ export default function PortalAluno() {
           </div>
         )}
 
-        {/* HEADER SUPERIOR */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-5">
+        {/* HEADER SUPERIOR GLOBAL DO PORTAL DO ALUNO */}
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
           <div className="flex items-center gap-3">
             <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-contain flex-shrink-0 bg-[#141416] p-1" />
             <div>
@@ -586,6 +586,12 @@ export default function PortalAluno() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            <Link
+              to="/"
+              className="px-3 py-1.5 rounded-lg bg-[#141416] hover:bg-zinc-800 text-xs font-bold text-zinc-200 border border-zinc-700 transition"
+            >
+              🏠 Site Principal
+            </Link>
             <ThemeSwitcher />
             <a 
               href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, sou o aluno(a) ${alunoLogado?.nome} e gostaria de tirar uma dúvida na recepção!`)}`}
@@ -607,35 +613,247 @@ export default function PortalAluno() {
         {/* MOTOR MULTI-LAYOUT & ORDENADOR DINÂMICO DO ALUNO */}
         <JourneyLayoutToolbar journey="student" />
 
-        <div style={{ marginBottom: '0.75rem' }}>
-          <DynamicNavBuilder
-            journey="student"
-            activeId={abaAtiva}
-            onSelect={(tab) => setAbaAtiva(tab)}
-            variant="horizontal"
-          />
-        </div>
-
-        {preferences.layoutPreset.student !== 'complete_tabs' && abaAtiva === 'treinos' && (
-          <StudentLayoutPresetsView
-            alunoLogado={alunoLogado}
-            aulas={aulas}
-            gamificacao={gamificacao}
-            onCheckinSuccess={() => {
-              if (alunoLogado?.id) {
-                carregarAulas(alunoLogado.id);
-                carregarFrequencia(alunoLogado.id, mesAtual, anoAtual);
-                carregarGamificacao(alunoLogado.id);
-              }
+        {/* HUD SUPERIOR EXCLUSIVO QUANDO EM LAYOUT 2 (ARENA FIGHTER HUD) */}
+        {preferences.layoutPreset.student === 'gamified_journey' && (
+          <div
+            style={{
+              padding: '1.25rem',
+              borderRadius: '18px',
+              background: 'linear-gradient(135deg, var(--bg-surface-1) 0%, var(--bg-surface-2) 100%)',
+              border: '2px solid var(--color-primary)',
+              boxShadow: 'var(--shadow-card)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '1rem',
+              alignItems: 'center'
             }}
-            onSelectTab={(tabId) => setAbaAtiva(tabId)}
-          />
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+              <div
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '16px',
+                  background: 'var(--color-primary)',
+                  color: 'var(--text-primary-foreground)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 900,
+                  flexShrink: 0
+                }}
+              >
+                <span style={{ fontSize: '0.58rem' }}>LVL</span>
+                <span style={{ fontSize: '1.45rem', lineHeight: 1 }}>
+                  {Math.max(1, Math.floor(Number(gamificacao?.xpTotal || alunoLogado?.xp || 0) / 100) + 1)}
+                </span>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.66rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                  🏆 ARENA FIGHTER HUD · TELEMETRIA DO ATLETA
+                </div>
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
+                  {alunoLogado?.nome}
+                </div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
+                  🥋 {alunoLogado?.prajied || 'Branco'} · 🔥 {gamificacao?.streak || 0} treinos seguidos · ⚡ {gamificacao?.xpTotal || 0} XP
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 900, marginBottom: '0.3rem' }}>
+                <span>META MENSAL ({gamificacao?.presencasNoMes || 0}/{gamificacao?.metaMes || 12} TREINOS)</span>
+                <span style={{ color: 'var(--color-primary)' }}>{gamificacao?.progressoMeta || 0}%</span>
+              </div>
+              <div style={{ width: '100%', height: '10px', borderRadius: '999px', background: 'var(--bg-background)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+                <div style={{ width: `${gamificacao?.progressoMeta || 0}%`, height: '100%', background: 'linear-gradient(90deg, var(--color-primary), var(--color-accent))' }} />
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* ========================================================
-            OS 3 PILARES COMPETITIVOS: TORNEIOS / RANKING / DESEMPENHO
-            (Sempre presentes no Portal do Aluno com as cores ativas)
-            ======================================================== */}
+        {/* SHELL POLIMÓRFICO DO PORTAL DO ALUNO:
+            Layout 1 (tatame_express): Sistema Escolar com Aba Lateral Fixa à Esquerda (280px + 1fr)
+            Layout 2 (gamified_journey): Arena Fighter HUD com Barra Tática
+            Layout 3 (agenda_control): Executivo Split-View 2 Colunas Simultâneas
+            Layout 4 (complete_tabs): Clássico em Abas Horizontais */}
+        <div
+          style={
+            preferences.layoutPreset.student === 'tatame_express'
+              ? { display: 'grid', gridTemplateColumns: 'minmax(250px, 285px) 1fr', gap: '1.25rem', alignItems: 'start' }
+              : preferences.layoutPreset.student === 'agenda_control'
+              ? { display: 'grid', gridTemplateColumns: '1.25fr 0.95fr', gap: '1.25rem', alignItems: 'start' }
+              : { display: 'block' }
+          }
+        >
+          {/* ABA LATERAL FIXA DO SISTEMA ESCOLAR (QUANDO LAYOUT 1 ESTÁ ATIVO) */}
+          {preferences.layoutPreset.student === 'tatame_express' && (
+            <aside
+              style={{
+                position: 'sticky',
+                top: '16px',
+                borderRadius: '18px',
+                background: 'var(--bg-surface-1)',
+                border: '2px solid var(--border-subtle)',
+                padding: '1.1rem',
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.85rem'
+              }}
+            >
+              {/* Carteirinha Escolar / Acadêmica do Aluno */}
+              <div
+                style={{
+                  padding: '0.9rem',
+                  borderRadius: '14px',
+                  background: 'var(--bg-surface-2)',
+                  border: '1px solid var(--color-primary)'
+                }}
+              >
+                <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  🎓 CARTEIRA ACADÊMICA DO ALUNO
+                </div>
+                <div style={{ fontSize: '0.98rem', fontWeight: 900, color: 'var(--text-foreground)', marginTop: '0.2rem' }}>
+                  {alunoLogado?.nome}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)', marginTop: '0.15rem' }}>
+                  🥋 Graduação: <strong style={{ color: 'var(--text-foreground)' }}>{alunoLogado?.prajied || 'Branco'}</strong>
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)', marginTop: '0.1rem' }}>
+                  🎫 Plano: <strong style={{ color: 'var(--color-primary)' }}>{alunoLogado?.plano || '2x na semana'}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.55rem', paddingTop: '0.45rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.68rem', fontWeight: 800 }}>
+                  <span style={{ color: 'var(--status-available)' }}>● Matrícula Ativa</span>
+                  <span style={{ color: 'var(--color-accent)' }}>🔥 {gamificacao?.streak || 0} seguidos</span>
+                </div>
+              </div>
+
+              {/* Menu Vertical Estilo Sistema Escolar */}
+              <div>
+                <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>
+                  📚 1. Vida Acadêmica & Tatame
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {[
+                    { id: 'treinos', icon: '🥊', label: 'Treinos & Check-in de Hoje' },
+                    { id: 'frequencia', icon: '📅', label: 'Grade, Calendário & %' },
+                    { id: 'contratos', icon: '📄', label: 'Meus Contratos & Termos' },
+                    { id: 'financeiro', icon: '💳', label: 'Mensalidade / Status Passe' }
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setAbaAtiva(item.id as any)}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem 0.75rem',
+                        borderRadius: '10px',
+                        border: abaAtiva === item.id ? '1px solid var(--color-primary)' : '1px solid transparent',
+                        borderLeft: abaAtiva === item.id ? '4px solid var(--color-primary)' : '4px solid transparent',
+                        background: abaAtiva === item.id ? 'var(--color-primary-light)' : 'transparent',
+                        color: abaAtiva === item.id ? 'var(--color-primary)' : 'var(--text-foreground)',
+                        fontSize: '0.76rem',
+                        fontWeight: abaAtiva === item.id ? 900 : 700,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.45rem'
+                      }}
+                    >
+                      <span>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>
+                  🏆 2. Competitivo, XP & Loja
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {[
+                    { id: 'conquistas', icon: '🏆', label: 'Minhas 30 Conquistas & XP' },
+                    { id: 'recompensas', icon: '🪙', label: 'Loja de Points & Prêmios' },
+                    { id: 'torneios', icon: '🏅', label: 'Próximos Torneios & Chaves' },
+                    { id: 'ranking', icon: '🌍', label: 'Ranking Global de Atletas' },
+                    { id: 'desempenho', icon: '📊', label: 'Estatísticas de Desempenho' }
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setAbaAtiva(item.id as any)}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem 0.75rem',
+                        borderRadius: '10px',
+                        border: abaAtiva === item.id ? '1px solid var(--color-primary)' : '1px solid transparent',
+                        borderLeft: abaAtiva === item.id ? '4px solid var(--color-primary)' : '4px solid transparent',
+                        background: abaAtiva === item.id ? 'var(--color-primary-light)' : 'transparent',
+                        color: abaAtiva === item.id ? 'var(--color-primary)' : 'var(--text-foreground)',
+                        fontSize: '0.76rem',
+                        fontWeight: abaAtiva === item.id ? 900 : 700,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.45rem'
+                      }}
+                    >
+                      <span>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>
+                  📢 3. Mural & Comunidade
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {[
+                    { id: 'avisos', icon: '📢', label: `Mural de Avisos (${avisos.length})` },
+                    { id: 'mercado', icon: '🛍️', label: 'Mercado & Loja do CT (Beta)' }
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setAbaAtiva(item.id as any)}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem 0.75rem',
+                        borderRadius: '10px',
+                        border: abaAtiva === item.id ? '1px solid var(--color-primary)' : '1px solid transparent',
+                        borderLeft: abaAtiva === item.id ? '4px solid var(--color-primary)' : '4px solid transparent',
+                        background: abaAtiva === item.id ? 'var(--color-primary-light)' : 'transparent',
+                        color: abaAtiva === item.id ? 'var(--color-primary)' : 'var(--text-foreground)',
+                        fontSize: '0.76rem',
+                        fontWeight: abaAtiva === item.id ? 900 : 700,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.45rem'
+                      }}
+                    >
+                      <span>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </aside>
+          )}
+
+          {/* COLUNA PRINCIPAL DE CONTEÚDO DO ALUNO */}
+          <div className="space-y-6 min-w-0">
+
+        {/* OS 3 PILARES COMPETITIVOS: TORNEIOS / RANKING / DESEMPENHO */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Card 1: Próximos Torneios */}
           <div 
@@ -1733,6 +1951,59 @@ export default function PortalAluno() {
           />
         )}
 
+          </div>
+
+          {/* COLUNA DIREITA FIXA QUANDO EM LAYOUT 3 (EXECUTIVO SPLIT-VIEW 2 COLUNAS) */}
+          {preferences.layoutPreset.student === 'agenda_control' && (
+            <aside
+              style={{
+                position: 'sticky',
+                top: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
+              }}
+            >
+              <div
+                style={{
+                  padding: '1.15rem',
+                  borderRadius: '10px',
+                  background: 'var(--bg-surface-1)',
+                  border: '1px solid var(--border-subtle)'
+                }}
+              >
+                <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
+                  🏛️ PAINEL EXECUTIVO LATERAL · AGENDA & VAGAS EM TEMPO REAL
+                </div>
+                <InteractiveCombatCalendar
+                  userRole="ALUNO"
+                  alunoLogado={alunoLogado}
+                  onRefreshExternal={() => {
+                    if (alunoLogado?.id) {
+                      carregarAulas(alunoLogado.id);
+                      carregarFrequencia(alunoLogado.id, mesAtual, anoAtual);
+                      carregarGamificacao(alunoLogado.id);
+                    }
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  padding: '1.15rem',
+                  borderRadius: '10px',
+                  background: 'var(--bg-surface-1)',
+                  border: '1px solid var(--border-subtle)'
+                }}
+              >
+                <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
+                  📄 CONTRATOS & TERMOS ASSINADOS
+                </div>
+                <MyContractsTab aluno={alunoLogado} />
+              </div>
+            </aside>
+          )}
+        </div>
       </div>
 
       {/* MODAL JUSTIFICAR AUSÊNCIA / INFORMAR DOENÇA */}

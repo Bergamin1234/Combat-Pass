@@ -5,7 +5,7 @@ export type JourneyKey = 'landing' | 'student' | 'teacher' | 'admin';
 
 export type LandingPresetId = 'marketplace' | 'corporate' | 'tatame' | 'classic';
 export type StudentPresetId = 'tatame_express' | 'gamified_journey' | 'agenda_control' | 'complete_tabs';
-export type TeacherPresetId = 'tatame_fast' | 'technical_perf' | 'partner_portal';
+export type TeacherPresetId = 'tatame_fast' | 'technical_perf' | 'partner_portal' | 'classic_teacher';
 export type AdminPresetId = 'executive' | 'operational_360' | 'customizer_studio' | 'complete_erp';
 export type LoadingStyleId = 'skeleton' | 'minimal_bar' | 'combat_pulse' | 'step_progress';
 
@@ -160,27 +160,28 @@ export const PRESET_META_BY_JOURNEY: Record<
   Array<{ id: string; title: string; badge: string; icon: string; desc: string }>
 > = {
   landing: [
-    { id: 'marketplace', title: 'Layout A: Marketplace', badge: 'Intuitivo / Busca', icon: '🏛️', desc: 'Busca inteligente de CTs, filtros de modalidade, mapa e comparativo de passes' },
-    { id: 'corporate', title: 'Layout B: Corporativo', badge: 'Formal / B2B', icon: '🏢', desc: 'Proposta executiva para empresas e redes, KPIs de autoridade e credenciamento' },
-    { id: 'tatame', title: 'Layout C: Direto ao Tatame', badge: 'Operacional Ao Vivo', icon: '⚡', desc: 'Abre direto na Grade Oficial ao vivo com [HÁ VAGAS]/[LOTADO] e Check-in Expresso' },
-    { id: 'classic', title: 'Layout Clássico HTML', badge: 'Original', icon: '📜', desc: 'Landing page institucional clássica do Centro de Combate' }
+    { id: 'marketplace', title: '1. Sistema Escolar (Aba Lateral)', badge: 'Aba Lateral Fixa', icon: '🎓', desc: 'Portal estilo sistema escolar/acadêmico com menu lateral fixo e todas as 12 seções do CT' },
+    { id: 'corporate', title: '2. Editorial & Corporativo B2B', badge: 'Formal / Ortogonal', icon: '🏛️', desc: 'Geometria executiva de bordas retas, abas corporativas e todas as 12 seções do CT' },
+    { id: 'tatame', title: '3. Arena Tatame HUD (3 Colunas)', badge: 'HUD Ao Vivo', icon: '⚡', desc: 'Placar eletrônico ao vivo, 3 colunas operacionais no topo e todas as 12 seções em HUD' },
+    { id: 'classic', title: '4. Site Clássico Original', badge: 'Original (4º)', icon: '📜', desc: 'Landing page institucional original do Centro de Combate com todas as seções' }
   ],
   student: [
-    { id: 'tatame_express', title: 'Layout A: Tatame Express', badge: 'Zero Fricção', icon: '🥊', desc: 'Foco no próximo treino, Check-in Expresso em 1 clique e botão Cancelar Vaga pendente' },
-    { id: 'gamified_journey', title: 'Layout B: Jornada & Evolução', badge: 'Gamificado', icon: '🏆', desc: 'Perfil atlético com XP, missões/streak, Loja de Recompensas por Points e graduação' },
-    { id: 'agenda_control', title: 'Layout C: Agenda & Controle', badge: 'Split-View Formal', icon: '📅', desc: 'Visão dividida com Calendário Semanal/Mensal, histórico de presenças e faturas' },
-    { id: 'complete_tabs', title: 'Modo Completo Multi-Abas', badge: 'Todas as Abas', icon: '🗂️', desc: 'Navegação clássica com todas as abas ordenáveis do Portal do Aluno' }
+    { id: 'tatame_express', title: '1. Sistema Escolar (Aba Lateral)', badge: 'Sidebar Acadêmica', icon: '🎓', desc: 'Portal estilo sistema de escola com aba lateral fixa à esquerda, carteira de aluno e todos os módulos' },
+    { id: 'gamified_journey', title: '2. Arena Fighter HUD (Gamificado)', badge: 'HUD & Telemetria', icon: '🏆', desc: 'Placar superior de atleta com nível, barra de XP, deck lateral tático e 30 conquistas' },
+    { id: 'agenda_control', title: '3. Executivo Split-View (2 Colunas)', badge: 'Formal Lado a Lado', icon: '🏛️', desc: 'Arquitetura dividida em 2 colunas simultâneas com Calendário + Contratos e módulo ativo' },
+    { id: 'complete_tabs', title: '4. Clássico em Abas Horizontais', badge: 'Original', icon: '📜', desc: 'Layout clássico centralizado com os 3 cards competitivos e barra de abas horizontais' }
   ],
   teacher: [
-    { id: 'tatame_fast', title: 'Layout A: Modo Tatame', badge: 'Touch-First', icon: '⚡', desc: 'Contador de vagas [HÁ VAGAS]/[LOTADO], chamada em 1 toque e Walk-in Check-in' },
-    { id: 'technical_perf', title: 'Layout B: Gestão Técnica', badge: 'Profissional', icon: '📋', desc: 'Tabela técnica da turma, concessão de XP Bônus/Points de mérito e grade semanal' },
-    { id: 'partner_portal', title: 'Layout C: Portal Parceiro', badge: 'Formal & Financeiro', icon: '💵', desc: 'Extrato detalhado de comissões dinâmicas por check-in, retenção e CTs' }
+    { id: 'tatame_fast', title: '1. Sistema Escolar Docente (Aba Lateral)', badge: 'Sidebar Professor', icon: '🎓', desc: 'Portal do professor estilo sistema acadêmico com menu vertical fixo e todos os módulos' },
+    { id: 'technical_perf', title: '2. Split-View Técnico (2 Colunas)', badge: 'Chamada + Grade', icon: '📋', desc: 'Visão em duas colunas simultâneas: Chamada/Vagas à esquerda e Grade/Mérito à direita' },
+    { id: 'partner_portal', title: '3. Executivo & Comissões (Formal)', badge: 'Financeiro & KPIs', icon: '💵', desc: 'Layout ortogonal focado em extrato de repasses por check-in, retenção e turmas' },
+    { id: 'classic_teacher', title: '4. Tatame Touch-First (Abas)', badge: 'Clássico Touch', icon: '⚡', desc: 'Modo clássico de tatame com abas horizontais grandes para celular e tablet' }
   ],
   admin: [
-    { id: 'executive', title: 'Layout A: Executivo', badge: 'Diretoria', icon: '📊', desc: 'Sidebar elegante, KPIs consolidados de repasses e resumo de Fechamento de Caixa' },
-    { id: 'operational_360', title: 'Layout B: Operacional 360°', badge: 'Alta Densidade', icon: '🔍', desc: 'Busca Global 360° fixa no topo, Grade Oficial editável e Caixa/Check-in lateral' },
-    { id: 'customizer_studio', title: 'Layout C: Estúdio & Builder', badge: 'White-Label Studio', icon: '🎨', desc: 'Painel de controle + Live Preview multi-dispositivo (Paletas + Layouts + Ordem)' },
-    { id: 'complete_erp', title: 'Modo ERP Completo', badge: 'Todos os Módulos', icon: '👑', desc: 'Acesso direto a todas as abas operacionais na ordem personalizada' }
+    { id: 'executive', title: '1. Sistema Escolar / ERP (Aba Lateral)', badge: 'Sidebar Diretoria', icon: '🎓', desc: 'ERP com menu lateral fixo à esquerda organizado por departamentos e todas as funções' },
+    { id: 'operational_360', title: '2. Command Center 360° (Split-Deck)', badge: 'Recepção + ERP', icon: '⚡', desc: 'Deck lateral de recepção/caixa/busca 360° fixo ao lado do módulo administrativo ativo' },
+    { id: 'customizer_studio', title: '3. Estúdio White-Label + ERP', badge: 'Builder + Gestão', icon: '🎨', desc: 'Estúdio de customização de layouts/paletas no topo integrado a todos os módulos do ERP' },
+    { id: 'complete_erp', title: '4. Clássico em Abas Horizontais', badge: 'Original', icon: '📜', desc: 'Painel administrativo clássico centralizado com cards de métricas e abas horizontais' }
   ]
 };
 
