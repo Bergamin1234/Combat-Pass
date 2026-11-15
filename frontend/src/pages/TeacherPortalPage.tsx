@@ -224,7 +224,7 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
             marginBottom: '1.15rem'
           }}
         >
-          <div>
+          <div style={{ flex: '1 1 280px', minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <span
                 style={{
@@ -271,10 +271,11 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
             <h2
               style={{
                 margin: '0.35rem 0 0 0',
-                fontSize: '1.35rem',
+                fontSize: 'clamp(1.15rem, 2.2vw, 1.45rem)',
                 fontWeight: 900,
                 color: aulaCancelada ? 'var(--status-canceled)' : 'var(--text-foreground)',
-                textDecoration: aulaCancelada ? 'line-through' : 'none'
+                textDecoration: aulaCancelada ? 'line-through' : 'none',
+                wordBreak: 'break-word'
               }}
             >
               {selectedHorario} — {selectedModalidade} ({selectedUnidade})
@@ -282,7 +283,7 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
           </div>
 
           {/* Seletor rápido de turno/horário e botão de cancelar aula */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', flex: '1 1 240px', justifyContent: 'flex-start' }}>
             <select
               value={selectedHorario}
               onChange={e => setSelectedHorario(e.target.value)}
@@ -685,7 +686,7 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
           onSubmit={handleConcederBonus}
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '0.85rem',
             alignItems: 'end',
             padding: '1.1rem',
@@ -941,13 +942,14 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
         )}
 
         {/* SHELL POLIMÓRFICO DO PROFESSOR:
-            Layout 1 (tatame_fast): Sistema Escolar Docente com Aba Lateral Fixa (285px + 1fr)
+            Layout 1 (tatame_fast): Sistema Escolar Docente com Aba Lateral Fixa (285px + 1fr no desktop, coluna única no mobile)
             Layout 2 (technical_perf): Split-View Técnico 2 Colunas Lado a Lado
             Layout 3 (partner_portal): Executivo Ortogonal de Comissões + Operação
             Layout 4 (classic_teacher): Clássico Touch-First em Abas Horizontais */}
         {activePreset === 'tatame_fast' ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 285px) 1fr', gap: '1.25rem', alignItems: 'start' }}>
+          <div className="responsive-portal-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 285px) 1fr', gap: '1.25rem', alignItems: 'start' }}>
             <aside
+              className="responsive-portal-aside"
               style={{
                 position: 'sticky',
                 top: '16px',
@@ -1012,7 +1014,7 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
                 variant="horizontal"
               />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
               <div>
                 {sectionsMap.ongoing_class}
                 {sectionsMap.touch_rollcall}

@@ -680,17 +680,19 @@ export default function PortalAluno() {
             Layout 3 (agenda_control): Executivo Split-View 2 Colunas Simultâneas
             Layout 4 (complete_tabs): Clássico em Abas Horizontais */}
         <div
+          className={preferences.layoutPreset.student === 'tatame_express' ? 'responsive-portal-grid' : ''}
           style={
             preferences.layoutPreset.student === 'tatame_express'
               ? { display: 'grid', gridTemplateColumns: 'minmax(250px, 285px) 1fr', gap: '1.25rem', alignItems: 'start' }
               : preferences.layoutPreset.student === 'agenda_control'
-              ? { display: 'grid', gridTemplateColumns: '1.25fr 0.95fr', gap: '1.25rem', alignItems: 'start' }
+              ? { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem', alignItems: 'start' }
               : { display: 'block' }
           }
         >
           {/* ABA LATERAL FIXA DO SISTEMA ESCOLAR (QUANDO LAYOUT 1 ESTÁ ATIVO) */}
           {preferences.layoutPreset.student === 'tatame_express' && (
             <aside
+              className="responsive-portal-aside"
               style={{
                 position: 'sticky',
                 top: '16px',

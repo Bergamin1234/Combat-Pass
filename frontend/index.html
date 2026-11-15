@@ -656,6 +656,26 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+    /* ========================================================
+       MOBILE & RESPONSIVE ENGINE (PREVENÇÃO DE OVERFLOW & LAYOUT 1 COLLAPSE)
+       ======================================================== */
+    @media (max-width: 900px) {
+      .responsive-portal-grid {
+        grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+      .responsive-portal-aside {
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 1.25rem !important;
+      }
+      .responsive-toolbar-wrap {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+    }
   </style>
 </head>
 <body class="text-zinc-100 min-h-screen selection:bg-red-600 selection:text-white relative">

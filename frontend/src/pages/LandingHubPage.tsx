@@ -489,6 +489,7 @@ export const LandingHubPage: React.FC = () => {
         {OrderBuilderModal}
 
         <div
+          className="responsive-portal-grid"
           style={{
             maxWidth: '1540px',
             width: '100%',
@@ -502,6 +503,7 @@ export const LandingHubPage: React.FC = () => {
           }}
         >
           <aside
+            className="responsive-portal-aside"
             style={{
               position: 'sticky',
               top: '64px',
@@ -698,6 +700,7 @@ export const LandingHubPage: React.FC = () => {
         </header>
 
         <div
+          className="responsive-portal-grid"
           style={{
             maxWidth: '1540px',
             width: '100%',
@@ -718,6 +721,7 @@ export const LandingHubPage: React.FC = () => {
           </main>
 
           <aside
+            className="responsive-portal-aside"
             style={{
               position: 'sticky',
               top: '64px',
