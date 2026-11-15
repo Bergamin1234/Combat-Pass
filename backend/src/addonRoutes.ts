@@ -536,7 +536,7 @@ export function registerAddonRoutes(app: Express, prisma: PrismaClient) {
   // MÓDULO 3: CHECK-IN RÁPIDO (HOME PÚBLICA E PORTAL INTERNO)
   // =========================================================
   app.post('/api/quick-checkin', async (req: Request, res: Response) => {
-    const { cpf, senha, alunoId, shift } = req.body;
+    const { cpf, senha, alunoId, shift, eventoId } = req.body;
 
     try {
       let aluno: any = null;
@@ -585,13 +585,23 @@ export function registerAddonRoutes(app: Express, prisma: PrismaClient) {
       const turnoInferido = shift || (horaAtual < 12 ? 'MANHA' : horaAtual < 18 ? 'TARDE' : 'NOITE');
 
       let presencaHoje = await prisma.agendamentoPresenca.findFirst({
-        where: {
-          alunoId: aluno.id,
-          data: { gte: inicioDia, lte: fimDia },
-        },
+        where: eventoId
+          ? { alunoId: aluno.id, eventoId: String(eventoId) }
+          : { alunoId: aluno.id, data: { gte: inicioDia, lte: fimDia } },
       });
 
       let jaEstavaPresente = false;
+      let dataEventoAlvo = agora;
+      if (eventoId) {
+        const evAlvo = await prisma.eventoDeAula.findUnique({ where: { id: String(eventoId) } });
+        if (!evAlvo) return res.status(404).json({ erro: 'Horário de treino não encontrado.' });
+        if (evAlvo.cancelada) return res.status(400).json({ erro: `Esta aula foi cancelada pelo professor${evAlvo.motivoCancelamento ? ` (${evAlvo.motivoCancelamento})` : ''}. Escolha outro horário!` });
+        const lotacaoAtual = await prisma.agendamentoPresenca.count({ where: { eventoId: evAlvo.id, status: { in: ['AGENDADO', 'PRESENTE'] } } });
+        if (!presencaHoje && lotacaoAtual >= (evAlvo.capacidade || 25)) {
+          return res.status(400).json({ erro: `A turma de ${evAlvo.titulo} atingiu a capacidade máxima (Lotado)! Escolha outro horário.` });
+        }
+        dataEventoAlvo = new Date(evAlvo.dataInicio);
+      }
 
       if (presencaHoje) {
         if (presencaHoje.status === 'PRESENTE') {
@@ -600,7 +610,7 @@ export function registerAddonRoutes(app: Express, prisma: PrismaClient) {
           presencaHoje = await prisma.agendamentoPresenca.update({
             where: { id: presencaHoje.id },
             data: {
-              status: 'PRESENTE',
+              status: 'AGENDADO',
               shift: turnoInferido,
             },
           });
@@ -609,8 +619,9 @@ export function registerAddonRoutes(app: Express, prisma: PrismaClient) {
         presencaHoje = await prisma.agendamentoPresenca.create({
           data: {
             alunoId: aluno.id,
-            data: agora,
-            status: 'PRESENTE',
+            eventoId: eventoId ? String(eventoId) : null,
+            data: dataEventoAlvo,
+            status: 'AGENDADO',
             shift: turnoInferido,
           },
         });

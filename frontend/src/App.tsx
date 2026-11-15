@@ -5,6 +5,10 @@ import AdminDashboard from './pages/AdminDashboard';
 import Checkout from './pages/Checkout';
 import AgendarAula from './pages/AgendarAula';
 import FighterProfile from './pages/FighterProfile';
+import LandingHubPage from './pages/LandingHubPage';
+import TeacherPortalPage from './pages/TeacherPortalPage';
+import { LayoutEngineProvider, useLayoutEngine } from './config/layoutEngine';
+import { GlobalLoadingOverlay } from './components/LoadingEngine';
 
 // Componente auxiliar para interceptar cliques nos links do index.html estático
 function GlobalLinkInterceptor() {
@@ -18,7 +22,7 @@ function GlobalLinkInterceptor() {
         // Se for um link interno (mesmo domínio) e não for âncora (#)
         if (url.origin === window.location.origin && !target.getAttribute('href')?.startsWith('#')) {
           e.preventDefault();
-          navigate(url.pathname + url.search); // Mantém a query string
+          navigate(url.pathname + url.search);
         }
       }
     };
@@ -32,36 +36,62 @@ function GlobalLinkInterceptor() {
 
 function BodyClassManager() {
   const location = useLocation();
+  const { preferences } = useLayoutEngine();
   const isLandingPage = location.pathname === '/' || location.pathname === '';
 
   useEffect(() => {
-    if (!isLandingPage) {
+    if (!isLandingPage || preferences.layoutPreset.landing !== 'classic') {
       document.body.classList.add('react-active');
     } else {
       document.body.classList.remove('react-active');
     }
-  }, [isLandingPage]);
+  }, [isLandingPage, preferences.layoutPreset.landing]);
 
   return null;
 }
 
+function AppRoutes() {
+  const { preferences } = useLayoutEngine();
+
+  const renderHomeEntry = () => {
+    if (preferences.defaultEntryPage === 'portal') {
+      return <Navigate to="/portal" replace />;
+    }
+    if (preferences.defaultEntryPage === 'professor') {
+      return <Navigate to="/professor" replace />;
+    }
+    if (preferences.defaultEntryPage === 'admin') {
+      return <Navigate to="/admin" replace />;
+    }
+    return <LandingHubPage />;
+  };
+
+  return (
+    <Routes>
+      <Route path="/" element={renderHomeEntry()} />
+      <Route path="/portal" element={<PortalAluno />} />
+      <Route path="/professor" element={<TeacherPortalPage />} />
+      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/agendar" element={<AgendarAula />} />
+      {/* Redirecionamentos seguros: Estatísticas e Ranking exigem autenticação de CPF no Portal do Aluno */}
+      <Route path="/dashboard-lutador" element={<Navigate to="/portal?tab=desempenho" replace />} />
+      <Route path="/ranking" element={<Navigate to="/portal?tab=ranking" replace />} />
+      <Route path="/perfil-lutador" element={<FighterProfile />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
-    <Router>
-      <GlobalLinkInterceptor />
-      <BodyClassManager />
-      <Routes>
-        <Route path="/" element={null} />
-        <Route path="/portal" element={<PortalAluno />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/agendar" element={<AgendarAula />} />
-        {/* Redirecionamentos seguros: Estatísticas e Ranking exigem autenticação de CPF no Portal do Aluno */}
-        <Route path="/dashboard-lutador" element={<Navigate to="/portal?tab=desempenho" replace />} />
-        <Route path="/ranking" element={<Navigate to="/portal?tab=ranking" replace />} />
-        <Route path="/perfil-lutador" element={<FighterProfile />} />
-      </Routes>
-    </Router>
+    <LayoutEngineProvider>
+      <Router>
+        <GlobalLinkInterceptor />
+        <BodyClassManager />
+        <GlobalLoadingOverlay />
+        <AppRoutes />
+      </Router>
+    </LayoutEngineProvider>
   );
 }
 

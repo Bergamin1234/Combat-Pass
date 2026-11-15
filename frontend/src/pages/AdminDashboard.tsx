@@ -10,6 +10,18 @@ import { FileUploadInput } from '../components/FileUploadInput';
 import { DevDashboardTab } from '../components/DevDashboardTab';
 import { FinancialDashboardTab } from '../components/FinancialDashboardTab';
 import { SplitRollCallTab } from '../components/SplitRollCallTab';
+import { CashRegisterTab } from '../components/CashRegisterTab';
+import { TeacherCommissionsTab } from '../components/TeacherCommissionsTab';
+import { OccupancyDashboardTab } from '../components/OccupancyDashboardTab';
+import { Student360Modal } from '../components/Student360Modal';
+import { AdminStoreRedemptionsTab } from '../components/AdminStoreRedemptionsTab';
+import { InteractiveCombatCalendar } from '../components/InteractiveCombatCalendar';
+import {
+  useLayoutEngine,
+  JourneyLayoutToolbar,
+  DynamicNavBuilder
+} from '../config/layoutEngine';
+import { AdminLayoutStudio } from '../components/AdminLayoutStudio';
 
 const graduacoesPorModalidade: Record<string, string[]> = {
   'Muay Thai': [
@@ -92,6 +104,7 @@ const opcoesTempoDocencia = [
 ];
 
 export default function AdminDashboard() {
+  const { preferences } = useLayoutEngine();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [usuarioLogado, setUsuarioLogado] = useState<any>(null);
   const [loginInput, setLoginInput] = useState('');
@@ -121,7 +134,9 @@ export default function AdminDashboard() {
 
   // Filtros e busca de Alunos
   const [buscaAluno, setBuscaAluno] = useState('');
-  const [filtroAssiduidade, setFiltroAssiduidade] = useState<'TODOS' | 'ALTA' | 'REGULAR' | 'RISCO' | 'DIARIA'>('TODOS');
+  const [filtroAssiduidade, setFiltroAssiduidade] = useState<'TODOS' | 'ATIVO' | 'INATIVO' | 'ALTA' | 'REGULAR' | 'RISCO' | 'DIARIA'>('TODOS');
+  const [aluno360Id, setAluno360Id] = useState<string | null>(null);
+  const [subAbaCalendario, setSubAbaCalendario] = useState<'grade_aulas' | 'frequencia_mensal'>('grade_aulas');
 
   // Filtros e lote em Chamada & Presenças
   const [filtroChamada, setFiltroChamada] = useState<'TODOS' | 'PRESENTE' | 'FALTA' | 'DOENCA' | 'AGENDADO'>('TODOS');
@@ -952,6 +967,17 @@ export default function AdminDashboard() {
     window.open(formatarWhatsUrl(aluno.telefone, msg), '_blank');
   };
 
+  const handleChamarDeVolta = (aluno: any) => {
+    if (!aluno.telefone) {
+      alert(`O aluno ${aluno.nome} não possui telefone cadastrado.`);
+      return;
+    }
+    const dias = aluno.diasSemTreinar ?? 18;
+    const semanas = Math.max(2, Math.floor(dias / 7));
+    const msg = `Fala ${aluno.nome}! Aqui é a coordenação técnica do Combat-Pass (${ACADEMY_CONFIG.nome}). 🥊🔥\n\nNotamos que você está há cerca de ${semanas} semanas (${dias} dias) sem fazer check-in nos treinos da rede. Tá tudo bem por aí?\n\nSeu passe continua ativo e os CTs parceiros estão esperando sua energia no tatame! Quando você volta para afiar os golpes?\n\nSe precisar de qualquer apoio ou ajuste nos seus horários, conta com a gente. Te esperamos no próximo treino! Oss! 🥋🔥`;
+    window.open(formatarWhatsUrl(aluno.telefone, msg), '_blank');
+  };
+
   // ==========================================
   // LEADS & AULAS EXPERIMENTAIS
   // ==========================================
@@ -1061,6 +1087,8 @@ export default function AdminDashboard() {
     if (!bateTexto) return false;
 
     if (filtroAssiduidade === 'TODOS') return true;
+    if (filtroAssiduidade === 'ATIVO') return (a.statusAtividade === 'ATIVO' || (a.diasSemTreinar !== undefined && a.diasSemTreinar < 14));
+    if (filtroAssiduidade === 'INATIVO') return (a.statusAtividade === 'INATIVO' || (a.diasSemTreinar !== undefined && a.diasSemTreinar >= 14));
     if (filtroAssiduidade === 'DIARIA') return isDiariaOuConvenio(a.plano);
     if (filtroAssiduidade === 'ALTA') return a.statusAssiduidade === 'ALTA';
     if (filtroAssiduidade === 'REGULAR') return a.statusAssiduidade === 'REGULAR';
@@ -1147,6 +1175,21 @@ export default function AdminDashboard() {
             >
               <span>👤</span> Meu Perfil
             </button>
+            <Link
+              to="/professor"
+              style={{
+                padding: '0.5rem 0.85rem',
+                borderRadius: '8px',
+                background: 'var(--bg-surface-2)',
+                color: 'var(--color-primary)',
+                border: '1px solid var(--color-primary)',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                textDecoration: 'none'
+              }}
+            >
+              🥋 Portal Professor
+            </Link>
             <button 
               onClick={() => setShowModal(true)}
               className="px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
@@ -1161,6 +1204,27 @@ export default function AdminDashboard() {
             </button>
           </div>
         </header>
+
+        {/* MOTOR MULTI-LAYOUT & ESTÚDIO DE CUSTOMIZAÇÃO DO ADMINISTRADOR */}
+        <JourneyLayoutToolbar journey="admin" />
+
+        <div style={{ marginBottom: '0.75rem' }}>
+          <DynamicNavBuilder
+            journey="admin"
+            activeId={abaAtiva}
+            onSelect={(tab) => setAbaAtiva(tab)}
+            variant="horizontal"
+          />
+        </div>
+
+        {(abaAtiva === 'aparencia_layouts' || preferences.layoutPreset.admin !== 'complete_erp') && (
+          <AdminLayoutStudio
+            usuarioLogado={usuarioLogado}
+            alunos={alunos}
+            onOpenStudent360={(id) => setAluno360Id(id)}
+            onSelectAdminTab={(tab) => setAbaAtiva(tab)}
+          />
+        )}
 
         {/* CARDS DE MÉTRICAS (INTERATIVOS COM ATALHO DIRETO) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -1262,6 +1326,42 @@ export default function AdminDashboard() {
                 💰 Gestão Financeira & Baixa
               </button>
             )}
+            {usuarioLogado?.cargo === 'ADMIN' && (
+              <button 
+                onClick={() => setAbaAtiva('caixa_diario')}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                  abaAtiva === 'caixa_diario' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'bg-[#141416] text-emerald-400 hover:text-white border border-emerald-500/40'
+                }`}
+              >
+                💵 Caixa Diário (Fechamento)
+              </button>
+            )}
+            {usuarioLogado?.cargo === 'ADMIN' && (
+              <button 
+                onClick={() => setAbaAtiva('comissoes')}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                  abaAtiva === 'comissoes' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-500/40'
+                }`}
+              >
+                🥋 Comissões Professores
+              </button>
+            )}
+            <button 
+              onClick={() => setAbaAtiva('ocupacao')}
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                abaAtiva === 'ocupacao' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'bg-[#141416] text-red-400 hover:text-white border border-red-500/40'
+              }`}
+            >
+              🔥 Ocupação de Turmas
+            </button>
+            <button 
+              onClick={() => setAbaAtiva('resgates_loja')}
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                abaAtiva === 'resgates_loja' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-[#141416] text-amber-300 hover:text-white border border-amber-500/40'
+              }`}
+            >
+              🎟️ Vouchers & Retiradas
+            </button>
             <button 
               onClick={() => setAbaAtiva('avisos')}
               className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
@@ -1438,6 +1538,32 @@ export default function AdminDashboard() {
                 }`}
               >
                 Todos ({alunos.length})
+              </button>
+              <button
+                onClick={() => setFiltroAssiduidade('ATIVO')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                  filtroAssiduidade === 'ATIVO'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-[#1A1A1E] text-emerald-400 hover:text-white border border-emerald-900/40'
+                }`}
+              >
+                <span>🟢 Ativos (Treinando)</span>
+                <span className="text-[10px] bg-black/40 px-1.5 py-0.2 rounded-full">
+                  {alunos.filter(a => a.statusAtividade === 'ATIVO' || (a.diasSemTreinar !== undefined && a.diasSemTreinar < 14)).length}
+                </span>
+              </button>
+              <button
+                onClick={() => setFiltroAssiduidade('INATIVO')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                  filtroAssiduidade === 'INATIVO'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-[#1A1A1E] text-amber-400 hover:text-white border border-amber-900/40'
+                }`}
+              >
+                <span>⚠️ Inativos (2 a 3 sem sem treinar)</span>
+                <span className="text-[10px] bg-black/40 px-1.5 py-0.2 rounded-full">
+                  {alunos.filter(a => a.statusAtividade === 'INATIVO' || (a.diasSemTreinar !== undefined && a.diasSemTreinar >= 14)).length}
+                </span>
               </button>
               <button
                 onClick={() => setFiltroAssiduidade('ALTA')}
@@ -1640,6 +1766,22 @@ export default function AdminDashboard() {
                         </td>
                         <td className="p-3 sm:p-4 text-right">
                           <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                            {(aluno.statusAtividade === 'INATIVO' || (aluno.diasSemTreinar !== undefined && aluno.diasSemTreinar >= 14)) && (
+                              <button
+                                onClick={() => handleChamarDeVolta(aluno)}
+                                className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-black font-black text-xs transition flex items-center gap-1 shadow-sm"
+                                title="Enviar mensagem de retorno aos treinos no WhatsApp"
+                              >
+                                <span>🥊 Chamar de Volta</span>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setAluno360Id(aluno.id)}
+                              className="px-2.5 py-1 rounded bg-red-600/20 text-red-300 hover:bg-red-600 hover:text-white border border-red-500/40 text-xs font-black transition flex items-center gap-1"
+                              title="Abrir Visão 360° do Aluno (Contratos, Graduações, Wallet de Points e Frequência)"
+                            >
+                              <span>🔍 Visão 360°</span>
+                            </button>
                             <button 
                               onClick={() => abrirCalendarioAluno(aluno)}
                               className="px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-xs font-bold transition flex items-center gap-1"
@@ -1696,6 +1838,48 @@ export default function AdminDashboard() {
         {/* CONTEÚDO DA ABA: CALENDÁRIO DA ACADEMIA & FREQUÊNCIA GERAL */}
         {abaAtiva === 'calendario_geral' && (
           <div className="space-y-5">
+            {/* SELETOR DE MODO DO CALENDÁRIO: GRADE DE HORÁRIOS vs ROSTER COLETIVO */}
+            <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSubAbaCalendario('grade_aulas')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 ${
+                    subAbaCalendario === 'grade_aulas'
+                      ? 'bg-[var(--color-primary)] text-[var(--color-btn-text)] shadow-lg'
+                      : 'bg-[#1A1A1E] text-zinc-300 hover:text-white border border-zinc-800'
+                  }`}
+                >
+                  <span>📅 Grade de Horários, Check-ins & Vagas (Multi-Academias)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSubAbaCalendario('frequencia_mensal')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 ${
+                    subAbaCalendario === 'frequencia_mensal'
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/30'
+                      : 'bg-[#1A1A1E] text-zinc-300 hover:text-white border border-zinc-800'
+                  }`}
+                >
+                  <span>📋 Roster Geral por Dia (Lançamento em Lote)</span>
+                </button>
+              </div>
+              <span className="text-[11px] text-zinc-400">
+                Clique em qualquer dia da grade para ver horários, cancelar aula (riscar) ou marcar presença na turma
+              </span>
+            </div>
+
+            {subAbaCalendario === 'grade_aulas' ? (
+              <InteractiveCombatCalendar
+                userRole={usuarioLogado?.cargo === 'ADMIN' ? 'ADMIN' : 'PROFESSOR'}
+                usuarioProfessor={usuarioLogado}
+                onRefreshExternal={() => {
+                  carregarDashboard();
+                  carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
+                }}
+              />
+            ) : (
+              <div className="space-y-5">
             {/* CABEÇALHO DO CALENDÁRIO GERAL */}
             <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
@@ -2076,6 +2260,8 @@ export default function AdminDashboard() {
                 )}
               </div>
             </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -2301,7 +2487,7 @@ export default function AdminDashboard() {
             cargoUsuario={usuarioLogado?.cargo || 'ADMIN'}
             professorId={usuarioLogado?.id}
             alunosLista={alunos}
-            isCombatHub={false}
+            isCombatHub={true}
             
             onRefreshDashboard={carregarDashboard}
           />
@@ -2734,6 +2920,26 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
+        )}
+
+        {/* CONTEÚDO DA ABA: CAIXA DIÁRIO OBRIGATÓRIO (FASE 1 - COMBAT-PASS HUB) */}
+        {abaAtiva === 'caixa_diario' && usuarioLogado?.cargo === 'ADMIN' && (
+          <CashRegisterTab usuarioLogado={usuarioLogado} />
+        )}
+
+        {/* CONTEÚDO DA ABA: COMISSIONAMENTO DINÂMICO DE PROFESSORES (FASE 1) */}
+        {abaAtiva === 'comissoes' && usuarioLogado?.cargo === 'ADMIN' && (
+          <TeacherCommissionsTab />
+        )}
+
+        {/* CONTEÚDO DA ABA: DASHBOARD DE OCUPAÇÃO & HEATMAP (FASE 1) */}
+        {abaAtiva === 'ocupacao' && (
+          <OccupancyDashboardTab />
+        )}
+
+        {/* CONTEÚDO DA ABA: VOUCHERS & RESGATES DA LOJA NA RECEPÇÃO (FASE 1) */}
+        {abaAtiva === 'resgates_loja' && (
+          <AdminStoreRedemptionsTab usuarioLogado={usuarioLogado} />
         )}
 
       </div>
@@ -4143,6 +4349,15 @@ export default function AdminDashboard() {
           </div>
         );
       })()}
+
+      {/* MODAL: VISÃO 360 DO ALUNO (FASE 1 - COMBAT-PASS HUB) */}
+      {aluno360Id && (
+        <Student360Modal
+          studentId={aluno360Id}
+          onClose={() => setAluno360Id(null)}
+          onRefreshStudentList={carregarDashboard}
+        />
+      )}
 
     </div>
   );

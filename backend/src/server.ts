@@ -5,6 +5,8 @@ import path from 'path';
 import { evaluateStudentGamification } from './gamificationService';
 import { registerGamificationRoutes } from './gamificationRoutes';
 import { registerAddonRoutes, calcularProximoVencimentoPorAdesao } from './addonRoutes';
+import { registerPhase1Routes } from './phase1Routes';
+import { registerClassScheduleRoutes, ensureMonthClassesCreated } from './classScheduleRoutes';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -29,6 +31,8 @@ app.use(cors({
 app.use(express.json({ limit: '15mb' }));
 registerGamificationRoutes(app, prisma);
 registerAddonRoutes(app, prisma);
+registerPhase1Routes(app, prisma);
+registerClassScheduleRoutes(app, prisma);
 
 // Servir arquivos estáticos do frontend e uploads (modo portátil / produção)
 app.use(express.static(path.join(__dirname, '../public')));
@@ -758,6 +762,7 @@ app.get('/api/aulas', async (req, res) => {
 
   try {
     const hoje = new Date();
+    await ensureMonthClassesCreated(prisma, hoje.getFullYear(), hoje.getMonth() + 1);
     hoje.setHours(0, 0, 0, 0);
 
     const limite = new Date(hoje);
@@ -780,6 +785,12 @@ app.get('/api/aulas', async (req, res) => {
       return {
         id: aula.id,
         titulo: aula.titulo,
+        professorNome: aula.professorNome || 'Felipe Borü',
+        modalidade: aula.modalidade || 'Muay Thai',
+        academiaNome: aula.academiaNome || 'CT Borü (Matriz)',
+        capacidade: aula.capacidade || 25,
+        cancelada: Boolean(aula.cancelada),
+        motivoCancelamento: aula.motivoCancelamento || null,
         dataInicio: aula.dataInicio,
         dataFim: aula.dataFim,
         checkinFeito: Boolean(meuCheckin),

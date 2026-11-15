@@ -12,7 +12,10 @@ export const publicApi = {
   getNotices: () => api.get('/avisos'),
   getProducts: () => api.get('/produtos'),
   getTeacherSchedules: () => api.get('/professores/horarios'),
-  quickCheckIn: (data: { cpf?: string; senha?: string; alunoId?: string; shift?: string }) =>
+  getAcademies: () => api.get('/academias'),
+  getTodayClasses: (params?: { alunoId?: string; academia?: string; modalidade?: string }) =>
+    api.get('/aulas/hoje', { params }),
+  quickCheckIn: (data: { cpf?: string; senha?: string; alunoId?: string; shift?: string; eventoId?: string; horario?: string }) =>
     api.post('/quick-checkin', data),
   uploadFile: (data: { fileName: string; mimeType: string; base64Data: string; folder?: string }) =>
     api.post('/upload', data)
@@ -23,6 +26,7 @@ export const adminApi = {
   getAppointments: () => api.get('/admin/agendamentos'),
   getAttendance: () => api.get('/admin/presencas'),
   getTeachers: () => api.get('/admin/professores'),
+  getAcademies: () => api.get('/academias'),
   login: (data: unknown) => api.post('/auth/login', data),
   createTeacher: (data: unknown) => api.post('/admin/professores', data),
   updateTeacher: (id: string, data: unknown) => api.patch(`/admin/professores/${id}`, data),
@@ -105,7 +109,7 @@ export const adminApi = {
   uploadFile: (data: { fileName: string; mimeType: string; base64Data: string; folder?: string }) =>
     api.post('/upload', data),
 
-  // Módulo 7: Gamificação ("Trilha do Nak Muay")
+  // Módulo 7: Gamificação ("Trilha do Guerreiro Combat-Pass")
   getGamificationConfig: () => api.get('/admin/gamificacao/config'),
   getStudentsGamificationSummary: () => api.get('/admin/gamificacao/resumo-alunos'),
   approveSpecialGamification: (data: unknown) => api.post('/admin/gamificacao/aprovar-especial', data),
@@ -117,6 +121,57 @@ export const adminApi = {
   deleteGamificationAchievement: (id: string) => api.delete(`/admin/gamificacao/conquistas/${id}`),
   resetGamificationDefault: () => api.post('/admin/gamificacao/reset-padrao'),
   exportGamificationJson: () => api.get('/admin/gamificacao/export-json'),
+
+  // Módulo Combat-Pass ERP: Loja & Resgates na Recepção
+  getStoreRedemptions: (status?: string) =>
+    api.get('/admin/loja/resgates', { params: status ? { status } : undefined }),
+  deliverStoreRedemption: (id: string, entreguePor?: string) =>
+    api.post(`/admin/loja/resgates/${id}/entregar`, { entreguePor }),
+
+  // Módulo Combat-Pass ERP: Exames de Graduação Multi-Modalidade
+  registerGraduation: (alunoId: string, data: unknown) =>
+    api.post(`/admin/alunos/${alunoId}/graduacoes`, data),
+
+  // Módulo Combat-Pass ERP: Fechamento de Caixa Diário Obrigatório
+  getCashRegisterStatus: () => api.get('/admin/caixa/status'),
+  openCashRegister: (data: { saldo_inicial_dinheiro: number; operador_id?: string; operador_nome?: string; academiaNome?: string }) =>
+    api.post('/admin/caixa/abrir', data),
+  closeCashRegister: (data: {
+    caixaId: string;
+    saldo_dinheiro_contado: number;
+    justificativa_diferenca?: string;
+    operador_fechamento_id?: string;
+    operador_fechamento_nome?: string;
+  }) => api.post('/admin/caixa/fechar', data),
+  getCashRegisterReports: () => api.get('/admin/caixa/relatorios'),
+
+  // Módulo Combat-Pass ERP: Gestão de Contratos Longos (3, 6, 12 meses)
+  getStudentContracts: (alunoId: string) => api.get(`/admin/alunos/${alunoId}/contratos`),
+  createStudentContract: (alunoId: string, data: unknown) =>
+    api.post(`/admin/alunos/${alunoId}/contratos`, data),
+
+  // Módulo Combat-Pass ERP: Comissionamento Dinâmico de Professores
+  getTeacherCommissionConfigs: () => api.get('/admin/professores/comissoes/config'),
+  saveTeacherCommissionConfig: (data: unknown) =>
+    api.post('/admin/professores/comissoes/config', data),
+  getTeacherCommissionReport: (params?: { mes?: number; ano?: number }) =>
+    api.get('/admin/professores/comissoes/relatorio', { params }),
+
+  // Módulo Combat-Pass ERP: Dashboard de Ocupação & Visão 360 do Aluno
+  getOccupancyDashboard: (params?: { academia?: string }) => api.get('/admin/dashboard/ocupacao', { params }),
+  getStudent360: (alunoId: string) => api.get(`/admin/alunos/${alunoId}/visao360`),
+
+  // Módulo de Grade de Aulas, Horários e Calendário Multi-Academias
+  getMonthSchedule: (params: { mes: number; ano: number; alunoId?: string; academia?: string; modalidade?: string }) =>
+    api.get('/calendario/aulas-mes', { params }),
+  cancelClass: (eventoId: string, motivo?: string) =>
+    api.post(`/aulas/${eventoId}/cancelar`, { motivo }),
+  reactivateClass: (eventoId: string) =>
+    api.post(`/aulas/${eventoId}/reativar`),
+  markClassAttendance: (eventoId: string, data: { alunoId: string; status: string }) =>
+    api.post(`/aulas/${eventoId}/marcar-presenca`, data),
+  cancelarCheckinHorario: (data: { alunoId: string; presencaId?: string; aulaId?: string; checkinId?: string; eventoId?: string }) =>
+    api.post('/checkin/cancelar', { alunoId: data.alunoId, checkinId: data.presencaId || data.checkinId, eventoId: data.aulaId || data.eventoId }),
 };
 
 export const studentApi = {
@@ -125,16 +180,36 @@ export const studentApi = {
   changePassword: (data: unknown) => api.post('/alunos/alterar-senha', data),
   getClasses: (params: { alunoId?: string }) => api.get('/aulas', { params }),
   getTeacherSchedules: () => api.get('/professores/horarios'),
+  getAcademies: () => api.get('/academias'),
   getCalendar: (studentId: string, params: { mes: number; ano: number }) =>
     api.get(`/admin/alunos/${studentId}/calendario`, { params }),
   getGamification: (studentId: string) => api.get(`/alunos/${studentId}/gamificacao`),
   markGamificationNotified: (studentId: string, achievementIds?: string[]) =>
     api.post(`/alunos/${studentId}/gamificacao/notificar`, { achievementIds }),
   checkIn: (data: unknown) => api.post('/checkin', data),
-  quickCheckIn: (data: { cpf?: string; senha?: string; alunoId?: string; shift?: string }) =>
+  getTodayClasses: (params?: { alunoId?: string; academia?: string; modalidade?: string }) =>
+    api.get('/aulas/hoje', { params }),
+  quickCheckIn: (data: { cpf?: string; senha?: string; alunoId?: string; shift?: string; eventoId?: string; horario?: string }) =>
     api.post('/quick-checkin', data),
   justifyAbsence: (data: unknown) => api.post('/alunos/justificar-ausencia', data),
   getContract: (studentId: string) => api.get(`/alunos/${studentId}/contrato`),
   signContract: (studentId: string, data: { aceitoTermos: boolean; dataDeAdesaoCustom?: string }) =>
     api.post(`/alunos/${studentId}/assinar-contrato`, data),
+
+  getLeaderboard: (periodo?: string) => api.get(`/alunos/ranking${periodo ? `?periodo=${periodo}` : ''}`),
+
+  // Módulo Combat-Pass: Carteira de Points, Loja de Recompensas & Graduações
+  getPointsWallet: (studentId: string) => api.get(`/alunos/${studentId}/carteira-pontos`),
+  getRewardStoreItems: () => api.get('/loja/recompensas'),
+  redeemStoreItem: (studentId: string, itemId: string) =>
+    api.post(`/alunos/${studentId}/loja/resgatar`, { itemId }),
+  getGraduations: (studentId: string) => api.get(`/alunos/${studentId}/graduacoes`),
+
+  // Módulo de Grade de Aulas Multi-Academias, Escolha de Horário e Cancelamento
+  getMonthSchedule: (params: { mes: number; ano: number; alunoId?: string; academia?: string; modalidade?: string }) =>
+    api.get('/calendario/aulas-mes', { params }),
+  checkInBySchedule: (data: { alunoId: string; eventoId: string; shift?: string }) =>
+    api.post('/checkin/horario', data),
+  cancelCheckIn: (data: { checkinId?: string; alunoId: string; eventoId?: string }) =>
+    api.post('/checkin/cancelar', data),
 };

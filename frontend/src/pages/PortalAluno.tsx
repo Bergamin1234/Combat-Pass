@@ -5,15 +5,24 @@ import StudentGlobalRanking from '../components/StudentGlobalRanking';
 import { StudentPerformanceStatsTab } from '../components/StudentPerformanceStatsTab';
 import NoticeCard from '../components/NoticeCard';
 import ThemeSwitcher from '../components/ThemeSwitcher';
-import { publicApi, studentApi } from '../services/api';
+import { publicApi, studentApi, adminApi } from '../services/api';
 import { StudentGamificationTab } from '../components/StudentGamificationTab';
 import { ContractBlockingModal, MyContractsTab } from '../components/ContractModalAndTab';
 import { PublicQuickCheckinCard, LoggedQuickCheckinBanner } from '../components/QuickCheckinWidget';
 import { isImageSource } from '../components/FileUploadInput';
+import { StudentRewardStoreTab } from '../components/StudentRewardStoreTab';
+import { InteractiveCombatCalendar } from '../components/InteractiveCombatCalendar';
 import { ACADEMY_CONFIG } from '../config/academyConfig';
+import {
+  useLayoutEngine,
+  JourneyLayoutToolbar,
+  DynamicNavBuilder
+} from '../config/layoutEngine';
+import { StudentLayoutPresetsView } from '../components/StudentLayoutPresets';
 
 export default function PortalAluno() {
   const location = useLocation();
+  const { preferences } = useLayoutEngine();
   const [aulas, setAulas] = useState<any[]>([]);
   const [alunoLogado, setAlunoLogado] = useState<any>(null);
   
@@ -50,7 +59,7 @@ export default function PortalAluno() {
 
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
-    if (tabParam && ['treinos', 'frequencia', 'conquistas', 'contratos', 'avisos', 'mercado', 'financeiro', 'torneios', 'ranking', 'desempenho'].includes(tabParam)) {
+    if (tabParam && ['treinos', 'frequencia', 'conquistas', 'recompensas', 'contratos', 'avisos', 'mercado', 'financeiro', 'torneios', 'ranking', 'desempenho'].includes(tabParam)) {
       setAbaAtiva(tabParam);
     }
   }, [location.search]);
@@ -114,7 +123,7 @@ export default function PortalAluno() {
       setIsLoggedIn(true);
       const params = new URLSearchParams(location.search);
       const targetTab = params.get('tab');
-      if (targetTab && ['treinos', 'frequencia', 'conquistas', 'contratos', 'avisos', 'mercado', 'financeiro', 'torneios', 'ranking', 'desempenho'].includes(targetTab)) {
+      if (targetTab && ['treinos', 'frequencia', 'conquistas', 'recompensas', 'contratos', 'avisos', 'mercado', 'financeiro', 'torneios', 'ranking', 'desempenho'].includes(targetTab)) {
         setAbaAtiva(targetTab);
       }
       if (!response.data.primeiroAcesso) {
@@ -217,9 +226,16 @@ export default function PortalAluno() {
           diaDaSemana,
           dataOriginal: aula.dataInicio,
           tipo,
-          titulo: 'Muay Thai Tradicional',
+          titulo: aula.titulo || 'Muay Thai Tradicional',
+          modalidade: aula.modalidade || 'Muay Thai',
+          academiaId: aula.academiaId || 'ct-boru',
+          academiaNome: aula.academiaNome || 'Borü Centro de Combate',
+          professorNome: aula.professorNome || 'Felipe Boru',
+          statusVagas: aula.statusVagas || 'HA_VAGAS',
+          cancelada: Boolean(aula.cancelada),
           checkinFeito: aula.checkinFeito,
           checkinStatus: aula.checkinStatus,
+          checkinId: aula.checkinId,
           tipoJustificativa: aula.tipoJustificativa
         };
       });
@@ -281,11 +297,8 @@ export default function PortalAluno() {
         eventoId: id
       });
       
-      setAulas(aulas.map(aula => 
-        aula.id === id ? { ...aula, checkinFeito: true, checkinStatus: 'AGENDADO' } : aula
-      ));
-
       if (alunoLogado?.id) {
+        carregarAulas(alunoLogado.id);
         carregarFrequencia(alunoLogado.id, mesAtual, anoAtual);
         carregarGamificacao(alunoLogado.id);
       }
@@ -294,6 +307,26 @@ export default function PortalAluno() {
       setTimeout(() => setCheckinSucessoAnim(null), 5000);
     } catch (error: any) {
       alert(error.response?.data?.erro || 'Erro ao realizar check-in.');
+    }
+  };
+
+  const cancelarCheckin = async (aula: any) => {
+    if (!window.confirm('Deseja cancelar este check-in agendado? (Só é possível cancelar enquanto o professor ainda não confirmou sua presença)')) return;
+    try {
+      const res = await adminApi.cancelarCheckinHorario({
+        alunoId: alunoLogado.id,
+        presencaId: aula.checkinId,
+        aulaId: aula.id
+      });
+      if (alunoLogado?.id) {
+        carregarAulas(alunoLogado.id);
+        carregarFrequencia(alunoLogado.id, mesAtual, anoAtual);
+        carregarGamificacao(alunoLogado.id);
+      }
+      setCheckinSucessoAnim(res.data?.mensagem || 'Check-in cancelado com sucesso.');
+      setTimeout(() => setCheckinSucessoAnim(null), 4000);
+    } catch (error: any) {
+      alert(error.response?.data?.erro || 'Erro ao cancelar check-in.');
     }
   };
 
@@ -571,6 +604,34 @@ export default function PortalAluno() {
           </div>
         </header>
 
+        {/* MOTOR MULTI-LAYOUT & ORDENADOR DINÂMICO DO ALUNO */}
+        <JourneyLayoutToolbar journey="student" />
+
+        <div style={{ marginBottom: '0.75rem' }}>
+          <DynamicNavBuilder
+            journey="student"
+            activeId={abaAtiva}
+            onSelect={(tab) => setAbaAtiva(tab)}
+            variant="horizontal"
+          />
+        </div>
+
+        {preferences.layoutPreset.student !== 'complete_tabs' && abaAtiva === 'treinos' && (
+          <StudentLayoutPresetsView
+            alunoLogado={alunoLogado}
+            aulas={aulas}
+            gamificacao={gamificacao}
+            onCheckinSuccess={() => {
+              if (alunoLogado?.id) {
+                carregarAulas(alunoLogado.id);
+                carregarFrequencia(alunoLogado.id, mesAtual, anoAtual);
+                carregarGamificacao(alunoLogado.id);
+              }
+            }}
+            onSelectTab={(tabId) => setAbaAtiva(tabId)}
+          />
+        )}
+
         {/* ========================================================
             OS 3 PILARES COMPETITIVOS: TORNEIOS / RANKING / DESEMPENHO
             (Sempre presentes no Portal do Aluno com as cores ativas)
@@ -719,6 +780,14 @@ export default function PortalAluno() {
             }`}
           >
             🏆 Minhas Conquistas {gamificacao?.rankAtual ? `(${isImageSource(gamificacao.rankAtual.badge_icon_url) ? '🥇' : gamificacao.rankAtual.badge_icon_url} ${gamificacao.rankAtual.name})` : ''}
+          </button>
+          <button 
+            onClick={() => setAbaAtiva('recompensas')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'recompensas' ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'bg-[#141416] text-emerald-400 hover:text-white border border-emerald-500/40'
+            }`}
+          >
+            🪙 Loja de Points & Prêmios
           </button>
           <button 
             onClick={() => setAbaAtiva('contratos')}
@@ -1013,41 +1082,71 @@ export default function PortalAluno() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {aulas.map(aula => (
-                    <div key={aula.id} className="bg-[#141416] border border-zinc-800 rounded-xl p-4 flex flex-col justify-between hover:border-zinc-700 transition space-y-4">
+                    <div key={aula.id} className={`bg-[#141416] border rounded-xl p-4 flex flex-col justify-between transition space-y-4 ${aula.cancelada ? 'border-zinc-800/60 opacity-60' : 'border-zinc-800 hover:border-zinc-700'}`}>
                       <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-red-950/60 text-red-400 border border-red-800/40">
-                            {aula.tipo}
-                          </span>
-                          <span className="text-base font-black text-white">{aula.horario}</span>
+                        <div className="flex justify-between items-center mb-2 gap-1 flex-wrap">
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-red-950/60 text-red-400 border border-red-800/40">
+                              {aula.modalidade || aula.tipo}
+                            </span>
+                            {aula.cancelada ? (
+                              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                CANCELADA
+                              </span>
+                            ) : aula.statusVagas === 'LOTADO' ? (
+                              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">
+                                [LOTADO]
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                [HÁ VAGAS]
+                              </span>
+                            )}
+                          </div>
+                          <span className={`text-base font-black ${aula.cancelada ? 'line-through text-zinc-500' : 'text-white'}`}>{aula.horario}</span>
                         </div>
-                        <h4 className="text-sm font-bold text-zinc-200">{aula.titulo}</h4>
+                        <h4 className={`text-sm font-bold ${aula.cancelada ? 'line-through text-zinc-500' : 'text-zinc-200'}`}>{aula.titulo}</h4>
+                        <p className="text-[11px] font-bold text-[var(--color-primary)] mt-0.5">🏛️ {aula.academiaNome}</p>
                         <p className="text-xs text-zinc-400 mt-1">Dia: <strong className="text-zinc-200">{aula.diaDaSemana}</strong></p>
-                        <p className="text-[11px] text-zinc-500">Instrutor: Coordenação Técnica</p>
+                        <p className="text-[11px] text-zinc-500">Instrutor: <strong className="text-zinc-300">{aula.professorNome || 'Coordenação Técnica'}</strong></p>
                       </div>
 
                       <div className="space-y-2">
-                        {aula.checkinFeito ? (
+                        {aula.cancelada ? (
+                          <div className="w-full py-2 rounded-lg bg-zinc-900 text-zinc-500 font-bold text-xs text-center border border-zinc-800">
+                            🚫 Aula Cancelada pelo Professor
+                          </div>
+                        ) : aula.checkinFeito ? (
                           aula.checkinStatus === 'PRESENTE' ? (
                             <div className="w-full py-2 rounded-lg bg-green-500/20 text-green-400 font-bold text-xs text-center border border-green-500/30">
-                              ✓ Presença Confirmada!
+                              ✓ Presença Confirmada pelo Professor!
                             </div>
                           ) : aula.checkinStatus === 'DOENCA' ? (
                             <div className="w-full py-2 rounded-lg bg-blue-500/20 text-blue-400 font-bold text-xs text-center border border-blue-500/30">
                               🩺 Ausência por Doença
                             </div>
                           ) : (
-                            <div className="w-full py-2 rounded-lg bg-amber-500/20 text-amber-400 font-bold text-xs text-center border border-amber-500/30">
-                              ⏳ Check-in Feito (Aguardando Professor)
+                            <div className="space-y-1.5">
+                              <div className="w-full py-2 rounded-lg bg-amber-500/20 text-amber-400 font-bold text-xs text-center border border-amber-500/30">
+                                ⏳ Check-in Agendado (Aguardando Professor)
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => cancelarCheckin(aula)}
+                                className="w-full py-1.5 rounded-lg bg-zinc-900 hover:bg-red-950/60 text-zinc-300 hover:text-red-300 border border-zinc-800 hover:border-red-500/40 font-bold text-[11px] transition"
+                              >
+                                ❌ Cancelar Check-in
+                              </button>
                             </div>
                           )
                         ) : (
                           <div className="flex gap-2">
                             <button 
                               onClick={() => fazerCheckin(aula.id)}
-                              className="flex-1 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition transform active:scale-95 shadow-md shadow-red-900/30 uppercase tracking-wider"
+                              disabled={aula.statusVagas === 'LOTADO'}
+                              className="flex-1 py-2 rounded-lg bg-[var(--color-primary)] hover:opacity-90 disabled:opacity-50 text-[var(--color-btn-text)] font-bold text-xs transition transform active:scale-95 shadow-md uppercase tracking-wider"
                             >
-                              Fazer Check-in
+                              {aula.statusVagas === 'LOTADO' ? 'Turma Lotada' : `Check-in (${aula.horario})`}
                             </button>
                             <button 
                               onClick={() => { setAulaParaJustificar(aula); setShowModalJustificar(true); }}
@@ -1090,7 +1189,7 @@ export default function PortalAluno() {
             alunoNome={alunoLogado?.nome || 'Guerreiro(a)'}
             gamificacaoData={gamificacao}
             onRefresh={() => alunoLogado?.id && carregarGamificacao(alunoLogado.id)}
-            isCombatHub={false}
+            isCombatHub={true}
           />
         )}
 
@@ -1102,6 +1201,19 @@ export default function PortalAluno() {
         {/* CONTEÚDO DA ABA: MINHA FREQUÊNCIA & CALENDÁRIO */}
         {abaAtiva === 'frequencia' && (
           <div className="space-y-6">
+            {/* NOVO CALENDÁRIO INTERATIVO DE HORÁRIOS E CHECK-IN DO COMBAT-PASS */}
+            <InteractiveCombatCalendar
+              userRole="ALUNO"
+              alunoLogado={alunoLogado}
+              onRefreshExternal={() => {
+                if (alunoLogado?.id) {
+                  carregarAulas(alunoLogado.id);
+                  carregarFrequencia(alunoLogado.id, mesAtual, anoAtual);
+                  carregarGamificacao(alunoLogado.id);
+                }
+              }}
+            />
+
             {dadosFrequencia && (
               <>
                 {/* BOTÃO DE SALTO RÁPIDO PARA O CALENDÁRIO NO MOBILE */}
@@ -1613,6 +1725,14 @@ export default function PortalAluno() {
           )
         )}
 
+        {/* CONTEÚDO DA ABA: LOJA DE RECOMPENSAS & POINTS COMBAT-PASS */}
+        {abaAtiva === 'recompensas' && alunoLogado && (
+          <StudentRewardStoreTab
+            alunoId={alunoLogado.id}
+            alunoNome={alunoLogado.nome}
+          />
+        )}
+
       </div>
 
       {/* MODAL JUSTIFICAR AUSÊNCIA / INFORMAR DOENÇA */}
@@ -1724,6 +1844,16 @@ export default function PortalAluno() {
         >
           <span className="text-base">🏆</span>
           <span>Conquistas</span>
+        </button>
+
+        <button 
+          onClick={() => setAbaAtiva('recompensas')}
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition ${
+            abaAtiva === 'recompensas' ? 'text-emerald-400' : 'text-zinc-500'
+          }`}
+        >
+          <span className="text-base">🪙</span>
+          <span>Prêmios</span>
         </button>
 
         <button 

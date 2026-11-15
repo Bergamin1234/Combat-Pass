@@ -289,7 +289,7 @@
   const STORAGE_KEY = 'combat_hub_theme';
   const DEFAULT_THEME = 'neutral-dark';
 
-  function applyTheme(themeId) {
+  function applyTheme(themeId, skipEvent) {
     const theme = THEMES[themeId] || THEMES[DEFAULT_THEME];
     const root = document.documentElement;
 
@@ -312,14 +312,45 @@
     root.style.setProperty('--color-border', theme.border);
     root.style.setProperty('--color-btn-text', theme.btnText);
 
+    // Tokens Semânticos do Motor de Layouts
+    root.style.setProperty('--bg-background', theme.bgMain);
+    root.style.setProperty('--bg-surface', theme.bgCard);
+    root.style.setProperty('--bg-surface-1', theme.bgCard);
+    root.style.setProperty('--bg-surface-2', theme.bgCardAlt);
+    root.style.setProperty('--bg-surface-muted', theme.bgSectionAlt);
+    root.style.setProperty('--bg-surface-highlight', theme.primaryLight);
+    root.style.setProperty('--text-foreground', theme.textMain);
+    root.style.setProperty('--text-muted-foreground', theme.textMuted);
+    root.style.setProperty('--text-primary-foreground', theme.btnText);
+    root.style.setProperty('--border-subtle', theme.border);
+    root.style.setProperty('--border-focus', theme.primaryBorder);
+    root.style.setProperty('--accent-glow', theme.primaryLight);
+
+    const isLight = theme.mode === 'light';
+    root.style.setProperty('--status-available', isLight ? '#047857' : '#34D399');
+    root.style.setProperty('--status-available-bg', isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.16)');
+    root.style.setProperty('--status-available-border', isLight ? 'rgba(5, 150, 105, 0.35)' : 'rgba(16, 185, 129, 0.4)');
+
+    root.style.setProperty('--status-full', isLight ? '#B91C1C' : '#F87171');
+    root.style.setProperty('--status-full-bg', isLight ? 'rgba(220, 38, 38, 0.12)' : 'rgba(239, 68, 68, 0.16)');
+    root.style.setProperty('--status-full-border', isLight ? 'rgba(220, 38, 38, 0.35)' : 'rgba(239, 68, 68, 0.4)');
+
+    root.style.setProperty('--status-warning', isLight ? '#B45309' : '#FBBF24');
+    root.style.setProperty('--status-warning-bg', isLight ? 'rgba(217, 119, 6, 0.12)' : 'rgba(245, 158, 11, 0.16)');
+    root.style.setProperty('--status-warning-border', isLight ? 'rgba(217, 119, 6, 0.35)' : 'rgba(245, 158, 11, 0.4)');
+
+    root.style.setProperty('--status-canceled', theme.textMuted);
+    root.style.setProperty('--status-canceled-bg', theme.bgSectionAlt);
+    root.style.setProperty('--status-canceled-border', theme.border);
+
     try {
       localStorage.setItem(STORAGE_KEY, theme.id);
     } catch (e) {}
 
-    // Notifica listeners
-    window.dispatchEvent(new CustomEvent('themeChanged', { detail: theme }));
+    if (!skipEvent) {
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: theme }));
+    }
 
-    // Atualiza label do seletor
     updateThemeSelectorUI(theme.id);
   }
 

@@ -307,16 +307,13 @@ export const THEMES_LIST: ThemeDefinition[] = [
 ];
 
 export function applyPlatformTheme(themeId: string) {
-  if (typeof window !== 'undefined' && (window as any).THEME_SYSTEM) {
-    (window as any).THEME_SYSTEM.applyTheme(themeId);
-    return;
-  }
   const theme = THEMES_LIST.find(t => t.id === themeId) || THEMES_LIST[0];
   const root = document.documentElement;
 
   root.setAttribute('data-theme', theme.id);
   root.setAttribute('data-theme-mode', theme.mode);
 
+  // Tokens base do Combat-Pass
   root.style.setProperty('--color-primary', theme.primary);
   root.style.setProperty('--color-primary-hover', theme.primaryHover);
   root.style.setProperty('--color-primary-light', theme.primaryLight);
@@ -331,6 +328,44 @@ export function applyPlatformTheme(themeId: string) {
   root.style.setProperty('--color-text-muted', theme.textMuted);
   root.style.setProperty('--color-border', theme.border);
   root.style.setProperty('--color-btn-text', theme.btnText);
+
+  // Mapeamento Semântico de Tokens (Polimorfismo Visual - Zero Hardcode)
+  root.style.setProperty('--bg-background', theme.bgMain);
+  root.style.setProperty('--bg-surface', theme.bgCard);
+  root.style.setProperty('--bg-surface-1', theme.bgCard);
+  root.style.setProperty('--bg-surface-2', theme.bgCardAlt);
+  root.style.setProperty('--bg-surface-muted', theme.bgSectionAlt);
+  root.style.setProperty('--bg-surface-highlight', theme.primaryLight);
+  root.style.setProperty('--text-foreground', theme.textMain);
+  root.style.setProperty('--text-muted-foreground', theme.textMuted);
+  root.style.setProperty('--text-primary-foreground', theme.btnText);
+  root.style.setProperty('--border-subtle', theme.border);
+  root.style.setProperty('--border-focus', theme.primaryBorder);
+  root.style.setProperty('--accent-glow', theme.primaryLight);
+
+  // Tokens Semânticos de Status (WCAG AA+ adaptados ao modo Dark / Light da paleta ativa)
+  const isLight = theme.mode === 'light';
+  root.style.setProperty('--status-available', isLight ? '#047857' : '#34D399');
+  root.style.setProperty('--status-available-bg', isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.16)');
+  root.style.setProperty('--status-available-border', isLight ? 'rgba(5, 150, 105, 0.35)' : 'rgba(16, 185, 129, 0.4)');
+
+  root.style.setProperty('--status-full', isLight ? '#B91C1C' : '#F87171');
+  root.style.setProperty('--status-full-bg', isLight ? 'rgba(220, 38, 38, 0.12)' : 'rgba(239, 68, 68, 0.16)');
+  root.style.setProperty('--status-full-border', isLight ? 'rgba(220, 38, 38, 0.35)' : 'rgba(239, 68, 68, 0.4)');
+
+  root.style.setProperty('--status-warning', isLight ? '#B45309' : '#FBBF24');
+  root.style.setProperty('--status-warning-bg', isLight ? 'rgba(217, 119, 6, 0.12)' : 'rgba(245, 158, 11, 0.16)');
+  root.style.setProperty('--status-warning-border', isLight ? 'rgba(217, 119, 6, 0.35)' : 'rgba(245, 158, 11, 0.4)');
+
+  root.style.setProperty('--status-canceled', theme.textMuted);
+  root.style.setProperty('--status-canceled-bg', theme.bgSectionAlt);
+  root.style.setProperty('--status-canceled-border', theme.border);
+
+  if (typeof window !== 'undefined' && (window as any).THEME_SYSTEM && (window as any).THEME_SYSTEM.applyTheme) {
+    try {
+      (window as any).THEME_SYSTEM.applyTheme(themeId, true);
+    } catch (e) {}
+  }
 
   try {
     localStorage.setItem('combat_hub_theme', theme.id);
