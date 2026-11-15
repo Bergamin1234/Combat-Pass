@@ -296,7 +296,7 @@
       pointer-events: none;
     }
 
-    body.react-active > *:not(#root):not(script):not(#global-combat-wallpaper) {
+    body.react-active > *:not(#root):not(script):not(#global-combat-wallpaper):not(.wallpaper-light-sweep):not(.combat-bg-animated):not(.arena-sparks-bg):not(.ambient-neon-glow) {
       display: none !important;
     }
   
@@ -321,7 +321,9 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      background-color: var(--color-bg-main) !important;
+      background-color: transparent !important;
+      position: relative;
+      z-index: 10;
     }
 
     /* MODO ESCURO (DARK) */
@@ -344,9 +346,12 @@
     }
     [data-theme-mode="light"] body,
     [data-theme-mode="light"] html,
-    [data-theme-mode="light"] body.react-active,
-    [data-theme-mode="light"] body.react-active #root {
+    [data-theme-mode="light"] body.react-active {
       background-color: #F4F5F7 !important;
+      color: #0F172A !important;
+    }
+    [data-theme-mode="light"] body.react-active #root {
+      background-color: transparent !important;
       color: #0F172A !important;
     }
     [data-theme-mode="light"] .theme-card-contrast,

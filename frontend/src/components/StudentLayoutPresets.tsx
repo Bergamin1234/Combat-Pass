@@ -19,7 +19,6 @@ export interface StudentLayoutPresetsViewProps {
 
 export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> = ({
   alunoLogado,
-  aulas,
   gamificacao,
   onCheckinSuccess,
   onSelectTab
@@ -36,13 +35,12 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
 
   // Widgets Modulares Reordenáveis da Área do Aluno
   const sectionsMap: Record<string, React.ReactNode> = {
-    // 1. WIDGET DE CHECK-IN RÁPIDO & PRÓXIMO TREINO (COM BOTÃO DE CANCELAR VAGA PENDENTE)
     next_class_checkin: (
       <div
         style={{
           marginBottom: '1.25rem',
-          padding: activePreset === 'tatame_express' ? '1.35rem' : '1.15rem',
-          borderRadius: '18px',
+          padding: activePreset === 'tatame_express' ? '1.45rem' : '1.15rem',
+          borderRadius: activePreset === 'agenda_control' ? '10px' : '18px',
           background: 'var(--bg-surface-1)',
           border:
             activePreset === 'tatame_express'
@@ -70,7 +68,7 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
               color: 'var(--color-primary)'
             }}
           >
-            ⚡ AÇÃO RÁPIDA DE TATAME · RESERVA & CANCELAMENTO DE VAGA PENDENTE
+            ⚡ CARTÃO DE EMBARQUE DE TATAME · RESERVA & CANCELAMENTO DE VAGA PENDENTE
           </span>
           <span
             style={{
@@ -94,13 +92,12 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
       </div>
     ),
 
-    // 2. RESUMO DO PASSE UNIFICADO & CRÉDITOS
     pass_status: (
       <div
         style={{
           marginBottom: '1.25rem',
           padding: '1.25rem',
-          borderRadius: '18px',
+          borderRadius: activePreset === 'agenda_control' ? '10px' : '18px',
           background: 'var(--bg-surface-1)',
           border: '1px solid var(--border-subtle)',
           display: 'grid',
@@ -111,7 +108,7 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
         <div
           style={{
             padding: '0.95rem',
-            borderRadius: '14px',
+            borderRadius: '12px',
             background: 'var(--bg-background)',
             border: '1px solid var(--border-subtle)'
           }}
@@ -137,7 +134,7 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
         <div
           style={{
             padding: '0.95rem',
-            borderRadius: '14px',
+            borderRadius: '12px',
             background: 'var(--bg-background)',
             border: '1px solid var(--border-subtle)'
           }}
@@ -163,7 +160,7 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
         <div
           style={{
             padding: '0.95rem',
-            borderRadius: '14px',
+            borderRadius: '12px',
             background: 'var(--bg-background)',
             border: '1px solid var(--border-subtle)'
           }}
@@ -201,13 +198,12 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
       </div>
     ),
 
-    // 3. CALENDÁRIO INTERATIVO & GRADE DE HORÁRIOS
     interactive_calendar: (
       <div
         style={{
           marginBottom: '1.25rem',
           padding: '1.25rem',
-          borderRadius: '18px',
+          borderRadius: activePreset === 'agenda_control' ? '10px' : '18px',
           background: 'var(--bg-surface-1)',
           border: '1px solid var(--border-subtle)'
         }}
@@ -248,76 +244,16 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
       </div>
     ),
 
-    // 4. PROGRESSO DE NÍVEL, XP & GRADUAÇÃO (GAMIFICADO)
     gamification_streak: (
       <div
         style={{
           marginBottom: '1.25rem',
           padding: '1.25rem',
-          borderRadius: '18px',
+          borderRadius: activePreset === 'agenda_control' ? '10px' : '18px',
           background: 'var(--bg-surface-1)',
           border: '1px solid var(--border-subtle)'
         }}
       >
-        {/* Header Gamificado extra quando em Layout B */}
-        {activePreset === 'gamified_journey' && (
-          <div
-            style={{
-              padding: '1.1rem',
-              marginBottom: '1rem',
-              borderRadius: '14px',
-              background: 'var(--bg-surface-2)',
-              border: '1px solid var(--color-primary)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1rem'
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-                🏆 PERFIL DE ATLETA COMBAT-PASS · NÍVEL {nivelAtual}
-              </div>
-              <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
-                {alunoLogado?.nome} · {graduacaoAtual}
-              </div>
-            </div>
-            <div style={{ minWidth: '220px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  marginBottom: '0.3rem'
-                }}
-              >
-                <span style={{ color: 'var(--text-muted-foreground)' }}>Progresso Próx. Nível</span>
-                <span style={{ color: 'var(--color-primary)' }}>{progressoNivel}/100 XP</span>
-              </div>
-              <div
-                style={{
-                  width: '100%',
-                  height: '8px',
-                  borderRadius: '999px',
-                  background: 'var(--bg-background)',
-                  overflow: 'hidden',
-                  border: '1px solid var(--border-subtle)'
-                }}
-              >
-                <div
-                  style={{
-                    width: `${progressoNivel}%`,
-                    height: '100%',
-                    background: 'linear-gradient(90deg, var(--color-primary), var(--color-accent))'
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
         <StudentGamificationTab
           alunoId={alunoLogado?.id}
           alunoNome={alunoLogado?.nome || 'Guerreiro(a)'}
@@ -328,13 +264,12 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
       </div>
     ),
 
-    // 5. LOJA DE RECOMPENSAS POR POINTS
     reward_store_carousel: (
       <div
         style={{
           marginBottom: '1.25rem',
           padding: '1.25rem',
-          borderRadius: '18px',
+          borderRadius: activePreset === 'agenda_control' ? '10px' : '18px',
           background: 'var(--bg-surface-1)',
           border: '1px solid var(--border-subtle)'
         }}
@@ -346,13 +281,12 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
       </div>
     ),
 
-    // 6. CONTRATOS, FATURAS & HISTÓRICO FINANCEIRO
     financial_summary: (
       <div
         style={{
           marginBottom: '1.25rem',
           padding: '1.25rem',
-          borderRadius: '18px',
+          borderRadius: activePreset === 'agenda_control' ? '10px' : '18px',
           background: 'var(--bg-surface-1)',
           border: '1px solid var(--border-subtle)'
         }}
@@ -362,15 +296,106 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
     )
   };
 
-  // Layout C ("Agenda & Controle" - Split-View Formal): destaca calendário e controle lado a lado no topo
-  return (
-    <div>
-      {activePreset === 'agenda_control' && (
+  // ============================================================================
+  // ARQUITETURA 2: GAMIFIED JOURNEY (HUD DE ATLETA RPG / UFC FIGHT PASS)
+  // ============================================================================
+  if (activePreset === 'gamified_journey') {
+    return (
+      <div>
+        {/* HUD SUPERIOR DE LUTADOR COM BRASÃO DE NÍVEL E BARRA DE XP */}
+        <div
+          style={{
+            marginBottom: '1.25rem',
+            padding: '1.35rem',
+            borderRadius: '20px',
+            background: 'linear-gradient(135deg, var(--bg-surface-1) 0%, var(--bg-surface-2) 100%)',
+            border: '2px solid var(--color-primary)',
+            boxShadow: 'var(--shadow-card)',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: '1.25rem',
+            alignItems: 'center'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div
+              style={{
+                width: '68px',
+                height: '68px',
+                borderRadius: '18px',
+                background: 'var(--color-primary)',
+                color: 'var(--text-primary-foreground)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 900,
+                boxShadow: 'var(--shadow-card)',
+                flexShrink: 0
+              }}
+            >
+              <span style={{ fontSize: '0.62rem', letterSpacing: '0.08em' }}>LVL</span>
+              <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>{nivelAtual}</span>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', letterSpacing: '0.08em' }}>
+                🏆 HUD GAMIFICADO · CARREIRA DO ATLETA
+              </div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
+                {alunoLogado?.nome}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted-foreground)', fontWeight: 700 }}>
+                🥋 {graduacaoAtual} · 🪙 {pointsSaldo} Combat Points
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', fontWeight: 900, marginBottom: '0.35rem' }}>
+              <span style={{ color: 'var(--text-foreground)' }}>PROGRESSÃO DE XP PARA O NÍVEL {nivelAtual + 1}</span>
+              <span style={{ color: 'var(--color-primary)' }}>{progressoNivel} / 100 XP</span>
+            </div>
+            <div
+              style={{
+                width: '100%',
+                height: '12px',
+                borderRadius: '999px',
+                background: 'var(--bg-background)',
+                border: '1px solid var(--border-subtle)',
+                overflow: 'hidden'
+              }}
+            >
+              <div
+                style={{
+                  width: `${progressoNivel}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, var(--color-primary), var(--color-accent))'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.45rem', fontSize: '0.68rem', color: 'var(--text-muted-foreground)' }}>
+              <span>⚡ +10 XP por Check-in Confirmado</span>
+              <span>🎁 Loja de Recompensas liberada abaixo</span>
+            </div>
+          </div>
+        </div>
+
+        <DynamicSectionRenderer journey="student" sectionsMap={sectionsMap} />
+      </div>
+    );
+  }
+
+  // ============================================================================
+  // ARQUITETURA 3: AGENDA & CONTROLE EXECUTIVO (SPLIT-VIEW 2 COLUNAS FORMAL)
+  // ============================================================================
+  if (activePreset === 'agenda_control') {
+    return (
+      <div>
         <div
           style={{
             marginBottom: '1rem',
             padding: '0.85rem 1.15rem',
-            borderRadius: '14px',
+            borderRadius: '10px',
             background: 'var(--bg-surface-1)',
             border: '1px solid var(--border-subtle)',
             display: 'flex',
@@ -381,14 +406,41 @@ export const StudentLayoutPresetsView: React.FC<StudentLayoutPresetsViewProps> =
           }}
         >
           <span style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--color-primary)' }}>
-            📅 Layout C · Agenda & Controle Executivo (Split-View Formal)
+            📅 ARQUITETURA SPLIT-VIEW EXECUTIVA · AGENDA & CONTROLE FINANCEIRO LADO A LADO
           </span>
-          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted-foreground)' }}>
-            Seus blocos continuam 100% reordenáveis no botão "Ordenar Menu & Seções" acima.
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted-foreground)' }}>
+            Visão em 2 colunas simultâneas (Calendário + Gestão de Contratos/Check-in)
           </span>
         </div>
-      )}
 
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
+            gap: '1.15rem',
+            alignItems: 'start'
+          }}
+        >
+          <div>
+            {sectionsMap.interactive_calendar}
+            {sectionsMap.gamification_streak}
+          </div>
+          <div>
+            {sectionsMap.next_class_checkin}
+            {sectionsMap.pass_status}
+            {sectionsMap.financial_summary}
+            {sectionsMap.reward_store_carousel}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================================
+  // ARQUITETURA 1 (DEFAULT): EXPRESS TATAME (CARTÃO DE EMBARQUE DIRETO AO PONTO)
+  // ============================================================================
+  return (
+    <div>
       <DynamicSectionRenderer journey="student" sectionsMap={sectionsMap} />
     </div>
   );

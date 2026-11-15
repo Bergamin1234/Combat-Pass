@@ -172,6 +172,8 @@ export const adminApi = {
     api.post(`/aulas/${eventoId}/marcar-presenca`, data),
   cancelarCheckinHorario: (data: { alunoId: string; presencaId?: string; aulaId?: string; checkinId?: string; eventoId?: string }) =>
     api.post('/checkin/cancelar', { alunoId: data.alunoId, checkinId: data.presencaId || data.checkinId, eventoId: data.aulaId || data.eventoId }),
+  getStudentEvaluation: (studentId: string) => api.get(`/admin/alunos/${studentId}/avaliacao`),
+  saveStudentEvaluation: (studentId: string, data: any) => api.post(`/admin/alunos/${studentId}/avaliacao`, data),
 };
 
 export const studentApi = {
@@ -212,4 +214,5 @@ export const studentApi = {
     api.post('/checkin/horario', data),
   cancelCheckIn: (data: { checkinId?: string; alunoId: string; eventoId?: string }) =>
     api.post('/checkin/cancelar', data),
+  getEvaluation: (studentId: string) => api.get(`/alunos/${studentId}/avaliacao`),
 };

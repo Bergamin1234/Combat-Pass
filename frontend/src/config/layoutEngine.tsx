@@ -66,11 +66,14 @@ export const DEFAULT_LAYOUT_PREFERENCES: LayoutPreferencesSchema = {
   routeOrder: {
     landing: [
       { id: 'nav_hub', label: 'Vitrine de Academias', icon: '🏛️', routeOrTab: '#academias', visible: true },
-      { id: 'nav_grade', label: 'Grade Oficial ao Vivo', icon: '📅', routeOrTab: '#grade', visible: true },
-      { id: 'nav_passes', label: 'Passes Unificados', icon: '🎫', routeOrTab: '#passes', visible: true },
-      { id: 'nav_recompensas', label: 'Loja & Gamificação', icon: '🪙', routeOrTab: '#recompensas', visible: true },
-      { id: 'nav_credenciar', label: 'Credenciar Academia', icon: '🤝', routeOrTab: '#credenciamento', visible: true },
-      { id: 'nav_aluno', label: 'Portal do Aluno', icon: '🥊', routeOrTab: '/portal', visible: true },
+      { id: 'nav_grade', label: 'Grade & Horários ao Vivo', icon: '📅', routeOrTab: '#grade', visible: true },
+      { id: 'nav_passes', label: 'Planos & Passes', icon: '🎫', routeOrTab: '#passes', visible: true },
+      { id: 'nav_torneios', label: 'Próximos Torneios', icon: '🏆', routeOrTab: '/portal?tab=torneios', visible: true },
+      { id: 'nav_ranking', label: 'Ranking Global', icon: '🌍', routeOrTab: '/portal?tab=ranking', visible: true },
+      { id: 'nav_stats', label: 'Estatísticas', icon: '📊', routeOrTab: '/portal?tab=desempenho', visible: true },
+      { id: 'nav_recompensas', label: 'Loja & Points', icon: '🪙', routeOrTab: '#recompensas', visible: true },
+      { id: 'nav_agendar', label: 'Aula Experimental', icon: '🔥', routeOrTab: '/agendar', visible: true },
+      { id: 'nav_aluno', label: 'Área do Aluno', icon: '🥊', routeOrTab: '/portal', visible: true },
       { id: 'nav_prof', label: 'Acesso Professor', icon: '🥋', routeOrTab: '/professor', visible: true },
       { id: 'nav_admin', label: 'ERP Admin & Studio', icon: '👑', routeOrTab: '/admin', visible: true }
     ],
@@ -188,7 +191,7 @@ export const LOADING_STYLE_META: Array<{ id: LoadingStyleId; title: string; icon
   { id: 'step_progress', title: 'Modelo D: Progressivo por Etapas', icon: '✅' }
 ];
 
-const STORAGE_KEY = 'combat_pass_layout_preferences_v1';
+const STORAGE_KEY = 'combat_pass_layout_preferences_v2';
 
 interface LayoutEngineContextValue {
   preferences: LayoutPreferencesSchema;
@@ -303,13 +306,50 @@ export const LayoutEngineProvider: React.FC<{ children: React.ReactNode }> = ({ 
     journey: K,
     preset: LayoutPreferencesSchema['layoutPreset'][K]
   ) => {
-    persist(prev => ({
-      ...prev,
-      layoutPreset: {
-        ...prev.layoutPreset,
-        [journey]: preset
+    persist(prev => {
+      // Ao trocar o Layout Estrutural (A, B, C), reordena automaticamente os blocos para refletir a arquitetura escolhida
+      const currentSections = [...prev.sectionOrder[journey]];
+      const orderMapByPreset: Record<string, string[]> = {
+        // Landing Presets
+        marketplace: ['hero', 'ct_search', 'passes_plans', 'live_schedule', 'rewards_showcase', 'testimonials', 'accreditation'],
+        corporate: ['hero', 'testimonials', 'passes_plans', 'accreditation', 'ct_search', 'live_schedule', 'rewards_showcase'],
+        tatame: ['live_schedule', 'hero', 'ct_search', 'rewards_showcase', 'passes_plans', 'testimonials', 'accreditation'],
+        // Student Presets
+        tatame_express: ['next_class_checkin', 'pass_status', 'interactive_calendar', 'gamification_streak', 'reward_store_carousel', 'financial_summary'],
+        gamified_journey: ['gamification_streak', 'reward_store_carousel', 'pass_status', 'next_class_checkin', 'interactive_calendar', 'financial_summary'],
+        agenda_control: ['interactive_calendar', 'financial_summary', 'pass_status', 'next_class_checkin', 'gamification_streak', 'reward_store_carousel'],
+        // Teacher Presets
+        tatame_fast: ['ongoing_class', 'touch_rollcall', 'weekly_schedule', 'bonus_merit', 'commissions_summary'],
+        technical_perf: ['touch_rollcall', 'bonus_merit', 'weekly_schedule', 'ongoing_class', 'commissions_summary'],
+        partner_portal: ['commissions_summary', 'weekly_schedule', 'ongoing_class', 'touch_rollcall', 'bonus_merit'],
+        // Admin Presets
+        executive: ['kpi_Overview', 'reception_cash_checkin', 'live_grid_control', 'global_search_360', 'active_module_view'],
+        operational_360: ['global_search_360', 'reception_cash_checkin', 'live_grid_control', 'kpi_Overview', 'active_module_view'],
+        customizer_studio: ['active_module_view', 'kpi_Overview', 'global_search_360', 'reception_cash_checkin', 'live_grid_control']
+      };
+
+      const targetOrder = orderMapByPreset[String(preset)];
+      let reorderedSections = currentSections;
+      if (targetOrder) {
+        reorderedSections = [...currentSections].sort((a, b) => {
+          const ia = targetOrder.indexOf(a.id);
+          const ib = targetOrder.indexOf(b.id);
+          return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+        });
       }
-    }));
+
+      return {
+        ...prev,
+        layoutPreset: {
+          ...prev.layoutPreset,
+          [journey]: preset
+        },
+        sectionOrder: {
+          ...prev.sectionOrder,
+          [journey]: reorderedSections
+        }
+      };
+    });
   };
 
   const setLoadingStyle = (style: LoadingStyleId) => {
@@ -713,57 +753,26 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
-          color: 'var(--text-foreground)'
+          color: 'var(--text-foreground)',
+          marginBottom: '1.25rem'
         }}
-        className={`border rounded-2xl ${compact ? 'p-2.5' : 'p-3.5'} shadow-lg transition-all`}
+        className={`border rounded-2xl ${compact ? 'p-3' : 'p-4'} shadow-lg transition-all space-y-3`}
       >
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+          <div className="flex items-center gap-2 flex-wrap">
             <span
               style={{
-                backgroundColor: 'var(--color-primary-light)',
-                color: 'var(--color-primary)',
-                borderColor: 'var(--color-primary-border)'
+                backgroundColor: 'var(--color-primary)',
+                color: 'var(--text-primary-foreground)'
               }}
-              className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border flex items-center gap-1.5"
+              className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
             >
               <span>🏗️</span>
-              <span>{title || 'Arquitetura & Layout Ativo'}</span>
+              <span>{title || 'Seletor de Layouts Estruturais & Ordenador'}</span>
             </span>
-
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {presets.map(p => {
-                const active = currentPreset === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      triggerLoadingPreview(`Aplicando ${p.name}...`, 650);
-                      setJourneyPreset(journey, p.id as any);
-                    }}
-                    style={{
-                      backgroundColor: active ? 'var(--color-primary)' : 'var(--bg-surface-2)',
-                      color: active ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
-                      borderColor: active ? 'var(--color-primary)' : 'var(--border-subtle)'
-                    }}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold border transition hover:scale-[1.01] flex items-center gap-1.5"
-                    title={p.desc}
-                  >
-                    <span>{p.name}</span>
-                    <span
-                      style={{
-                        backgroundColor: active ? 'var(--bg-surface)' : 'var(--color-primary-light)',
-                        color: 'var(--color-primary)'
-                      }}
-                      className="hidden sm:inline px-1.5 py-0.2 rounded text-[9px] font-black uppercase"
-                    >
-                      {p.badge}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <span style={{ color: 'var(--text-muted-foreground)' }} className="text-xs font-semibold">
+              Compare todos os modelos em igualdade visual ou reordene páginas e seções:
+            </span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -772,10 +781,10 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
               onClick={() => setShowOrderModal(true)}
               style={{
                 backgroundColor: 'var(--bg-surface-2)',
-                color: 'var(--color-primary)',
-                borderColor: 'var(--color-primary-border)'
+                color: 'var(--text-foreground)',
+                borderColor: 'var(--color-primary)'
               }}
-              className="px-3 py-1.5 rounded-xl text-xs font-black border transition hover:opacity-90 flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition hover:opacity-95 flex items-center gap-1.5 shadow-sm"
             >
               <span>🔀</span>
               <span>Ordenar Páginas & Blocos</span>
@@ -793,7 +802,7 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
                 color: 'var(--text-foreground)',
                 borderColor: 'var(--border-subtle)'
               }}
-              className="px-2.5 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer"
               title="Escolher Modelo de Tela de Carregamento (Loading Screen)"
             >
               {loadingOptions.map(lo => (
@@ -803,6 +812,79 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
               ))}
             </select>
           </div>
+        </div>
+
+        {/* GRID DE IGUALDADE VISUAL PARA COMPARAÇÃO CLARA ENTRE TODOS OS LAYOUTS */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '0.65rem'
+          }}
+        >
+          {presets.map(p => {
+            const active = currentPreset === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  triggerLoadingPreview(`Aplicando ${p.name}...`, 550);
+                  setJourneyPreset(journey, p.id as any);
+                }}
+                style={{
+                  backgroundColor: active ? 'var(--bg-surface-2)' : 'var(--bg-background)',
+                  color: 'var(--text-foreground)',
+                  borderColor: active ? 'var(--color-primary)' : 'var(--border-subtle)',
+                  borderWidth: '2px',
+                  borderStyle: 'solid',
+                  boxShadow: active ? 'var(--shadow-glow)' : 'none',
+                  textAlign: 'left',
+                  padding: '0.75rem 0.9rem',
+                  borderRadius: '14px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '0.4rem'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                    <span
+                      style={{
+                        backgroundColor: active ? 'var(--color-primary)' : 'var(--bg-surface-2)',
+                        color: active ? 'var(--text-primary-foreground)' : 'var(--color-primary)',
+                        border: active ? 'none' : '1px solid var(--border-subtle)',
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: '6px',
+                        fontSize: '0.64rem',
+                        fontWeight: 900,
+                        textTransform: 'uppercase'
+                      }}
+                    >
+                      {p.badge}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '0.66rem',
+                        fontWeight: 900,
+                        color: active ? 'var(--status-available)' : 'var(--text-muted-foreground)'
+                      }}
+                    >
+                      {active ? '● ATIVO' : 'Ver Layout →'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 900, color: 'var(--text-foreground)' }}>
+                    {p.name}
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted-foreground)', lineHeight: 1.35 }}>
+                  {p.desc}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
