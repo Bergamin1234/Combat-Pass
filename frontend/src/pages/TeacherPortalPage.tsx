@@ -815,10 +815,11 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
         minHeight: embedded ? 'auto' : '100vh',
         background: 'var(--bg-background)',
         color: 'var(--text-foreground)',
-        padding: embedded ? '0' : '1.25rem clamp(1rem, 3vw, 2.5rem) 4rem'
+        padding: embedded ? '0' : '1.25rem 1rem 4rem',
+        width: '100%'
       }}
     >
-      <div style={{ maxWidth: '1380px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1540px', width: '100%', margin: '0 auto' }}>
         {!embedded && (
           <header
             style={{
@@ -947,7 +948,7 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
             Layout 3 (partner_portal): Executivo Ortogonal de Comissões + Operação
             Layout 4 (classic_teacher): Clássico Touch-First em Abas Horizontais */}
         {activePreset === 'tatame_fast' ? (
-          <div className="responsive-portal-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 285px) 1fr', gap: '1.25rem', alignItems: 'start' }}>
+          <div className="responsive-portal-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 285px) 1fr', gap: '1.25rem', alignItems: 'start', width: '100%' }}>
             <aside
               className="responsive-portal-aside"
               style={{
@@ -1000,12 +1001,12 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
               </div>
             </aside>
 
-            <div>
+            <div style={{ minWidth: 0, width: '100%' }}>
               <DynamicSectionRenderer journey="teacher" sectionsMap={sectionsMap} />
             </div>
           </div>
         ) : activePreset === 'technical_perf' ? (
-          <div>
+          <div style={{ width: '100%' }}>
             <div style={{ marginBottom: '1rem' }}>
               <DynamicNavBuilder
                 journey="teacher"
@@ -1014,12 +1015,12 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
                 variant="horizontal"
               />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
-              <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', alignItems: 'start', width: '100%' }}>
+              <div style={{ minWidth: 0 }}>
                 {sectionsMap.ongoing_class}
                 {sectionsMap.touch_rollcall}
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 {sectionsMap.bonus_merit}
                 {sectionsMap.weekly_schedule}
                 {sectionsMap.commissions_summary}
@@ -1027,7 +1028,7 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
             </div>
           </div>
         ) : (
-          <div>
+          <div style={{ width: '100%' }}>
             <div style={{ marginBottom: '1rem' }}>
               <DynamicNavBuilder
                 journey="teacher"
