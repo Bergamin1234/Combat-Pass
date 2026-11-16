@@ -42,16 +42,44 @@ export const CommandCenterLayout: React.FC<BaseLayoutProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  const terminalTabs = [
-    { id: 'treinos', label: 'CMD://TREINOS', icon: '🥊' },
-    { id: 'frequencia', label: 'CMD://GRADE_PRESENCA', icon: '📅' },
-    { id: 'conquistas', label: 'CMD://XP_EVOLUCAO', icon: '🏆' },
-    { id: 'alunos', label: 'CMD://ROSTER_360', icon: '👥' },
-    { id: 'chamada_diaria', label: 'CMD://CHAMADA_TATAME', icon: '⚡' },
-    { id: 'caixa_diario', label: 'CMD://CAIXA_BALCAO', icon: '💵' },
-    { id: 'financeiro_gestao', label: 'CMD://FINANCEIRO', icon: '💰' },
-    { id: 'avisos', label: 'CMD://MURAL_BROADCAST', icon: '📢' },
-  ];
+  const getTerminalTabsByPortal = () => {
+    if (portal === 'professor') {
+      return [
+        { id: 'chamada', label: 'CMD://CHAMADA_TATAME', icon: '⚡' },
+        { id: 'grade', label: 'CMD://GRADE_HORARIOS', icon: '📅' },
+        { id: 'comissoes', label: 'CMD://EXTRATO_COMISSOES', icon: '💵' },
+        { id: 'merito', label: 'CMD://BONUS_MERITO', icon: '🏅' }
+      ];
+    }
+    if (portal === 'admin') {
+      return [
+        { id: 'alunos', label: 'CMD://ROSTER_360', icon: '👥' },
+        { id: 'calendario_geral', label: 'CMD://GRADE_TATAMES', icon: '📅' },
+        { id: 'financeiro_gestao', label: 'CMD://FINANCEIRO', icon: '💰' },
+        { id: 'caixa_diario', label: 'CMD://CAIXA_BALCAO', icon: '💵' },
+        { id: 'comissoes', label: 'CMD://COMISSOES_CT', icon: '🥋' },
+        { id: 'ocupacao', label: 'CMD://LOTACAO_SALAS', icon: '🔥' },
+        { id: 'avisos', label: 'CMD://MURAL_BROADCAST', icon: '📢' },
+        { id: 'gamificacao', label: 'CMD://GAMIFICACAO_XP', icon: '🏆' },
+        { id: 'aparencia_layouts', label: 'CMD://STUDIO_LAYOUTS', icon: '🎨' }
+      ];
+    }
+    return [
+      { id: 'treinos', label: 'CMD://TREINOS_CHECKIN', icon: '🥊' },
+      { id: 'frequencia', label: 'CMD://GRADE_PRESENCA', icon: '📅' },
+      { id: 'conquistas', label: 'CMD://XP_EVOLUCAO', icon: '🏆' },
+      { id: 'torneios', label: 'CMD://BRACKETS_LUTA', icon: '🏅' },
+      { id: 'ranking', label: 'CMD://RANKING_GLOBAL', icon: '🥇' },
+      { id: 'desempenho', label: 'CMD://ANALYTICS_RADAR', icon: '📊' },
+      { id: 'recompensas', label: 'CMD://LOJA_POINTS', icon: '🪙' },
+      { id: 'contratos', label: 'CMD://CONTRATO_DIGITAL', icon: '📄' },
+      { id: 'avisos', label: 'CMD://MURAL_AVISOS', icon: '📢' },
+      { id: 'mercado', label: 'CMD://LOJA_EQUIPAMENTOS', icon: '🥋' },
+      { id: 'financeiro', label: 'CMD://FATURAS_ACESSO', icon: '💳' }
+    ];
+  };
+
+  const terminalTabs = getTerminalTabsByPortal();
 
   return (
     <div className="h-screen w-full bg-[#050508] text-emerald-400 font-mono overflow-hidden p-2 flex flex-col gap-2 antialiased select-none">

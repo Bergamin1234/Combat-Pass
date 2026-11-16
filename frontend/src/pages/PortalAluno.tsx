@@ -784,35 +784,37 @@ export default function PortalAluno() {
           </div>
         )}
 
-        {/* NAVEGAÇÃO DE ABAS */}
-        <div className="p-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-1.5 overflow-x-auto scrollbar-thin mb-5">
-          {[
-            { id: 'treinos', label: '🥊 Treinos & Check-in' },
-            { id: 'frequencia', label: '📅 Calendário' },
-            { id: 'conquistas', label: '🏆 Conquistas' },
-            { id: 'torneios', label: '🏅 Torneios' },
-            { id: 'ranking', label: '🥇 Ranking' },
-            { id: 'desempenho', label: '📊 Desempenho' },
-            { id: 'recompensas', label: '🪙 Points & Loja' },
-            { id: 'contratos', label: '📄 Contrato' },
-            { id: 'avisos', label: '📢 Avisos' },
-            { id: 'mercado', label: '🥋 Mercado' },
-            { id: 'financeiro', label: '💳 Mensalidades' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setAbaAtiva(tab.id as any)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                abaAtiva === tab.id
-                  ? 'bg-red-600 text-white font-black shadow-md shadow-red-900/50'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* NAVEGAÇÃO DE ABAS: Omitida em Split-Screen e Command Center para não duplicar com o menu da esquerda */}
+        {!['split_screen', 'command_center'].includes(studentPreset) && (
+          <div className="p-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-1.5 overflow-x-auto scrollbar-thin mb-5">
+            {[
+              { id: 'treinos', label: '🥊 Treinos & Check-in' },
+              { id: 'frequencia', label: '📅 Calendário' },
+              { id: 'conquistas', label: '🏆 Conquistas' },
+              { id: 'torneios', label: '🏅 Torneios' },
+              { id: 'ranking', label: '🥇 Ranking' },
+              { id: 'desempenho', label: '📊 Desempenho' },
+              { id: 'recompensas', label: '🪙 Points & Loja' },
+              { id: 'contratos', label: '📄 Contrato' },
+              { id: 'avisos', label: '📢 Avisos' },
+              { id: 'mercado', label: '🥋 Mercado' },
+              { id: 'financeiro', label: '💳 Mensalidades' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setAbaAtiva(tab.id as any)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                  abaAtiva === tab.id
+                    ? 'bg-red-600 text-white font-black shadow-md shadow-red-900/50'
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* PAINEL DINÂMICO CONFORME A ABA SELECIONADA */}
         <div className="space-y-6">

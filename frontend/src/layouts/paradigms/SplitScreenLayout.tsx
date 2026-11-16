@@ -19,15 +19,47 @@ export const SplitScreenLayout: React.FC<BaseLayoutProps> = ({
   headerActions,
   portal = 'aluno',
 }) => {
-  const splitNavItems = [
-    { id: 'treinos', label: 'Diário & Grade de Treinos', icon: '🥊', badge: 'Ao Vivo' },
-    { id: 'frequencia', label: 'Boletim de Presença', icon: '📅', badge: '94%' },
-    { id: 'conquistas', label: 'Gamificação & Streak', icon: '🏆', badge: 'Streak x8' },
-    { id: 'alunos', label: 'Alunos & Visão 360°', icon: '👥', badge: 'Roster' },
-    { id: 'chamada_diaria', label: 'Chamada de Tatame', icon: '✅', badge: 'Presença' },
-    { id: 'financeiro_gestao', label: 'Contratos & Caixa', icon: '💰', badge: 'Financeiro' },
-    { id: 'avisos', label: 'Comunicados & Mural', icon: '📢', badge: 'Avisos' },
-  ];
+  const getNavItemsByPortal = () => {
+    if (portal === 'professor') {
+      return [
+        { id: 'chamada', label: 'Lista de Chamada & Avaliação', icon: '✅', badge: 'Ao Vivo' },
+        { id: 'grade', label: 'Grade Multi-CT & Horários', icon: '📅', badge: 'Horários' },
+        { id: 'comissoes', label: 'Extrato de Comissões & Ganhos', icon: '💵', badge: 'Repasse' },
+        { id: 'merito', label: 'Bonificação de Mérito Técnico', icon: '🏅', badge: 'Bônus' }
+      ];
+    }
+
+    if (portal === 'admin') {
+      return [
+        { id: 'alunos', label: 'Alunos Matriculados & Dossiê', icon: '👥', badge: 'Roster' },
+        { id: 'calendario_geral', label: 'Grade Oficial de Tatames', icon: '📅', badge: 'Tatames' },
+        { id: 'financeiro_gestao', label: 'Gestão Financeira & Baixas', icon: '💰', badge: 'Contas' },
+        { id: 'caixa_diario', label: 'Caixa Diário & PDV Recepção', icon: '💵', badge: 'Caixa' },
+        { id: 'comissoes', label: 'Comissões dos Mestres', icon: '🥋', badge: 'Repasse' },
+        { id: 'ocupacao', label: 'Ocupação & Lotação de Salas', icon: '🔥', badge: 'Lotação' },
+        { id: 'avisos', label: 'Mural de Avisos da Rede', icon: '📢', badge: 'Avisos' },
+        { id: 'gamificacao', label: 'Gestão de Gamificação & Níveis', icon: '🏆', badge: 'Regras' },
+        { id: 'aparencia_layouts', label: 'Estúdio de Layouts & Temas', icon: '🎨', badge: 'Design' }
+      ];
+    }
+
+    // Padrão: Portal do Aluno
+    return [
+      { id: 'treinos', label: 'Diário & Grade de Treinos', icon: '🥊', badge: 'Check-in' },
+      { id: 'frequencia', label: 'Boletim & Calendário de Presença', icon: '📅', badge: '94%' },
+      { id: 'conquistas', label: 'Gamificação & Trilha de XP', icon: '🏆', badge: 'Streak x8' },
+      { id: 'torneios', label: 'Torneios & Brackets Oficiais', icon: '🏅', badge: 'Chaves' },
+      { id: 'ranking', label: 'Ranking Geral & Desempenho', icon: '🥇', badge: 'Top CT' },
+      { id: 'desempenho', label: 'Analytics & Radar Técnico', icon: '📊', badge: 'Radar' },
+      { id: 'recompensas', label: 'Loja de Points & Resgates', icon: '🪙', badge: 'Points' },
+      { id: 'contratos', label: 'Contrato de Matrícula & Termos', icon: '📄', badge: 'Digital' },
+      { id: 'avisos', label: 'Comunicados & Mural de Avisos', icon: '📢', badge: 'Recados' },
+      { id: 'mercado', label: 'Mercado do CT & Equipamentos', icon: '🥋', badge: 'Loja' },
+      { id: 'financeiro', label: 'Mensalidades & Status de Acesso', icon: '💳', badge: 'Faturas' }
+    ];
+  };
+
+  const splitNavItems = getNavItemsByPortal();
 
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full overflow-hidden bg-zinc-950 text-zinc-100 font-sans antialiased">
