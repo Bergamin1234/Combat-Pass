@@ -3,15 +3,20 @@ import { THEMES_LIST, applyPlatformTheme, getCurrentPlatformTheme } from './them
 
 export type JourneyKey = 'landing' | 'student' | 'teacher' | 'admin';
 
-export type LandingPresetId = 'marketplace' | 'corporate' | 'tatame' | 'classic';
-export type StudentPresetId = 'tatame_express' | 'gamified_journey' | 'agenda_control' | 'complete_tabs';
-export type TeacherPresetId = 'tatame_fast' | 'technical_perf' | 'partner_portal' | 'classic_teacher';
-export type AdminPresetId = 'executive' | 'operational_360' | 'customizer_studio' | 'complete_erp';
+export type LandingPresetId = 'marketplace' | 'corporate' | 'tatame' | 'classic' | 'command_center' | 'split_screen' | 'floating_island' | 'zen_focus';
+export type StudentPresetId = 'tatame_express' | 'gamified_journey' | 'agenda_control' | 'complete_tabs' | 'command_center' | 'split_screen' | 'floating_island' | 'zen_focus';
+export type TeacherPresetId = 'tatame_fast' | 'technical_perf' | 'partner_portal' | 'classic_teacher' | 'command_center' | 'split_screen' | 'floating_island' | 'zen_focus';
+export type AdminPresetId = 'executive' | 'operational_360' | 'customizer_studio' | 'complete_erp' | 'command_center' | 'split_screen' | 'floating_island' | 'zen_focus';
 export type LoadingStyleId = 'skeleton' | 'minimal_bar' | 'combat_pulse' | 'step_progress';
 
-export type InterfaceOption = 'escolar' | 'mesa_hud' | 'b2b_0px' | 'super_app';
+export type InterfaceOption = 'escolar' | 'mesa_hud' | 'b2b_0px' | 'super_app' | 'command_center' | 'split_screen' | 'floating_island' | 'zen_focus';
 
 export function getInterfaceFromPreset(journey: JourneyKey, preset: string): InterfaceOption {
+  if (preset === 'command_center') return 'command_center';
+  if (preset === 'split_screen') return 'split_screen';
+  if (preset === 'floating_island') return 'floating_island';
+  if (preset === 'zen_focus') return 'zen_focus';
+
   if (journey === 'student') {
     if (preset === 'gamified_journey') return 'mesa_hud';
     if (preset === 'agenda_control') return 'b2b_0px';
@@ -38,6 +43,11 @@ export function getInterfaceFromPreset(journey: JourneyKey, preset: string): Int
 }
 
 export function getPresetFromInterface(journey: JourneyKey, opt: InterfaceOption): string {
+  if (opt === 'command_center') return 'command_center';
+  if (opt === 'split_screen') return 'split_screen';
+  if (opt === 'floating_island') return 'floating_island';
+  if (opt === 'zen_focus') return 'zen_focus';
+
   if (journey === 'student') {
     if (opt === 'mesa_hud') return 'gamified_journey';
     if (opt === 'b2b_0px') return 'agenda_control';
@@ -217,25 +227,41 @@ export const PRESET_META_BY_JOURNEY: Record<
     { id: 'marketplace', title: '1. Sistema Escolar', badge: 'Sidebar Esquerdo', icon: '🎓', desc: 'Estrutura clássica de dashboard: sidebar fixo à esquerda (w-64) + conteúdo amplo à direita' },
     { id: 'tatame', title: '2. Mesa HUD Tatame', badge: 'Zero Sidebar / 100%', icon: '⚡', desc: 'Estrutura de monitor/painel de controle: navbar densa no topo ocupando 100% de largura + zero sidebars' },
     { id: 'corporate', title: '3. Editorial & B2B 0px', badge: 'Grid Invertido 0px', icon: '🏛️', desc: 'Estrutura de matriz invertida: conteúdo principal na esquerda + sidebar de ações na direita, flat 0px' },
-    { id: 'classic', title: '4. Super-App Mobile', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' }
+    { id: 'classic', title: '4. Super-App Mobile', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' },
+    { id: 'command_center', title: '5. Command Center', badge: 'Grid Terminal 12x6', icon: '💻', desc: 'Painel trader/IDE: grid rígido 12x6 sem rolagem geral, com scroll exclusivamente interno por bloco' },
+    { id: 'split_screen', title: '6. Split-Screen', badge: 'Divisão 40/60', icon: '🌓', desc: 'Divisão vertical 40/60: 40% fixo com identidade e navegação à esquerda, 60% com scroll para dados à direita' },
+    { id: 'floating_island', title: '7. Floating Island', badge: 'macOS Glass', icon: '🏝️', desc: 'Ilha flutuante centralizada sobre gradiente com backdrop-blur, cantos arredondados e botões traffic lights' },
+    { id: 'zen_focus', title: '8. Zen Foco Total', badge: 'Estilo Notion', icon: '🧘', desc: 'Foco absoluto em leitura e dados: coluna central estreita max-w-3xl com margens laterais gigantes e topo invisível' }
   ],
   student: [
     { id: 'tatame_express', title: '1. Sistema Escolar', badge: 'Sidebar Acadêmica', icon: '🎓', desc: 'Estrutura clássica de dashboard: sidebar fixo à esquerda (w-64) + conteúdo amplo à direita' },
     { id: 'gamified_journey', title: '2. Mesa HUD Tatame', badge: 'Zero Sidebar / 100%', icon: '⚡', desc: 'Estrutura de monitor/painel de controle: navbar densa no topo ocupando 100% de largura + zero sidebars' },
     { id: 'agenda_control', title: '3. Editorial & B2B 0px', badge: 'Grid Invertido 0px', icon: '🏛️', desc: 'Estrutura de matriz invertida: conteúdo principal na esquerda + sidebar de ações na direita, flat 0px' },
-    { id: 'complete_tabs', title: '4. Super-App Mobile', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' }
+    { id: 'complete_tabs', title: '4. Super-App Mobile', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' },
+    { id: 'command_center', title: '5. Command Center', badge: 'Grid Terminal 12x6', icon: '💻', desc: 'Painel trader/IDE: grid rígido 12x6 sem rolagem geral, com scroll exclusivamente interno por bloco' },
+    { id: 'split_screen', title: '6. Split-Screen', badge: 'Divisão 40/60', icon: '🌓', desc: 'Divisão vertical 40/60: 40% fixo com identidade e navegação à esquerda, 60% com scroll para dados à direita' },
+    { id: 'floating_island', title: '7. Floating Island', badge: 'macOS Glass', icon: '🏝️', desc: 'Ilha flutuante centralizada sobre gradiente com backdrop-blur, cantos arredondados e botões traffic lights' },
+    { id: 'zen_focus', title: '8. Zen Foco Total', badge: 'Estilo Notion', icon: '🧘', desc: 'Foco absoluto em leitura e dados: coluna central estreita max-w-3xl com margens laterais gigantes e topo invisível' }
   ],
   teacher: [
     { id: 'tatame_fast', title: '1. Sistema Escolar Docente', badge: 'Sidebar Professor', icon: '🎓', desc: 'Estrutura clássica de dashboard: sidebar fixo à esquerda (w-64) + conteúdo amplo à direita' },
     { id: 'technical_perf', title: '2. Mesa Técnica HUD', badge: 'Zero Sidebar / 100%', icon: '⚡', desc: 'Estrutura de monitor/painel de controle: navbar densa no topo ocupando 100% de largura + zero sidebars' },
     { id: 'partner_portal', title: '3. Editorial & B2B 0px', badge: 'Grid Invertido 0px', icon: '🏛️', desc: 'Estrutura de matriz invertida: conteúdo principal na esquerda + sidebar de ações na direita, flat 0px' },
-    { id: 'classic_teacher', title: '4. Super-App Tatame', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' }
+    { id: 'classic_teacher', title: '4. Super-App Tatame', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' },
+    { id: 'command_center', title: '5. Command Center', badge: 'Grid Terminal 12x6', icon: '💻', desc: 'Painel trader/IDE: grid rígido 12x6 sem rolagem geral, com scroll exclusivamente interno por bloco' },
+    { id: 'split_screen', title: '6. Split-Screen', badge: 'Divisão 40/60', icon: '🌓', desc: 'Divisão vertical 40/60: 40% fixo com identidade e navegação à esquerda, 60% com scroll para dados à direita' },
+    { id: 'floating_island', title: '7. Floating Island', badge: 'macOS Glass', icon: '🏝️', desc: 'Ilha flutuante centralizada sobre gradiente com backdrop-blur, cantos arredondados e botões traffic lights' },
+    { id: 'zen_focus', title: '8. Zen Foco Total', badge: 'Estilo Notion', icon: '🧘', desc: 'Foco absoluto em leitura e dados: coluna central estreita max-w-3xl com margens laterais gigantes e topo invisível' }
   ],
   admin: [
     { id: 'executive', title: '1. Sistema Escolar / ERP', badge: 'Sidebar Diretoria', icon: '🎓', desc: 'Estrutura clássica de dashboard: sidebar fixo à esquerda (w-64) + conteúdo amplo à direita' },
     { id: 'operational_360', title: '2. Mesa Command HUD', badge: 'Zero Sidebar / 100%', icon: '⚡', desc: 'Estrutura de monitor/painel de controle: navbar densa no topo ocupando 100% de largura + zero sidebars' },
     { id: 'customizer_studio', title: '3. Editorial & B2B 0px', badge: 'Grid Invertido 0px', icon: '🏛️', desc: 'Estrutura de matriz invertida: conteúdo principal na esquerda + sidebar de ações na direita, flat 0px' },
-    { id: 'complete_erp', title: '4. Super-App ERP', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' }
+    { id: 'complete_erp', title: '4. Super-App ERP', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' },
+    { id: 'command_center', title: '5. Command Center', badge: 'Grid Terminal 12x6', icon: '💻', desc: 'Painel trader/IDE: grid rígido 12x6 sem rolagem geral, com scroll exclusivamente interno por bloco' },
+    { id: 'split_screen', title: '6. Split-Screen', badge: 'Divisão 40/60', icon: '🌓', desc: 'Divisão vertical 40/60: 40% fixo com identidade e navegação à esquerda, 60% com scroll para dados à direita' },
+    { id: 'floating_island', title: '7. Floating Island', badge: 'macOS Glass', icon: '🏝️', desc: 'Ilha flutuante centralizada sobre gradiente com backdrop-blur, cantos arredondados e botões traffic lights' },
+    { id: 'zen_focus', title: '8. Zen Foco Total', badge: 'Estilo Notion', icon: '🧘', desc: 'Foco absoluto em leitura e dados: coluna central estreita max-w-3xl com margens laterais gigantes e topo invisível' }
   ]
 };
 
@@ -272,10 +298,10 @@ interface LayoutEngineContextValue {
 
 const LayoutEngineContext = createContext<LayoutEngineContextValue | null>(null);
 
-const VALID_LANDING: LandingPresetId[] = ['marketplace', 'corporate', 'tatame', 'classic'];
-const VALID_STUDENT: StudentPresetId[] = ['tatame_express', 'gamified_journey', 'agenda_control', 'complete_tabs'];
-const VALID_TEACHER: TeacherPresetId[] = ['tatame_fast', 'technical_perf', 'partner_portal', 'classic_teacher'];
-const VALID_ADMIN: AdminPresetId[] = ['executive', 'operational_360', 'customizer_studio', 'complete_erp'];
+const VALID_LANDING: LandingPresetId[] = ['marketplace', 'corporate', 'tatame', 'classic', 'command_center', 'split_screen', 'floating_island', 'zen_focus'];
+const VALID_STUDENT: StudentPresetId[] = ['tatame_express', 'gamified_journey', 'agenda_control', 'complete_tabs', 'command_center', 'split_screen', 'floating_island', 'zen_focus'];
+const VALID_TEACHER: TeacherPresetId[] = ['tatame_fast', 'technical_perf', 'partner_portal', 'classic_teacher', 'command_center', 'split_screen', 'floating_island', 'zen_focus'];
+const VALID_ADMIN: AdminPresetId[] = ['executive', 'operational_360', 'customizer_studio', 'complete_erp', 'command_center', 'split_screen', 'floating_island', 'zen_focus'];
 
 function mergeWithDefaults(saved: any): LayoutPreferencesSchema {
   if (!saved || typeof saved !== 'object') return DEFAULT_LAYOUT_PREFERENCES;
@@ -789,6 +815,8 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
 }) => {
   const {
     preferences,
+    currentGlobalInterface,
+    setGlobalInterface,
     setJourneyPreset,
     setLoadingStyle,
     triggerLoadingPreview,
@@ -813,26 +841,30 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
     };
   }, [showOrderModal]);
 
-  const common4Presets = [
+  const common8Presets = [
     { id: 'marketplace', name: '1. Sistema Escolar', badge: 'Sidebar Esquerdo', desc: 'Estrutura clássica de dashboard: sidebar fixo à esquerda (w-64) + conteúdo amplo à direita' },
     { id: 'tatame', name: '2. Mesa HUD', badge: 'Zero Sidebar / 100%', desc: 'Estrutura de monitor/painel de controle: navbar densa no topo ocupando 100% de largura + zero sidebars' },
     { id: 'corporate', name: '3. B2B 0px', badge: 'Grid Invertido 0px', desc: 'Estrutura de matriz invertida: conteúdo principal na esquerda + sidebar de ações na direita, flat 0px' },
-    { id: 'classic', name: '4. Super-App', badge: 'Mobile-First', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' }
+    { id: 'classic', name: '4. Super-App', badge: 'Mobile-First', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' },
+    { id: 'command_center', name: '5. Command Center', badge: 'Grid Terminal 12x6', desc: 'Painel trader/IDE: grid rígido 12x6 sem rolagem geral, com scroll exclusivamente interno por bloco' },
+    { id: 'split_screen', name: '6. Split-Screen', badge: 'Divisão 40/60', desc: 'Divisão vertical 40/60: 40% fixo com identidade e navegação à esquerda, 60% com scroll para dados à direita' },
+    { id: 'floating_island', name: '7. Floating Island', badge: 'macOS Glass', desc: 'Ilha flutuante centralizada sobre gradiente com backdrop-blur, cantos arredondados e botões traffic lights' },
+    { id: 'zen_focus', name: '8. Zen Foco Total', badge: 'Estilo Notion', desc: 'Foco absoluto em leitura e dados: coluna central estreita max-w-3xl com margens laterais gigantes e topo invisível' }
   ];
 
   const presetOptionsByJourney: Record<JourneyKey, Array<{ id: string; name: string; badge: string; desc: string }>> = {
-    landing: common4Presets,
-    student: common4Presets.map(p => ({
+    landing: common8Presets,
+    student: common8Presets.map(p => ({
       ...p,
-      id: p.id === 'marketplace' ? 'tatame_express' : p.id === 'tatame' ? 'gamified_journey' : p.id === 'corporate' ? 'agenda_control' : 'complete_tabs'
+      id: p.id === 'marketplace' ? 'tatame_express' : p.id === 'tatame' ? 'gamified_journey' : p.id === 'corporate' ? 'agenda_control' : p.id === 'classic' ? 'complete_tabs' : p.id
     })),
-    teacher: common4Presets.map(p => ({
+    teacher: common8Presets.map(p => ({
       ...p,
-      id: p.id === 'marketplace' ? 'tatame_fast' : p.id === 'tatame' ? 'technical_perf' : p.id === 'corporate' ? 'partner_portal' : 'classic_teacher'
+      id: p.id === 'marketplace' ? 'tatame_fast' : p.id === 'tatame' ? 'technical_perf' : p.id === 'corporate' ? 'partner_portal' : p.id === 'classic' ? 'classic_teacher' : p.id
     })),
-    admin: common4Presets.map(p => ({
+    admin: common8Presets.map(p => ({
       ...p,
-      id: p.id === 'marketplace' ? 'executive' : p.id === 'tatame' ? 'operational_360' : p.id === 'corporate' ? 'customizer_studio' : 'complete_erp'
+      id: p.id === 'marketplace' ? 'executive' : p.id === 'tatame' ? 'operational_360' : p.id === 'corporate' ? 'customizer_studio' : p.id === 'classic' ? 'complete_erp' : p.id
     }))
   };
 
@@ -929,6 +961,8 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
                 type="button"
                 onClick={() => {
                   triggerLoadingPreview(`Aplicando ${p.name}...`, 550);
+                  const opt = getInterfaceFromPreset(journey, p.id as any);
+                  setGlobalInterface(opt);
                   setJourneyPreset(journey, p.id as any);
                 }}
                 style={{

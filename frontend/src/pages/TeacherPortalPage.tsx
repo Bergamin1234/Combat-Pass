@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { LayoutRouter } from '../layouts/LayoutRouter';
 import {
   useLayoutEngine,
   JourneyLayoutToolbar,
@@ -505,6 +506,171 @@ export const TeacherPortalPage: React.FC<TeacherPortalPageProps> = ({ embedded =
     { id: 'partner_portal', icon: '🏛️', short: '3. B2B 0px', name: 'Layout 3: Dossiê B2B', tag: 'Matriz 0px' },
     { id: 'classic_teacher', icon: '⚡', short: '4. Super-App', name: 'Layout 4: Touch Tatame', tag: 'Hero Touch' }
   ];
+
+  // Intercepta os 4 Novos Paradigmas Estruturais (5 a 8) garantindo renderização 100% funcional
+  if (['command_center', 'split_screen', 'floating_island', 'zen_focus'].includes(activePreset)) {
+    return (
+      <LayoutRouter
+        portal="professor"
+        interfaceOption={activePreset as any}
+        usuarioLogado={teacherUser}
+        title="Mesa Técnica Docente Combat-Pass"
+        subtitle={`Instrutor Responsável: ${teacherUser?.nome || 'Professor'} · CT Principal`}
+        headerActions={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowLayoutCustomDrawer(!showLayoutCustomDrawer)}
+              style={{
+                backgroundColor: 'var(--color-primary)',
+                color: 'var(--text-primary-foreground)'
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>⚙️</span>
+              <span>Layouts & Ordem</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleTeacherLogout}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-red-600/80 hover:bg-red-600 text-white transition cursor-pointer"
+            >
+              Sair
+            </button>
+          </div>
+        }
+      >
+        {feedbackMsg && (
+          <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500 text-emerald-300 text-xs font-bold flex justify-between items-center mb-4">
+            <span>{feedbackMsg}</span>
+            <button onClick={() => setFeedbackMsg('')} className="text-emerald-400 font-black">✕</button>
+          </div>
+        )}
+
+        {showLayoutCustomDrawer && (
+          <div className="mb-6">
+            <JourneyLayoutToolbar journey="teacher" />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+          {/* Coluna 1: Lista de Chamada e Avaliação Técnica */}
+          <div className="space-y-4">
+            <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <span className="text-[10px] font-mono font-black text-purple-400 uppercase tracking-wider block">
+                    MESA TÉCNICA // CHAMADA AO VIVO
+                  </span>
+                  <h3 className="text-base font-black text-white">
+                    Avaliação em Tempo Real ({selectedHorario})
+                  </h3>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-red-600 text-white text-xs font-black">
+                  {totalConfirmadosOuAgendados} Atletas
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {roster.map(st => (
+                  <div key={st.id} className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2.5">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <strong className="text-sm text-white">{st.nome}</strong>
+                        <div className="text-xs text-slate-400">{st.graduacao} · XP: {st.xp}</div>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleMarcarStatus(st.id, 'PRESENTE')}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                            st.statusChamada === 'PRESENTE'
+                              ? 'bg-emerald-600 text-white font-black'
+                              : 'bg-white/5 text-emerald-400 border border-emerald-500/40'
+                          }`}
+                        >
+                          ✓ Presente
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMarcarStatus(st.id, 'FALTA')}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                            st.statusChamada === 'FALTA'
+                              ? 'bg-red-600 text-white font-black'
+                              : 'bg-white/5 text-red-400 border border-red-500/40'
+                          }`}
+                        >
+                          ✕ Falta
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-1 border-t border-white/5">
+                      <button
+                        type="button"
+                        onClick={() => handleQuickXP(st.id, 25, 'Sparring Técnico')}
+                        className="px-2 py-1 rounded-md bg-white/10 text-white text-[10px] font-bold hover:bg-white/20 transition cursor-pointer"
+                      >
+                        ⚡ +25 XP
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickXP(st.id, 50, 'Destaque')}
+                        className="px-2 py-1 rounded-md bg-purple-600/30 text-purple-300 border border-purple-500/40 text-[10px] font-black hover:bg-purple-600/50 transition cursor-pointer"
+                      >
+                        🏅 +50 XP
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bonificação Técnica */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <h4 className="text-xs font-black uppercase text-white mb-2.5">🏅 Bonificação de Mérito</h4>
+              <form onSubmit={handleConcederBonus} className="grid gap-2">
+                <select
+                  value={bonusAlunoId}
+                  onChange={e => setBonusAlunoId(e.target.value)}
+                  className="p-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs"
+                >
+                  {roster.map(r => (
+                    <option key={r.id} value={r.id}>{r.nome} ({r.graduacao})</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={bonusMotivo}
+                  onChange={e => setBonusMotivo(e.target.value)}
+                  placeholder="Motivo da bonificação..."
+                  className="p-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs"
+                />
+                <button
+                  type="submit"
+                  className="p-2 rounded-lg bg-red-600 text-white font-black text-xs hover:bg-red-700 transition cursor-pointer"
+                >
+                  Creditar +{bonusPoints} XP
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Coluna 2: Calendário e Comissões */}
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <h3 className="text-sm font-black text-white uppercase tracking-wider mb-3">📅 Grade Multi-CT</h3>
+              <InteractiveCombatCalendar userRole="PROFESSOR" />
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <TeacherCommissionsTab />
+            </div>
+          </div>
+        </div>
+      </LayoutRouter>
+    );
+  }
 
   return (
     <div

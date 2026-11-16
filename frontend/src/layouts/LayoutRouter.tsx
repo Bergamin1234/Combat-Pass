@@ -1,8 +1,8 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { useLayoutEngine, InterfaceOption } from '../config/layoutEngine';
+import { useLayoutEngine, InterfaceOption, getInterfaceFromPreset } from '../config/layoutEngine';
 
-// Importação dos 24 layouts estruturais isolados
+// Importação dos 24 layouts estruturais isolados para os 4 primeiros paradigmas
 // 1. ADMIN (4 arquivos isolados)
 import { AdminEscolarLayout } from './admin/AdminEscolarLayout';
 import { AdminMesaHudLayout } from './admin/AdminMesaHudLayout';
@@ -39,10 +39,17 @@ import { StatsMesaHudLayout } from './stats/StatsMesaHudLayout';
 import { StatsB2B0pxLayout } from './stats/StatsB2B0pxLayout';
 import { StatsSuperAppLayout } from './stats/StatsSuperAppLayout';
 
+// 7. OS 4 NOVOS PARADIGMAS ESTRUTURAIS (Totalizando 8 layouts)
+import { CommandCenterLayout } from './paradigms/CommandCenterLayout';
+import { SplitScreenLayout } from './paradigms/SplitScreenLayout';
+import { FloatingIslandLayout } from './paradigms/FloatingIslandLayout';
+import { ZenFocusLayout } from './paradigms/ZenFocusLayout';
+
 export type PortalType = 'admin' | 'professor' | 'aluno' | 'torneios' | 'ranking' | 'stats';
 
 export interface LayoutRouterProps {
   portal?: PortalType;
+  interfaceOption?: InterfaceOption;
   children: React.ReactNode;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
@@ -54,11 +61,12 @@ export interface LayoutRouterProps {
 
 /**
  * LayoutRouter: Roteador dinâmico de layout que resolve exatamente
- * a combinação de Portal (6 portais) × Interface (4 paradigmas estruturais),
- * totalizando 24 layouts isolados com troca instantânea e reativa.
+ * a combinação de Portal (6 portais) × Interface (8 paradigmas estruturais),
+ * todos completamente funcionais, com renderização reativa sem quebra de tela.
  */
 export const LayoutRouter: React.FC<LayoutRouterProps> = ({
   portal,
+  interfaceOption,
   children,
   activeTab,
   onTabChange,
@@ -68,7 +76,7 @@ export const LayoutRouter: React.FC<LayoutRouterProps> = ({
   headerActions,
 }) => {
   const location = useLocation();
-  const { currentGlobalInterface, setGlobalInterface } = useLayoutEngine();
+  const { currentGlobalInterface, setGlobalInterface, preferences } = useLayoutEngine();
 
   // Se o portal não for informado explicitamente nas props, resolve pela rota e query params
   const resolvedPortal: PortalType = portal || (() => {
@@ -82,7 +90,22 @@ export const LayoutRouter: React.FC<LayoutRouterProps> = ({
     return 'aluno';
   })();
 
-  const currentInterface: InterfaceOption = currentGlobalInterface || 'escolar';
+  const journeyKey =
+    resolvedPortal === 'admin'
+      ? 'admin'
+      : resolvedPortal === 'professor'
+      ? 'teacher'
+      : 'student';
+
+  const portalInterface = preferences?.layoutPreset
+    ? getInterfaceFromPreset(journeyKey, preferences.layoutPreset[journeyKey])
+    : undefined;
+
+  const currentInterface: InterfaceOption =
+    interfaceOption ||
+    portalInterface ||
+    currentGlobalInterface ||
+    'escolar';
 
   const handleInterfaceChange = (opt: InterfaceOption) => {
     setGlobalInterface(opt);
@@ -97,8 +120,31 @@ export const LayoutRouter: React.FC<LayoutRouterProps> = ({
     title,
     subtitle,
     headerActions,
+    portal: resolvedPortal,
   };
 
+  // =========================================================================
+  // OS 4 NOVOS PARADIGMAS GLOBAIS (5 a 8)
+  // =========================================================================
+  if (currentInterface === 'command_center') {
+    return <CommandCenterLayout {...commonProps} />;
+  }
+
+  if (currentInterface === 'split_screen') {
+    return <SplitScreenLayout {...commonProps} />;
+  }
+
+  if (currentInterface === 'floating_island') {
+    return <FloatingIslandLayout {...commonProps} />;
+  }
+
+  if (currentInterface === 'zen_focus') {
+    return <ZenFocusLayout {...commonProps} />;
+  }
+
+  // =========================================================================
+  // OS 4 PARADIGMAS ESPECÍFICOS POR PORTAL (1 a 4)
+  // =========================================================================
   // 1. PORTAL ADMIN
   if (resolvedPortal === 'admin') {
     if (currentInterface === 'escolar') return <AdminEscolarLayout {...commonProps} />;

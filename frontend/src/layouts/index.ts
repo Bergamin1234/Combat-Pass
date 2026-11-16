@@ -46,6 +46,12 @@ export { StatsB2B0pxLayout } from './stats/StatsB2B0pxLayout';
 export { StatsSuperAppLayout } from './stats/StatsSuperAppLayout';
 export type { StatsLayoutProps } from './stats/StatsEscolarLayout';
 
+// 7. OS 4 NOVOS PARADIGMAS GLOBAIS (Totalizando 8 layouts)
+export { CommandCenterLayout } from './paradigms/CommandCenterLayout';
+export { SplitScreenLayout } from './paradigms/SplitScreenLayout';
+export { FloatingIslandLayout } from './paradigms/FloatingIslandLayout';
+export { ZenFocusLayout } from './paradigms/ZenFocusLayout';
+
 // Componentes comuns / navegação e Roteador Dinâmico
 export * from './common/PortalNavBar';
 export { LayoutRouter, default as LayoutRouterDefault } from './LayoutRouter';

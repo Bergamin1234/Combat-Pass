@@ -3,13 +3,21 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayoutEngine } from '../../config/layoutEngine';
 import { THEMES_LIST } from '../../config/themeConfig';
 
-export type InterfaceOption = 'escolar' | 'mesa_hud' | 'b2b_0px' | 'super_app';
+export type InterfaceOption =
+  | 'escolar'
+  | 'mesa_hud'
+  | 'b2b_0px'
+  | 'super_app'
+  | 'command_center'
+  | 'split_screen'
+  | 'floating_island'
+  | 'zen_focus';
 
 export interface PortalNavBarProps {
   currentPortal: 'admin' | 'professor' | 'aluno' | 'torneios' | 'ranking' | 'stats';
   currentInterface: InterfaceOption;
   onInterfaceChange?: (option: InterfaceOption) => void;
-  variant?: 'escolar' | 'hud' | 'b2b' | 'superapp';
+  variant?: 'escolar' | 'hud' | 'b2b' | 'superapp' | 'command_center' | 'split_screen' | 'floating_island' | 'zen_focus';
   extraActions?: React.ReactNode;
 }
 
@@ -18,6 +26,10 @@ export const INTERFACE_OPTIONS: Array<{ id: InterfaceOption; label: string; icon
   { id: 'mesa_hud', label: '2. Mesa HUD', icon: '⚡' },
   { id: 'b2b_0px', label: '3. B2B 0px', icon: '🏛️' },
   { id: 'super_app', label: '4. Super-App', icon: '📱' },
+  { id: 'command_center', label: '5. Command Center', icon: '💻' },
+  { id: 'split_screen', label: '6. Split-Screen', icon: '🌓' },
+  { id: 'floating_island', label: '7. Floating Island', icon: '🏝️' },
+  { id: 'zen_focus', label: '8. Zen Foco Total', icon: '🧘' },
 ];
 
 export const PORTALS_LIST: Array<{ id: string; label: string; route: string; icon: string }> = [
@@ -68,7 +80,11 @@ export const PortalNavBar: React.FC<PortalNavBarProps> = ({
     hud: 'bg-[#121215] border-b border-red-900/50 text-white px-4 py-2 flex items-center justify-between gap-3 flex-wrap shadow-xl',
     b2b: 'bg-[#141418] border-b-2 border-amber-600/70 text-zinc-200 px-4 py-2 flex items-center justify-between gap-3 flex-wrap rounded-none',
     superapp: 'bg-[#111114] border-b border-zinc-800 text-zinc-300 px-3 py-2 flex items-center justify-between gap-2 overflow-x-auto',
-  }[variant];
+    command_center: 'bg-black border-b border-emerald-500/50 text-emerald-400 font-mono px-4 py-2 flex items-center justify-between gap-3 flex-wrap',
+    split_screen: 'bg-slate-900/90 border-b border-blue-500/40 text-slate-200 px-4 py-2 flex items-center justify-between gap-3 flex-wrap',
+    floating_island: 'bg-slate-950/70 backdrop-blur-md border-b border-white/10 text-slate-200 px-4 py-2 flex items-center justify-between gap-3 flex-wrap',
+    zen_focus: 'bg-transparent border-b border-zinc-800/40 text-zinc-300 px-4 py-2 flex items-center justify-between gap-3 flex-wrap',
+  }[variant] || 'bg-slate-950/80 border-b border-slate-800 text-slate-200 px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap';
 
   return (
     <header className={`${containerClasses} w-full sticky top-0 z-40 backdrop-blur-md`}>

@@ -1,100 +1,185 @@
 import React from 'react';
-import { LayoutProps } from './EscolarLayout';
+import { PortalNavBar, InterfaceOption, PORTALS_LIST } from '../common/PortalNavBar';
+import { BaseLayoutProps } from './CommandCenterLayout';
 
-export const SplitScreenLayout: React.FC<LayoutProps> = ({
+/**
+ * 6. Layout 'Split Screen' (Painel Duplo 40/60)
+ * Estrutura: Divisão vertical rígida 40/60.
+ * Lado esquerdo (40%) totalmente fixo com navegação e status.
+ * Lado direito (60%) exclusivo para rolagem e visualização do conteúdo principal.
+ */
+export const SplitScreenLayout: React.FC<BaseLayoutProps> = ({
   children,
-  title = 'Split-Screen Cockpit',
-  subtitle = 'Visão dividida: controle fixo à esquerda e fluxo de dados à direita',
   activeTab,
   onTabChange,
+  onInterfaceChange,
   usuarioLogado,
-  navItems = [],
-  headerActions
+  title = 'Divisão Tática 40/60',
+  subtitle = 'Navegação fixa à esquerda e fluxo contínuo de dados à direita',
+  headerActions,
+  portal = 'aluno',
 }) => {
-  return (
-    <div className="flex flex-col lg:flex-row h-screen w-full overflow-hidden bg-black text-white font-sans antialiased">
-      {/* 1. LADO ESQUERDO FIXO (40%) - ZERO SCROLL NA PÁGINA */}
-      <aside className="w-full lg:w-[40%] h-full shrink-0 bg-gradient-to-br from-red-950 via-zinc-900 to-black p-6 sm:p-8 flex flex-col justify-between border-r border-zinc-800 shadow-2xl overflow-hidden relative">
-        <div className="space-y-6 relative z-10">
-          {/* Identidade Visual de Impacto */}
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-red-400 bg-red-600/20 px-2.5 py-1 rounded-full border border-red-500/30">
-              Split-Screen 40/60
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-3">
-              {title}
-            </h1>
-            <p className="text-xs text-zinc-400 mt-1 max-w-sm leading-relaxed">
-              {subtitle}
-            </p>
-          </div>
+  const splitNavItems = [
+    { id: 'treinos', label: 'Diário & Grade de Treinos', icon: '🥊', badge: 'Ao Vivo' },
+    { id: 'frequencia', label: 'Boletim de Presença', icon: '📅', badge: '94%' },
+    { id: 'conquistas', label: 'Gamificação & Streak', icon: '🏆', badge: 'Streak x8' },
+    { id: 'alunos', label: 'Alunos & Visão 360°', icon: '👥', badge: 'Roster' },
+    { id: 'chamada_diaria', label: 'Chamada de Tatame', icon: '✅', badge: 'Presença' },
+    { id: 'financeiro_gestao', label: 'Contratos & Caixa', icon: '💰', badge: 'Financeiro' },
+    { id: 'avisos', label: 'Comunicados & Mural', icon: '📢', badge: 'Avisos' },
+  ];
 
-          {/* Cartão de Resumo do Usuário Fixo */}
-          <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 backdrop-blur-md space-y-3">
+  return (
+    <div className="flex flex-col lg:flex-row h-screen w-full overflow-hidden bg-zinc-950 text-zinc-100 font-sans antialiased">
+      {/* =========================================================================
+          LADO ESQUERDO: 40% FIXO COM FUNDO DE DESTAQUE, NAVEGAÇÃO & SUMÁRIOS
+          ========================================================================= */}
+      <aside className="w-full lg:w-[40%] xl:w-[38%] h-auto lg:h-screen bg-gradient-to-br from-indigo-950 via-slate-900 to-zinc-950 border-r border-indigo-500/20 p-6 flex flex-col justify-between shrink-0 shadow-2xl overflow-y-auto scrollbar-thin">
+        <div className="space-y-6">
+          {/* Identidade do Split Screen */}
+          <div className="flex items-center justify-between pb-4 border-b border-indigo-500/30">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-red-600/30 border border-red-500/50 flex items-center justify-center text-xl font-black text-red-300">
-                🥊
+              <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-indigo-600/40">
+                🌓
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white">{usuarioLogado?.nome || 'Operador Combat'}</h4>
-                <p className="text-xs text-zinc-400">{usuarioLogado?.email || 'Painel de Controle Central'}</p>
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block">
+                  LAYOUT DUPLO 40/60
+                </span>
+                <h1 className="text-lg font-black text-white tracking-wide">
+                  Combat-Pass Split
+                </h1>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800/60 text-center">
-              <div className="p-2 rounded-lg bg-black/40">
-                <span className="text-[10px] text-zinc-500 uppercase font-bold block">Conexão</span>
-                <span className="text-xs font-black text-emerald-400">Ativa</span>
+            <span className="px-2.5 py-1 rounded-full bg-indigo-900/60 border border-indigo-400/40 text-indigo-300 text-[10px] font-black">
+              LADO FIXO
+            </span>
+          </div>
+
+          {/* Cartão de Identidade do Atleta / Operador */}
+          <div className="p-4 rounded-2xl bg-slate-900/80 border border-indigo-500/30 shadow-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black text-sm flex items-center justify-center shadow-md">
+                  {usuarioLogado?.nome ? usuarioLogado.nome.charAt(0).toUpperCase() : 'C'}
+                </div>
+                <div>
+                  <h3 className="text-xs font-black text-white">{usuarioLogado?.nome || 'Operador Combat-Pass'}</h3>
+                  <p className="text-[10px] text-indigo-300 font-mono">PORTAL: {portal.toUpperCase()}</p>
+                </div>
               </div>
-              <div className="p-2 rounded-lg bg-black/40">
-                <span className="text-[10px] text-zinc-500 uppercase font-bold block">Perfil</span>
-                <span className="text-xs font-black text-amber-400">{usuarioLogado?.cargo || 'Membro'}</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Conexão Ativa" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-[11px]">
+              <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
+                <span className="text-[9px] text-slate-400 block">Status:</span>
+                <span className="text-emerald-400 font-black">100% REGULAR</span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
+                <span className="text-[9px] text-slate-400 block">Assiduidade:</span>
+                <span className="text-indigo-300 font-black">94.8% MENSAL</span>
               </div>
             </div>
           </div>
 
-          {/* Menu Lateral em Pílulas Verticais Grandes */}
-          <nav className="space-y-1.5 max-h-[38vh] overflow-y-auto scrollbar-thin pr-1">
-            {navItems.map((item) => {
-              const isActive = activeTab === item.id || activeTab === item.routeOrTab;
+          {/* Links Horizontais Rápidos para os 6 Portais */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-400/80 block px-1">
+              Portais do Ecossistema:
+            </span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {PORTALS_LIST.map((p) => {
+                const isActive = portal === p.id;
+                return (
+                  <a
+                    key={p.id}
+                    href={p.route}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                      isActive
+                        ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-900/40'
+                        : 'bg-slate-900/60 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    <span>{p.icon}</span>
+                    <span className="truncate">{p.label}</span>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Menu Vertical de Abas do Portal */}
+          <nav className="space-y-1.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-400/80 block px-1">
+              Navegação do Módulo:
+            </span>
+            {splitNavItems.map((item) => {
+              const active = activeTab === item.id;
               return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => onTabChange && onTabChange(item.routeOrTab || item.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all text-left ${
-                    isActive
-                      ? 'bg-red-600 text-white font-black shadow-lg shadow-red-950/60 translate-x-1'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                  onClick={() => onTabChange && onTabChange(item.id)}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
+                    active
+                      ? 'bg-indigo-600 text-white font-black shadow-lg shadow-indigo-950/50'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
                   }`}
                 >
                   <span className="flex items-center gap-2.5 truncate">
-                    <span className="text-base">{item.icon || '⚡'}</span>
+                    <span>{item.icon}</span>
                     <span className="truncate">{item.label}</span>
                   </span>
-                  {item.badge && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/50 text-red-200">
-                      {item.badge}
-                    </span>
-                  )}
+                  <span className={`text-[10px] px-2 py-0.5 rounded-md font-mono ${
+                    active ? 'bg-indigo-900/80 text-white' : 'bg-slate-950 text-slate-400'
+                  }`}>
+                    {item.badge}
+                  </span>
                 </button>
               );
             })}
           </nav>
         </div>
 
-        {/* Rodapé Fixo */}
-        <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-500 relative z-10">
-          <span>Combat Split Engine</span>
-          {headerActions}
+        {/* Rodapé do Lado Fixo */}
+        <div className="pt-4 border-t border-indigo-500/20 text-[10px] text-indigo-400/60 flex items-center justify-between">
+          <span>Split Screen Engine v8</span>
+          <button
+            type="button"
+            onClick={() => onInterfaceChange && onInterfaceChange('escolar')}
+            className="text-indigo-300 font-black hover:underline cursor-pointer"
+          >
+            Mudar Layout →
+          </button>
         </div>
       </aside>
 
-      {/* 2. LADO DIREITO (60%) - A ÚNICA ÁREA COM ROLAGEM */}
-      <main className="w-full lg:w-[60%] h-full overflow-y-auto bg-zinc-950 p-6 sm:p-10 space-y-6">
-        <div className="max-w-4xl w-full mx-auto">
-          {children}
+      {/* =========================================================================
+          LADO DIREITO: 60% COM ROLAGEM EXCLUSIVA & CONTEÚDO PRINCIPAL
+          ========================================================================= */}
+      <section className="w-full lg:w-[60%] xl:w-[62%] h-screen bg-[#09090b] flex flex-col overflow-y-auto scrollbar-thin">
+        {/* Barra Superior do Lado Direito */}
+        <div className="sticky top-0 z-20 bg-[#09090b]/90 backdrop-blur-md p-4 px-6 border-b border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-sm font-black text-white">{title}</h2>
+            <p className="text-xs text-zinc-400">{subtitle}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-700 text-zinc-300 text-[10px] font-mono">
+              SCROLL ATIVO (60%)
+            </span>
+            {headerActions}
+          </div>
         </div>
-      </main>
+
+        {/* Conteúdo Dinâmico com Scroll */}
+        <main className="flex-1 p-4 sm:p-6 space-y-6 max-w-5xl w-full mx-auto">
+          {children}
+        </main>
+      </section>
     </div>
   );
 };
+
+export default SplitScreenLayout;

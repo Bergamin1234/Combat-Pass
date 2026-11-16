@@ -1,79 +1,96 @@
-import React, { useState } from 'react';
-import { LayoutProps } from './EscolarLayout';
+import React from 'react';
+import { PortalNavBar, InterfaceOption, PORTALS_LIST } from '../common/PortalNavBar';
+import { BaseLayoutProps } from './CommandCenterLayout';
 
-export const ZenFocusLayout: React.FC<LayoutProps> = ({
+/**
+ * 8. Layout 'Zen Foco Total' (Estilo Notion / Documento Limpo)
+ * Estrutura: Minimalismo absoluto, sem bordas pesadas e sem sidebars fixos.
+ * Coluna central estreita (max-w-4xl), navegação minimalista estilo breadcrumb,
+ * foco integral na leitura, métricas e tipografia limpa.
+ */
+export const ZenFocusLayout: React.FC<BaseLayoutProps> = ({
   children,
-  title = 'Zen Notion Focus',
-  subtitle = 'Foco absoluto em leitura e produtividade com interface minimalista',
   activeTab,
   onTabChange,
+  onInterfaceChange,
   usuarioLogado,
-  navItems = [],
-  headerActions
+  title = 'Documento Zen & Foco Operacional',
+  subtitle = 'Interface purista sem distrações periféricas, otimizada para leitura e análise',
+  headerActions,
+  portal = 'aluno',
 }) => {
-  const [showQuickMenu, setShowQuickMenu] = useState(false);
-
   return (
-    <div className="flex flex-col min-h-screen w-full items-center bg-[#0d0d0f] text-zinc-200 antialiased font-sans">
-      {/* 1. BARRA SUPERIOR EXTREMAMENTE FINA E MINIMALISTA */}
-      <header className="w-full max-w-3xl h-12 flex items-center justify-between px-4 border-b border-zinc-800/50 text-xs text-zinc-400 shrink-0 sticky top-0 bg-[#0d0d0f]/90 backdrop-blur-sm z-30">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-zinc-600" />
-          <span className="font-mono text-zinc-300 font-semibold tracking-wide">{title}</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {headerActions}
-          <button
-            type="button"
-            onClick={() => setShowQuickMenu(!showQuickMenu)}
-            className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-[11px] font-mono transition"
-          >
-            {showQuickMenu ? '✕ Fechar Menu' : '☰ Navegar'}
-          </button>
-        </div>
-      </header>
-
-      {/* GAVETA SUSPENSA DE NAVEGAÇÃO ZEN (QUANDO ACIONADA) */}
-      {showQuickMenu && (
-        <div className="w-full max-w-3xl px-4 py-3 bg-zinc-900/90 border-b border-zinc-800 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex flex-wrap gap-1.5">
-            {navItems.map((item) => {
-              const isActive = activeTab === item.id || activeTab === item.routeOrTab;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    onTabChange && onTabChange(item.routeOrTab || item.id);
-                    setShowQuickMenu(false);
-                  }}
-                  className={`px-3 py-1.5 rounded text-xs transition-all ${
-                    isActive
-                      ? 'bg-zinc-200 text-black font-black'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                  }`}
-                >
-                  <span className="mr-1.5">{item.icon || '•'}</span>
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
+    <div className="min-h-screen w-full bg-[#0d0d0f] text-zinc-200 font-sans antialiased py-6 px-4 sm:px-8">
+      {/* Container Central Estreito estilo Notion */}
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* 1. TOPO MINIMALISTA ESTILO BREADCRUMB DISCRETO */}
+        <header className="pb-4 border-b border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-zinc-400">
+            <span className="text-zinc-500 font-mono">Combat-Pass</span>
+            <span>/</span>
+            <span className="font-bold text-zinc-300 uppercase tracking-wider">{portal}</span>
+            <span>/</span>
+            <span className="text-amber-400 font-bold flex items-center gap-1">
+              <span>🧘</span> Zen Foco
+            </span>
           </div>
-        </div>
-      )}
 
-      {/* 2. CONTEÚDO PRINCIPAL EM COLUNA CENTRAL ESTREITA (MAX-W-3XL COM MARGENS GIGANTES) */}
-      <main className="w-full max-w-3xl px-4 py-10 flex-1 space-y-8">
-        <div className="space-y-1 pb-4 border-b border-zinc-800/40">
-          <h1 className="text-2xl font-bold tracking-tight text-white">{title}</h1>
-          <p className="text-xs text-zinc-400">{subtitle}</p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onInterfaceChange && onInterfaceChange('escolar')}
+              className="text-zinc-400 hover:text-white transition font-medium text-xs flex items-center gap-1 cursor-pointer"
+            >
+              <span>⚙️</span> Alternar Layout
+            </button>
+            {headerActions}
+          </div>
+        </header>
+
+        {/* 2. NAVEGAÇÃO DE PORTAIS MINIMALISTA */}
+        <nav className="flex items-center gap-4 overflow-x-auto pb-1 text-xs text-zinc-400 scrollbar-thin">
+          {PORTALS_LIST.map((p) => {
+            const isActive = portal === p.id;
+            return (
+              <a
+                key={p.id}
+                href={p.route}
+                className={`transition pb-1 whitespace-nowrap flex items-center gap-1 ${
+                  isActive
+                    ? 'text-white font-black border-b-2 border-amber-400'
+                    : 'hover:text-zinc-200'
+                }`}
+              >
+                <span>{p.icon}</span>
+                <span>{p.label}</span>
+              </a>
+            );
+          })}
+        </nav>
+
+        {/* 3. TÍTULO DO DOCUMENTO NOTION */}
+        <div className="pt-2 pb-4 space-y-1">
+          <div className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+            <span>🧘</span>
+            <span>{title}</span>
+          </div>
+          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+            {subtitle} • Operador: <strong className="text-zinc-200">{usuarioLogado?.nome || 'Atleta Zen'}</strong>
+          </p>
         </div>
 
-        <div className="w-full space-y-6">
+        {/* 4. CORPO DO CONTEÚDO (STREAM LIMPO) */}
+        <main className="w-full space-y-6 pt-2">
           {children}
-        </div>
-      </main>
+        </main>
+
+        {/* 5. RODAPÉ ZEN DISCRETO */}
+        <footer className="pt-10 pb-6 border-t border-zinc-900 text-center text-[11px] text-zinc-600 font-mono">
+          Combat-Pass Zen Focus Document • {new Date().toLocaleDateString('pt-BR')}
+        </footer>
+      </div>
     </div>
   );
 };
+
+export default ZenFocusLayout;

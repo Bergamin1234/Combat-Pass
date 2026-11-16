@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { LayoutRouter } from '../layouts/LayoutRouter';
 import { StudentTournamentsTab } from '../components/StudentTournamentsTab';
 import StudentGlobalRanking from '../components/StudentGlobalRanking';
 import { StudentPerformanceStatsTab } from '../components/StudentPerformanceStatsTab';
@@ -52,6 +53,12 @@ export default function PortalAluno() {
 
   // Abas do Portal: 'treinos' | 'frequencia' | 'conquistas' | 'contratos' | 'avisos' | 'mercado' | 'financeiro' | 'torneios' | 'ranking' | 'desempenho'
   const [abaAtiva, setAbaAtiva] = useState('treinos');
+
+  const handleLogoutStudent = () => {
+    try { sessionStorage.removeItem('combat_hub_aluno_session'); } catch (e) {}
+    setIsLoggedIn(false);
+    setAlunoLogado(null);
+  };
 
   // Recupera tab da URL e restaura sessão do aluno
   useEffect(() => {
@@ -716,6 +723,240 @@ export default function PortalAluno() {
   // ==========================================
   // TELA DO PORTAL PRINCIPAL
   // ==========================================
+  // Intercepta os 4 Novos Paradigmas Estruturais (5 a 8) garantindo renderização 100% funcional
+  if (['command_center', 'split_screen', 'floating_island', 'zen_focus'].includes(studentPreset)) {
+    return (
+      <LayoutRouter
+        portal="aluno"
+        interfaceOption={studentPreset as any}
+        activeTab={abaAtiva}
+        onTabChange={(t) => setAbaAtiva(t as any)}
+        usuarioLogado={alunoLogado}
+        title="Portal do Aluno Combat-Pass"
+        subtitle={`Atleta: ${alunoLogado?.nome || 'Aluno'} · Graduação: ${alunoLogado?.prajied || 'Branca'}`}
+        headerActions={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowLayoutCustomDrawer(!showLayoutCustomDrawer)}
+              style={{
+                backgroundColor: 'var(--color-primary)',
+                color: 'var(--text-primary-foreground)'
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>⚙️</span>
+              <span>Layouts & Ordem</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleLogoutStudent}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-red-600/80 hover:bg-red-600 text-white transition cursor-pointer"
+            >
+              Sair
+            </button>
+          </div>
+        }
+      >
+        <ContractBlockingModal
+          aluno={alunoLogado}
+          onContractSigned={(alunoAtualizado) => {
+            setAlunoLogado({ ...alunoLogado, ...alunoAtualizado, has_signed_contract: true });
+          }}
+        />
+
+        {checkinSucessoAnim && (
+          <div className="p-4 rounded-xl flex items-center justify-between shadow-xl bg-red-950/40 border border-red-500 text-white mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🔥</span>
+              <div>
+                <p className="font-black text-sm text-red-400">CHECK-IN CONFIRMADO!</p>
+                <p className="text-xs text-slate-200">{checkinSucessoAnim}</p>
+              </div>
+            </div>
+            <button onClick={() => setCheckinSucessoAnim(null)} className="text-slate-400 hover:text-white">✕</button>
+          </div>
+        )}
+
+        {showLayoutCustomDrawer && (
+          <div className="mb-6">
+            <JourneyLayoutToolbar journey="student" />
+          </div>
+        )}
+
+        {/* NAVEGAÇÃO DE ABAS */}
+        <div className="p-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-1.5 overflow-x-auto scrollbar-thin mb-5">
+          {[
+            { id: 'treinos', label: '🥊 Treinos & Check-in' },
+            { id: 'frequencia', label: '📅 Calendário' },
+            { id: 'conquistas', label: '🏆 Conquistas' },
+            { id: 'torneios', label: '🏅 Torneios' },
+            { id: 'ranking', label: '🥇 Ranking' },
+            { id: 'desempenho', label: '📊 Desempenho' },
+            { id: 'recompensas', label: '🪙 Points & Loja' },
+            { id: 'contratos', label: '📄 Contrato' },
+            { id: 'avisos', label: '📢 Avisos' },
+            { id: 'mercado', label: '🥋 Mercado' },
+            { id: 'financeiro', label: '💳 Mensalidades' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setAbaAtiva(tab.id as any)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                abaAtiva === tab.id
+                  ? 'bg-red-600 text-white font-black shadow-md shadow-red-900/50'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* PAINEL DINÂMICO CONFORME A ABA SELECIONADA */}
+        <div className="space-y-6">
+          {abaAtiva === 'treinos' && (
+            <div className="space-y-6">
+              <LoggedQuickCheckinBanner
+                aluno={alunoLogado}
+                onCheckinSuccess={() => {
+                  if (alunoLogado?.id) {
+                    carregarAulas(alunoLogado.id);
+                    carregarFrequencia(alunoLogado.id, mesAtual, anoAtual);
+                    carregarGamificacao(alunoLogado.id);
+                  }
+                  setCheckinSucessoAnim('Check-in confirmado no tatame!');
+                }}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">🥋 Próximos Treinos</h3>
+                  <div className="space-y-2">
+                    {aulas.slice(0, 4).map(a => (
+                      <div key={a.id} className="p-3 rounded-xl bg-white/5 flex items-center justify-between text-xs">
+                        <span className="font-bold text-white">{a.horario} - {a.diaDaSemana}</span>
+                        <span className="text-slate-400">{a.categoria}</span>
+                      </div>
+                    ))}
+                    {aulas.length === 0 && <p className="text-xs text-slate-400">Nenhum treino agendado hoje.</p>}
+                  </div>
+                </div>
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">🔥 Minha Assiduidade</h3>
+                  <p className="text-xs text-slate-300 mb-3">Acompanhamento contínuo de frequência:</p>
+                  <div className="space-y-1.5">
+                    {aulas.slice(0, 3).map((h, i) => (
+                      <div key={i} className="text-xs p-2 rounded-lg bg-emerald-950/30 border border-emerald-500/30 text-emerald-300 flex items-center justify-between">
+                        <span>Check-in Registrado</span>
+                        <span className="font-mono text-[10px]">{h.diaDaSemana || 'Presença'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {abaAtiva === 'frequencia' && (
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <InteractiveCombatCalendar
+                userRole="ALUNO"
+                alunoLogado={alunoLogado}
+                onRefreshExternal={() => {
+                  if (alunoLogado?.id) {
+                    carregarAulas(alunoLogado.id);
+                    carregarFrequencia(alunoLogado.id, mesAtual, anoAtual);
+                  }
+                }}
+              />
+            </div>
+          )}
+
+          {abaAtiva === 'torneios' && (
+            <StudentTournamentsTab aluno={alunoLogado} />
+          )}
+
+          {abaAtiva === 'ranking' && (
+            <StudentGlobalRanking aluno={alunoLogado} />
+          )}
+
+          {abaAtiva === 'desempenho' && (
+            <StudentPerformanceStatsTab aluno={alunoLogado} />
+          )}
+
+          {abaAtiva === 'conquistas' && (
+            <StudentGamificationTab
+              alunoId={alunoLogado?.id}
+              alunoNome={alunoLogado?.nome || 'Guerreiro(a)'}
+              gamificacaoData={gamificacao}
+              onRefresh={() => alunoLogado?.id && carregarGamificacao(alunoLogado.id)}
+              isCombatHub={true}
+            />
+          )}
+
+          {abaAtiva === 'contratos' && (
+            <MyContractsTab aluno={alunoLogado} />
+          )}
+
+          {abaAtiva === 'avisos' && (
+            <div className="space-y-4">
+              <div className="border-b border-zinc-800 pb-3">
+                <h2 className="text-xl font-bold text-white">📢 Mural de Avisos do CT</h2>
+                <p className="text-xs text-zinc-400">Recados oficiais da coordenação técnica e do mestre.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {avisos.map(aviso => (
+                  <NoticeCard key={aviso.id} aviso={aviso} variant="student" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {abaAtiva === 'recompensas' && alunoLogado && (
+            <StudentRewardStoreTab
+              alunoId={alunoLogado.id}
+              alunoNome={alunoLogado.nome}
+            />
+          )}
+
+          {abaAtiva === 'mercado' && (
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <div className="bg-gradient-to-r from-red-950/40 via-[#1A1A1E] to-zinc-900 border border-red-500/30 rounded-2xl p-5 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🛍️</span>
+                  <h3 className="text-base font-black text-white">Mercado do CT - Versão BETA</h3>
+                </div>
+                <p className="text-xs text-zinc-300">Equipamentos e itens para treino disponíveis no balcão da academia.</p>
+              </div>
+            </div>
+          )}
+
+          {abaAtiva === 'financeiro' && (
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+                <span className="text-3xl">💳</span>
+                <div>
+                  <h2 className="text-xl font-black text-white">Situação Financeira & Contrato</h2>
+                  <p className="text-xs text-zinc-400">Acompanhe suas mensalidades e status de acesso.</p>
+                </div>
+              </div>
+              <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-slate-400">Plano Atual</span>
+                  <p className="text-lg font-bold text-white">{alunoLogado?.plano || 'Passaporte Livre'}</p>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-emerald-950/50 border border-emerald-500/40 text-emerald-400 text-xs font-bold">
+                  REGULAR
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </LayoutRouter>
+    );
+  }
+
   return (
     <div
       data-layout-arch={studentArch}

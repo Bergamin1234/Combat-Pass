@@ -13,6 +13,7 @@ import { PublicQuickCheckinCard } from '../components/QuickCheckinWidget';
 import { publicApi, studentApi } from '../services/api';
 import { ACADEMY_CONFIG } from '../config/academyConfig';
 import { CompleteSiteModules } from '../components/CompleteSiteModules';
+import { LayoutRouter } from '../layouts/LayoutRouter';
 
 const FALLBACK_ACADEMIES = [
   {
@@ -507,6 +508,54 @@ export const LandingHubPage: React.FC = () => {
       </div>
     </div>
   );
+
+  // ============================================================================
+  // OS 4 NOVOS PARADIGMAS DE LAYOUT (5. Command Center, 6. Split, 7. Island, 8. Zen)
+  // ============================================================================
+  if (['command_center', 'split_screen', 'floating_island', 'zen_focus'].includes(activePreset)) {
+    return (
+      <div style={{ position: 'relative' }}>
+        {OrderBuilderModal}
+        <LayoutRouter
+          portal="aluno"
+          interfaceOption={activePreset as any}
+          title="Combat-Pass • Hub Principal"
+          subtitle="Apresentação institucional, grade horária de tatames e check-in"
+          headerActions={
+            <button
+              type="button"
+              onClick={() => setShowOrderModal(true)}
+              style={{
+                backgroundColor: 'var(--color-primary)',
+                color: 'var(--text-primary-foreground)'
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>⚙️</span>
+              <span>Layouts & Ordem</span>
+            </button>
+          }
+        >
+          <div style={{ maxWidth: '1540px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.35rem', alignItems: 'start' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <InteractiveCombatCalendar userRole="ALUNO" />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ padding: '1.25rem', borderRadius: '16px', background: 'var(--bg-surface-1)', border: '2px solid var(--color-primary)' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                    ⚡ CHECK-IN EXPRESSO POR CPF & HORÁRIO
+                  </div>
+                  <PublicQuickCheckinCard />
+                </div>
+              </div>
+            </div>
+            <CompleteSiteModules variant="arena_hud" academies={academies} rewardsCatalog={rewardsCatalog} />
+          </div>
+        </LayoutRouter>
+      </div>
+    );
+  }
 
   // ============================================================================
   // LAYOUT 4: SITE CLÁSSICO ORIGINAL

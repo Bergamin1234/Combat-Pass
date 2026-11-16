@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { LayoutRouter } from '../layouts/LayoutRouter';
 import NoticeCard from '../components/NoticeCard';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import { adminApi, publicApi } from '../services/api';
@@ -1226,6 +1227,174 @@ export default function AdminDashboard() {
   // ==========================================
   // PAINEL LOGADO
   // ==========================================
+  const handleAdminLogout = () => {
+    setIsLoggedIn(false);
+    setUsuarioLogado(null);
+  };
+
+  // Intercepta os 4 Novos Paradigmas Estruturais (5 a 8) garantindo renderização 100% funcional
+  if (['command_center', 'split_screen', 'floating_island', 'zen_focus'].includes(adminPreset)) {
+    return (
+      <LayoutRouter
+        portal="admin"
+        interfaceOption={adminPreset as any}
+        activeTab={abaAtiva}
+        onTabChange={(t) => setAbaAtiva(t as any)}
+        usuarioLogado={usuarioLogado}
+        title="Admin ERP & Centro de Controle Combat-Pass"
+        subtitle={`Administrador: ${usuarioLogado?.nome || 'Diretoria'} · Gestão Multi-Unidades`}
+        headerActions={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowLayoutCustomDrawer(!showLayoutCustomDrawer)}
+              style={{
+                backgroundColor: 'var(--color-primary)',
+                color: 'var(--text-primary-foreground)'
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>⚙️</span>
+              <span>Layouts & Ordem</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleAdminLogout}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-red-600/80 hover:bg-red-600 text-white transition cursor-pointer"
+            >
+              Sair
+            </button>
+          </div>
+        }
+      >
+        {showLayoutCustomDrawer && (
+          <div className="mb-6">
+            <JourneyLayoutToolbar journey="admin" />
+          </div>
+        )}
+
+        {/* NAVEGAÇÃO DE ABAS DO ADMIN */}
+        <div className="p-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-1.5 overflow-x-auto scrollbar-thin mb-5">
+          {[
+            { id: 'alunos', label: `👥 Alunos (${alunos.length})` },
+            { id: 'calendario_geral', label: '📅 Grade & Horários' },
+            { id: 'financeiro_gestao', label: '💰 Gestão Financeira' },
+            { id: 'caixa_diario', label: '💵 Caixa PDV' },
+            { id: 'comissoes', label: '🥋 Comissões' },
+            { id: 'ocupacao', label: '🔥 Ocupação' },
+            { id: 'avisos', label: `📢 Avisos (${avisos.length})` },
+            { id: 'gamificacao', label: '🏆 Gamificação' },
+            { id: 'aparencia_layouts', label: '🎨 Estúdio & Temas' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setAbaAtiva(tab.id as any)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                abaAtiva === tab.id
+                  ? 'bg-red-600 text-white font-black shadow-md shadow-red-900/50'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* CONTEÚDO DAS ABAS */}
+        <div className="space-y-6">
+          {abaAtiva === 'calendario_geral' && (
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <InteractiveCombatCalendar userRole="ADMIN" />
+            </div>
+          )}
+
+          {abaAtiva === 'financeiro_gestao' && usuarioLogado?.cargo === 'ADMIN' && (
+            <FinancialDashboardTab
+              onRefreshGlobal={carregarDashboard}
+              usuarioLogadoNome={usuarioLogado?.nome || 'Administração'}
+            />
+          )}
+
+          {abaAtiva === 'caixa_diario' && usuarioLogado?.cargo === 'ADMIN' && (
+            <CashRegisterTab usuarioLogado={usuarioLogado} />
+          )}
+
+          {abaAtiva === 'comissoes' && usuarioLogado?.cargo === 'ADMIN' && (
+            <TeacherCommissionsTab />
+          )}
+
+          {abaAtiva === 'ocupacao' && (
+            <OccupancyDashboardTab />
+          )}
+
+          {abaAtiva === 'avisos' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {avisos.map(aviso => (
+                  <NoticeCard key={aviso.id} aviso={aviso} variant="admin" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {abaAtiva === 'gamificacao' && (
+            <AdminGamificationTab
+              cargoUsuario={usuarioLogado?.cargo || 'ADMIN'}
+              professorId={usuarioLogado?.id}
+              alunosLista={alunos}
+              isCombatHub={true}
+              onRefreshDashboard={carregarDashboard}
+            />
+          )}
+
+          {abaAtiva === 'aparencia_layouts' && (
+            <AdminLayoutStudio
+              usuarioLogado={usuarioLogado}
+              alunos={alunos}
+              onOpenStudent360={(id) => setAluno360Id(id)}
+              onSelectAdminTab={(tab) => setAbaAtiva(tab)}
+            />
+          )}
+
+          {abaAtiva === 'alunos' && (
+            <div className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-xl space-y-4 p-4 sm:p-5">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                    <span>👥 Alunos Matriculados</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300">
+                      {alunosFiltrados.length} de {alunos.length}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Acompanhe frequência individual mensal, retenção de alunos e planos ativos.
+                  </p>
+                </div>
+              </div>
+
+              <div className="divide-y divide-zinc-800/80">
+                {alunosFiltrados.slice(0, 15).map(aluno => (
+                  <div key={aluno.id} className="py-3 flex items-center justify-between gap-3 text-xs">
+                    <div>
+                      <strong className="text-white text-sm">{aluno.nome}</strong>
+                      <div className="text-zinc-400">{aluno.cpf} · {aluno.prajied || 'Branco'} · {aluno.plano}</div>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded text-[11px] font-bold ${
+                      aluno.status_financeiro === 'PAGO' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/40' : 'bg-red-950/60 text-red-400 border border-red-500/40'
+                    }`}>
+                      {aluno.status_financeiro || 'REGULAR'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </LayoutRouter>
+    );
+  }
+
   return (
     <div
       data-layout-arch={adminArch}
