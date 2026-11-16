@@ -38,7 +38,7 @@ export const PortalNavBar: React.FC<PortalNavBarProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { preferences, setPalette } = useLayoutEngine();
+  const { preferences, setPalette, setGlobalInterface } = useLayoutEngine();
   const [showPalettes, setShowPalettes] = useState(false);
   const [showInterfaceMenu, setShowInterfaceMenu] = useState(false);
 
@@ -54,6 +54,9 @@ export const PortalNavBar: React.FC<PortalNavBarProps> = ({
       localStorage.setItem(`combat_pass_interface_${currentPortal}`, id);
       localStorage.setItem('combat_pass_global_interface', id);
     } catch {}
+    if (setGlobalInterface) {
+      setGlobalInterface(id);
+    }
     if (onInterfaceChange) {
       onInterfaceChange(id);
     }

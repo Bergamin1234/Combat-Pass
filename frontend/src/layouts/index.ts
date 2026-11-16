@@ -46,5 +46,7 @@ export { StatsB2B0pxLayout } from './stats/StatsB2B0pxLayout';
 export { StatsSuperAppLayout } from './stats/StatsSuperAppLayout';
 export type { StatsLayoutProps } from './stats/StatsEscolarLayout';
 
-// Componentes comuns / navegação
+// Componentes comuns / navegação e Roteador Dinâmico
 export * from './common/PortalNavBar';
+export { LayoutRouter, default as LayoutRouterDefault } from './LayoutRouter';
+export type { LayoutRouterProps, PortalType } from './LayoutRouter';
