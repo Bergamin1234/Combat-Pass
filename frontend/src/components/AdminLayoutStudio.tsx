@@ -479,8 +479,8 @@ export const AdminLayoutStudio: React.FC<AdminLayoutStudioProps> = ({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '0.75rem'
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                gap: '0.85rem'
               }}
             >
               {/* Ordem do Menu */}

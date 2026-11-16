@@ -3,10 +3,10 @@ import { THEMES_LIST, applyPlatformTheme, getCurrentPlatformTheme } from './them
 
 export type JourneyKey = 'landing' | 'student' | 'teacher' | 'admin';
 
-export type LandingPresetId = 'marketplace' | 'corporate' | 'tatame' | 'classic';
-export type StudentPresetId = 'tatame_express' | 'gamified_journey' | 'agenda_control' | 'complete_tabs';
-export type TeacherPresetId = 'tatame_fast' | 'technical_perf' | 'partner_portal' | 'classic_teacher';
-export type AdminPresetId = 'executive' | 'operational_360' | 'customizer_studio' | 'complete_erp';
+export type LandingPresetId = 'marketplace' | 'corporate' | 'tatame' | 'classic' | 'command_center' | 'split_screen' | 'floating_island' | 'zen_focus';
+export type StudentPresetId = 'tatame_express' | 'gamified_journey' | 'agenda_control' | 'complete_tabs' | 'command_center' | 'split_screen' | 'floating_island' | 'zen_focus';
+export type TeacherPresetId = 'tatame_fast' | 'technical_perf' | 'partner_portal' | 'classic_teacher' | 'command_center' | 'split_screen' | 'floating_island' | 'zen_focus';
+export type AdminPresetId = 'executive' | 'operational_360' | 'customizer_studio' | 'complete_erp' | 'command_center' | 'split_screen' | 'floating_island' | 'zen_focus';
 export type LoadingStyleId = 'skeleton' | 'minimal_bar' | 'combat_pulse' | 'step_progress';
 
 export interface OrderedNavItem {
@@ -160,28 +160,44 @@ export const PRESET_META_BY_JOURNEY: Record<
   Array<{ id: string; title: string; badge: string; icon: string; desc: string }>
 > = {
   landing: [
-    { id: 'marketplace', title: '1. Sistema Escolar (Aba Lateral)', badge: 'Aba Lateral Fixa', icon: '🎓', desc: 'Portal estilo sistema escolar/acadêmico com menu lateral fixo e todas as 12 seções do CT' },
-    { id: 'corporate', title: '2. Editorial & Corporativo B2B', badge: 'Formal / Ortogonal', icon: '🏛️', desc: 'Geometria executiva de bordas retas, abas corporativas e todas as 12 seções do CT' },
-    { id: 'tatame', title: '3. Arena Tatame HUD (3 Colunas)', badge: 'HUD Ao Vivo', icon: '⚡', desc: 'Placar eletrônico ao vivo, 3 colunas operacionais no topo e todas as 12 seções em HUD' },
-    { id: 'classic', title: '4. Site Clássico Original', badge: 'Original (4º)', icon: '📜', desc: 'Landing page institucional original do Centro de Combate com todas as seções' }
+    { id: 'marketplace', title: '1. Sistema Escolar', badge: 'Sidebar Esquerdo', icon: '🎓', desc: 'Estrutura clássica de dashboard: sidebar fixo à esquerda (w-64) + conteúdo amplo à direita' },
+    { id: 'corporate', title: '2. Editorial & B2B 0px', badge: 'Grid Invertido 0px', icon: '🏛️', desc: 'Estrutura de matriz invertida: conteúdo principal na esquerda + sidebar de ações na direita, flat 0px' },
+    { id: 'tatame', title: '3. Mesa HUD Tatame', badge: 'Zero Sidebar / 100%', icon: '⚡', desc: 'Estrutura de monitor/painel de controle: navbar densa no topo ocupando 100% de largura + zero sidebars' },
+    { id: 'classic', title: '4. Super-App Mobile', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' },
+    { id: 'command_center', title: '5. Command Center', badge: 'Grid Terminal 12x6', icon: '💻', desc: 'Painel trader/IDE: grid rígido 12x6 sem rolagem geral, com scroll exclusivamente interno por bloco' },
+    { id: 'split_screen', title: '6. Split-Screen', badge: 'Divisão 40/60', icon: '🌓', desc: 'Divisão vertical 40/60: 40% fixo com identidade e navegação à esquerda, 60% com scroll para dados à direita' },
+    { id: 'floating_island', title: '7. Floating Island', badge: 'macOS Glass', icon: '🏝️', desc: 'Ilha flutuante centralizada sobre gradiente com backdrop-blur, cantos arredondados e botões traffic lights' },
+    { id: 'zen_focus', title: '8. Zen Foco Total', badge: 'Estilo Notion', icon: '🧘', desc: 'Foco absoluto em leitura e dados: coluna central estreita max-w-3xl com margens laterais gigantes e topo invisível' }
   ],
   student: [
-    { id: 'tatame_express', title: '1. Sistema Escolar (Aba Lateral)', badge: 'Sidebar Acadêmica', icon: '🎓', desc: 'Portal estilo sistema de escola com aba lateral fixa à esquerda, carteira de aluno e todos os módulos' },
-    { id: 'gamified_journey', title: '2. Arena Fighter HUD (Gamificado)', badge: 'HUD & Telemetria', icon: '🏆', desc: 'Placar superior de atleta com nível, barra de XP, deck lateral tático e 30 conquistas' },
-    { id: 'agenda_control', title: '3. Executivo Split-View (2 Colunas)', badge: 'Formal Lado a Lado', icon: '🏛️', desc: 'Arquitetura dividida em 2 colunas simultâneas com Calendário + Contratos e módulo ativo' },
-    { id: 'complete_tabs', title: '4. Clássico em Abas Horizontais', badge: 'Original', icon: '📜', desc: 'Layout clássico centralizado com os 3 cards competitivos e barra de abas horizontais' }
+    { id: 'tatame_express', title: '1. Sistema Escolar', badge: 'Sidebar Acadêmica', icon: '🎓', desc: 'Estrutura clássica de dashboard: sidebar fixo à esquerda (w-64) + conteúdo amplo à direita' },
+    { id: 'gamified_journey', title: '2. Mesa HUD Tatame', badge: 'Zero Sidebar / 100%', icon: '⚡', desc: 'Estrutura de monitor/painel de controle: navbar densa no topo ocupando 100% de largura + zero sidebars' },
+    { id: 'agenda_control', title: '3. Editorial & B2B 0px', badge: 'Grid Invertido 0px', icon: '🏛️', desc: 'Estrutura de matriz invertida: conteúdo principal na esquerda + sidebar de ações na direita, flat 0px' },
+    { id: 'complete_tabs', title: '4. Super-App Mobile', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' },
+    { id: 'command_center', title: '5. Command Center', badge: 'Grid Terminal 12x6', icon: '💻', desc: 'Painel trader/IDE: grid rígido 12x6 sem rolagem geral, com scroll exclusivamente interno por bloco' },
+    { id: 'split_screen', title: '6. Split-Screen', badge: 'Divisão 40/60', icon: '🌓', desc: 'Divisão vertical 40/60: 40% fixo com identidade e navegação à esquerda, 60% com scroll para dados à direita' },
+    { id: 'floating_island', title: '7. Floating Island', badge: 'macOS Glass', icon: '🏝️', desc: 'Ilha flutuante centralizada sobre gradiente com backdrop-blur, cantos arredondados e botões traffic lights' },
+    { id: 'zen_focus', title: '8. Zen Foco Total', badge: 'Estilo Notion', icon: '🧘', desc: 'Foco absoluto em leitura e dados: coluna central estreita max-w-3xl com margens laterais gigantes e topo invisível' }
   ],
   teacher: [
-    { id: 'tatame_fast', title: '1. Sistema Escolar Docente (Aba Lateral)', badge: 'Sidebar Professor', icon: '🎓', desc: 'Portal do professor estilo sistema acadêmico com menu vertical fixo e todos os módulos' },
-    { id: 'technical_perf', title: '2. Split-View Técnico (2 Colunas)', badge: 'Chamada + Grade', icon: '📋', desc: 'Visão em duas colunas simultâneas: Chamada/Vagas à esquerda e Grade/Mérito à direita' },
-    { id: 'partner_portal', title: '3. Executivo & Comissões (Formal)', badge: 'Financeiro & KPIs', icon: '💵', desc: 'Layout ortogonal focado em extrato de repasses por check-in, retenção e turmas' },
-    { id: 'classic_teacher', title: '4. Tatame Touch-First (Abas)', badge: 'Clássico Touch', icon: '⚡', desc: 'Modo clássico de tatame com abas horizontais grandes para celular e tablet' }
+    { id: 'tatame_fast', title: '1. Sistema Escolar Docente', badge: 'Sidebar Professor', icon: '🎓', desc: 'Estrutura clássica de dashboard: sidebar fixo à esquerda (w-64) + conteúdo amplo à direita' },
+    { id: 'technical_perf', title: '2. Mesa Técnica HUD', badge: 'Zero Sidebar / 100%', icon: '⚡', desc: 'Estrutura de monitor/painel de controle: navbar densa no topo ocupando 100% de largura + zero sidebars' },
+    { id: 'partner_portal', title: '3. Editorial & B2B 0px', badge: 'Grid Invertido 0px', icon: '🏛️', desc: 'Estrutura de matriz invertida: conteúdo principal na esquerda + sidebar de ações na direita, flat 0px' },
+    { id: 'classic_teacher', title: '4. Super-App Tatame', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' },
+    { id: 'command_center', title: '5. Command Center', badge: 'Grid Terminal 12x6', icon: '💻', desc: 'Painel trader/IDE: grid rígido 12x6 sem rolagem geral, com scroll exclusivamente interno por bloco' },
+    { id: 'split_screen', title: '6. Split-Screen', badge: 'Divisão 40/60', icon: '🌓', desc: 'Divisão vertical 40/60: 40% fixo com identidade e navegação à esquerda, 60% com scroll para dados à direita' },
+    { id: 'floating_island', title: '7. Floating Island', badge: 'macOS Glass', icon: '🏝️', desc: 'Ilha flutuante centralizada sobre gradiente com backdrop-blur, cantos arredondados e botões traffic lights' },
+    { id: 'zen_focus', title: '8. Zen Foco Total', badge: 'Estilo Notion', icon: '🧘', desc: 'Foco absoluto em leitura e dados: coluna central estreita max-w-3xl com margens laterais gigantes e topo invisível' }
   ],
   admin: [
-    { id: 'executive', title: '1. Sistema Escolar / ERP (Aba Lateral)', badge: 'Sidebar Diretoria', icon: '🎓', desc: 'ERP com menu lateral fixo à esquerda organizado por departamentos e todas as funções' },
-    { id: 'operational_360', title: '2. Command Center 360° (Split-Deck)', badge: 'Recepção + ERP', icon: '⚡', desc: 'Deck lateral de recepção/caixa/busca 360° fixo ao lado do módulo administrativo ativo' },
-    { id: 'customizer_studio', title: '3. Estúdio White-Label + ERP', badge: 'Builder + Gestão', icon: '🎨', desc: 'Estúdio de customização de layouts/paletas no topo integrado a todos os módulos do ERP' },
-    { id: 'complete_erp', title: '4. Clássico em Abas Horizontais', badge: 'Original', icon: '📜', desc: 'Painel administrativo clássico centralizado com cards de métricas e abas horizontais' }
+    { id: 'executive', title: '1. Sistema Escolar / ERP', badge: 'Sidebar Diretoria', icon: '🎓', desc: 'Estrutura clássica de dashboard: sidebar fixo à esquerda (w-64) + conteúdo amplo à direita' },
+    { id: 'operational_360', title: '2. Mesa Command HUD', badge: 'Zero Sidebar / 100%', icon: '⚡', desc: 'Estrutura de monitor/painel de controle: navbar densa no topo ocupando 100% de largura + zero sidebars' },
+    { id: 'customizer_studio', title: '3. Editorial & B2B 0px', badge: 'Grid Invertido 0px', icon: '🏛️', desc: 'Estrutura de matriz invertida: conteúdo principal na esquerda + sidebar de ações na direita, flat 0px' },
+    { id: 'complete_erp', title: '4. Super-App ERP', badge: 'Mobile-First', icon: '📱', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' },
+    { id: 'command_center', title: '5. Command Center', badge: 'Grid Terminal 12x6', icon: '💻', desc: 'Painel trader/IDE: grid rígido 12x6 sem rolagem geral, com scroll exclusivamente interno por bloco' },
+    { id: 'split_screen', title: '6. Split-Screen', badge: 'Divisão 40/60', icon: '🌓', desc: 'Divisão vertical 40/60: 40% fixo com identidade e navegação à esquerda, 60% com scroll para dados à direita' },
+    { id: 'floating_island', title: '7. Floating Island', badge: 'macOS Glass', icon: '🏝️', desc: 'Ilha flutuante centralizada sobre gradiente com backdrop-blur, cantos arredondados e botões traffic lights' },
+    { id: 'zen_focus', title: '8. Zen Foco Total', badge: 'Estilo Notion', icon: '🧘', desc: 'Foco absoluto em leitura e dados: coluna central estreita max-w-3xl com margens laterais gigantes e topo invisível' }
   ]
 };
 
@@ -724,31 +740,31 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
     };
   }, [showOrderModal]);
 
+  const common8Presets = [
+    { id: 'marketplace', name: '1. Sistema Escolar', badge: 'Sidebar Esquerdo', desc: 'Estrutura clássica de dashboard: sidebar fixo à esquerda (w-64) + conteúdo amplo à direita' },
+    { id: 'tatame', name: '2. Mesa HUD', badge: 'Zero Sidebar / 100%', desc: 'Estrutura de monitor/painel de controle: navbar densa no topo ocupando 100% de largura + zero sidebars' },
+    { id: 'corporate', name: '3. B2B 0px', badge: 'Grid Invertido 0px', desc: 'Estrutura de matriz invertida: conteúdo principal na esquerda + sidebar de ações na direita, flat 0px' },
+    { id: 'classic', name: '4. Super-App', badge: 'Mobile-First', desc: 'Estrutura mobile-first: container centralizado max-w-xl, navbar minimalista no topo e bottom nav flutuante' },
+    { id: 'command_center', name: '5. Command Center', badge: 'Grid Terminal 12x6', desc: 'Painel trader/IDE: grid rígido 12x6 sem rolagem geral, com scroll exclusivamente interno por bloco' },
+    { id: 'split_screen', name: '6. Split-Screen', badge: 'Divisão 40/60', desc: 'Divisão vertical 40/60: 40% fixo com identidade e navegação à esquerda, 60% com scroll para dados à direita' },
+    { id: 'floating_island', name: '7. Floating Island', badge: 'macOS Glass', desc: 'Ilha flutuante centralizada sobre gradiente com backdrop-blur, cantos arredondados e botões traffic lights' },
+    { id: 'zen_focus', name: '8. Zen Foco Total', badge: 'Estilo Notion', desc: 'Foco absoluto em leitura e dados: coluna central estreita max-w-3xl com margens laterais gigantes e topo invisível' }
+  ];
+
   const presetOptionsByJourney: Record<JourneyKey, Array<{ id: string; name: string; badge: string; desc: string }>> = {
-    landing: [
-      { id: 'marketplace', name: 'Layout A: Marketplace & Descoberta', badge: 'Intuitivo / Busca', desc: 'Busca inteligente de CTs, filtros de modalidade, mapa e comparativo de passes' },
-      { id: 'corporate', name: 'Layout B: Corporativo & Institucional', badge: 'Formal / B2B', desc: 'Proposta executiva para empresas e redes, KPIs de autoridade e credenciamento' },
-      { id: 'tatame', name: 'Layout C: Direto ao Tatame', badge: 'Operacional Ao Vivo', desc: 'Abre direto na Grade Oficial ao vivo com [HÁ VAGAS]/[LOTADO] e Check-in Expresso' },
-      { id: 'classic', name: 'Layout Clássico (HTML Institucional)', badge: 'Original', desc: 'Landing page institucional clássica do Centro de Combate' }
-    ],
-    student: [
-      { id: 'tatame_express', name: 'Layout 1: Sistema Escolar', badge: 'Sidebar & Pílulas 26px', desc: 'Barra lateral fixa estilo boletim escolar, cartões arredondados e menus agrupados' },
-      { id: 'gamified_journey', name: 'Layout 2: Arena HUD Tático', badge: 'Cockpit 2 Colunas', desc: 'Cockpit cyber-esportivo 6px com barra lateral esquerda neon e painel de telemetria ao vivo' },
-      { id: 'agenda_control', name: 'Layout 3: Dossiê B2B 0px', badge: 'Matriz Formal 0px', desc: 'Timbrado executivo sem arredondamento, tabela formal de módulos e agenda lateral fixa' },
-      { id: 'complete_tabs', name: 'Layout 4: Super-App Clássico', badge: 'Hero Gradiente Touch', desc: 'Etapa centralizada mobile-first com banner em gradiente, mega-tiles e dock inferior' }
-    ],
-    teacher: [
-      { id: 'tatame_fast', name: 'Layout 1: Diário Escolar', badge: 'Sidebar & Pílulas 26px', desc: 'Menu lateral escolar de topo ao rodapé, caderneta em pílulas arredondadas e retratos circulares' },
-      { id: 'technical_perf', name: 'Layout 2: Mesa Técnica HUD', badge: 'Cockpit 50/50 Neon', desc: 'Painel técnico chanfrado 6px em duas colunas com notas 0..10 e concessão rápida de XP' },
-      { id: 'partner_portal', name: 'Layout 3: Dossiê Executivo B2B', badge: 'Timbrado & Tabela 0px', desc: 'Balanço contábil R$, planilha zebra 0px com borda superior em destaque e repasses' },
-      { id: 'classic_teacher', name: 'Layout 4: Super-App Tatame', badge: 'Hero Touch Centralizado', desc: 'Interface touch centralizada com hero gradiente ao vivo e botões grandes para celular/tablet' }
-    ],
-    admin: [
-      { id: 'executive', name: 'Layout 1: Diretoria Escolar', badge: 'Sidebar & Pílulas 26px', desc: 'ERP estilo sistema escolar com sidebar permanente, KPIs circulares em pílulas e blocos suaves' },
-      { id: 'operational_360', name: 'Layout 2: Command Center HUD', badge: 'Cockpit 360° Split', desc: 'Cockpit tático 6px com medidores de progresso, grade [01..13] e recepção rápida fixa' },
-      { id: 'customizer_studio', name: 'Layout 3: Contábil B2B 0px', badge: 'Timbrado & Balancete', desc: 'Estúdio White-Label + Balancete formal B2B em 0px e índice tabular com sublinhado reto' },
-      { id: 'complete_erp', name: 'Layout 4: Super-App ERP', badge: 'Hero Touch Centralizado', desc: 'Painel clássico centralizado com banner gradiente, abas deslizantes e visão focada' }
-    ]
+    landing: common8Presets,
+    student: common8Presets.map(p => ({
+      ...p,
+      id: p.id === 'marketplace' ? 'tatame_express' : p.id === 'tatame' ? 'gamified_journey' : p.id === 'corporate' ? 'agenda_control' : p.id === 'classic' ? 'complete_tabs' : p.id
+    })),
+    teacher: common8Presets.map(p => ({
+      ...p,
+      id: p.id === 'marketplace' ? 'tatame_fast' : p.id === 'tatame' ? 'technical_perf' : p.id === 'corporate' ? 'partner_portal' : p.id === 'classic' ? 'classic_teacher' : p.id
+    })),
+    admin: common8Presets.map(p => ({
+      ...p,
+      id: p.id === 'marketplace' ? 'executive' : p.id === 'tatame' ? 'operational_360' : p.id === 'corporate' ? 'customizer_studio' : p.id === 'classic' ? 'complete_erp' : p.id
+    }))
   };
 
   const loadingOptions: Array<{ id: LoadingStyleId; name: string; icon: string }> = [
