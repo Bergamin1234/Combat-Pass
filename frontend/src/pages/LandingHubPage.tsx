@@ -103,6 +103,17 @@ export const LandingHubPage: React.FC = () => {
   const [rewardsCatalog, setRewardsCatalog] = useState<any[]>(FALLBACK_REWARDS);
   const [schoolSectionFilter, setSchoolSectionFilter] = useState<string>('ALL');
   const [showOrderModal, setShowOrderModal] = useState(false);
+
+  useEffect(() => {
+    if (showOrderModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showOrderModal]);
   const [showExperienceLauncher, setShowExperienceLauncher] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -400,34 +411,40 @@ export const LandingHubPage: React.FC = () => {
         position: 'fixed',
         inset: 0,
         zIndex: 10006,
-        background: 'rgba(0,0,0,0.8)',
-        backdropFilter: 'blur(6px)',
+        background: 'rgba(0,0,0,0.75)',
+        backdropFilter: 'blur(4px)',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem'
+        justifyContent: 'flex-end',
       }}
       onClick={() => setShowOrderModal(false)}
+      className="animate-in fade-in duration-300"
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%',
-          maxWidth: '980px',
-          maxHeight: '88vh',
-          overflowY: 'auto',
-          borderRadius: '20px',
-          background: 'var(--bg-surface-1)',
-          border: '2px solid var(--color-primary)',
-          padding: '1.5rem',
-          color: 'var(--text-foreground)'
+          backgroundColor: 'var(--bg-surface-1)',
+          color: 'var(--text-foreground)',
+          borderColor: 'var(--border-subtle)',
         }}
+        className="w-full sm:w-[480px] md:w-[520px] h-full min-h-screen border-l shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300"
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900 }}>
-            🔀 Ordenador Dinâmico de Páginas, Menus e Telas de Carregamento
-          </h3>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        {/* CABEÇALHO DO DRAWER */}
+        <div 
+          style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-surface-1)' }}
+          className="p-4 sm:p-5 border-b shrink-0 flex items-start justify-between gap-3"
+        >
+          <div>
+            <span style={{ color: 'var(--color-primary)' }} className="text-[10px] font-black uppercase tracking-widest block">
+              Page Builder & Order Engine (LANDING)
+            </span>
+            <h3 className="text-base sm:text-lg font-black mt-0.5">
+              🔀 Ordenador de Menus & Telas
+            </h3>
+            <p style={{ color: 'var(--text-muted-foreground)' }} className="text-xs mt-0.5 leading-snug">
+              Personalize a ordem das seções e navegação da Landing.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <select
               value={preferences.loadingStyle}
               onChange={e => {
@@ -436,14 +453,11 @@ export const LandingHubPage: React.FC = () => {
                 triggerLoadingDemo('Testando estilo de carregamento...', st, 700);
               }}
               style={{
-                padding: '0.45rem 0.7rem',
-                borderRadius: '8px',
-                background: 'var(--bg-surface-2)',
+                backgroundColor: 'var(--bg-surface-2)',
                 color: 'var(--text-foreground)',
-                border: '1px solid var(--border-subtle)',
-                fontSize: '0.75rem',
-                fontWeight: 700
+                borderColor: 'var(--border-subtle)'
               }}
+              className="p-2 rounded-xl border text-[11px] font-bold min-h-[38px] max-w-[130px] truncate"
             >
               {LOADING_STYLE_META.map(l => (
                 <option key={l.id} value={l.id}>
@@ -454,13 +468,42 @@ export const LandingHubPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowOrderModal(false)}
-              style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', fontWeight: 800, cursor: 'pointer' }}
+              style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                color: 'var(--text-foreground)'
+              }}
+              className="px-3 py-2 rounded-xl text-xs font-black min-h-[38px] flex items-center justify-center hover:opacity-80 transition cursor-pointer"
             >
-              ✕ Fechar
+              ✕
             </button>
           </div>
         </div>
-        <JourneyLayoutToolbar journey="landing" />
+
+        {/* CORPO DO DRAWER COM SCROLL VERTICAL TOUCH-FRIENDLY */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 scrollbar-thin">
+          <JourneyLayoutToolbar journey="landing" />
+        </div>
+
+        {/* RODAPÉ DO DRAWER */}
+        <div
+          style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-surface-1)' }}
+          className="p-4 border-t shrink-0 flex items-center justify-between gap-2"
+        >
+          <span style={{ color: 'var(--text-muted-foreground)' }} className="text-[11px]">
+            Sincronizado automaticamente.
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowOrderModal(false)}
+            style={{
+              backgroundColor: 'var(--color-primary)',
+              color: 'var(--text-primary-foreground)'
+            }}
+            className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:opacity-90 transition min-h-[42px] flex items-center justify-center"
+          >
+            ✓ Concluir
+          </button>
+        </div>
       </div>
     </div>
   );

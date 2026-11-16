@@ -713,6 +713,17 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
 
   const [showOrderModal, setShowOrderModal] = useState(false);
 
+  useEffect(() => {
+    if (showOrderModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showOrderModal]);
+
   const presetOptionsByJourney: Record<JourneyKey, Array<{ id: string; name: string; badge: string; desc: string }>> = {
     landing: [
       { id: 'marketplace', name: 'Layout A: Marketplace & Descoberta', badge: 'Intuitivo / Busca', desc: 'Busca inteligente de CTs, filtros de modalidade, mapa e comparativo de passes' },
@@ -891,13 +902,13 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
         </div>
       </div>
 
-      {/* MODAL VISUAL DE REORDENAÇÃO DE PÁGINAS/ABAS E BLOCOS/SEÇÕES */}
+      {/* DRAWER LATERAL RESPONSIVO DE REORDENAÇÃO (OFFCANVAS) */}
       {showOrderModal && (
         <div
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowOrderModal(false);
           }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 z-[99999] overflow-y-auto"
+          className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[99999] flex justify-end transition-opacity duration-300"
         >
           <div
             style={{
@@ -905,24 +916,25 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
               borderColor: 'var(--border-subtle)',
               color: 'var(--text-foreground)'
             }}
-            className="border rounded-2xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl my-auto max-h-[90vh] overflow-y-auto space-y-5"
+            className="w-full sm:w-[460px] md:w-[500px] h-full min-h-screen border-l shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300"
           >
+            {/* CABEÇALHO DO DRAWER */}
             <div
-              style={{ borderColor: 'var(--border-subtle)' }}
-              className="flex items-start justify-between gap-4 border-b pb-4"
+              style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-surface)' }}
+              className="p-4 sm:p-5 border-b shrink-0 flex items-start justify-between gap-3"
             >
               <div>
                 <span
                   style={{ color: 'var(--color-primary)' }}
                   className="text-[10px] font-black uppercase tracking-widest block"
                 >
-                  Page Builder & Dynamic Order Engine ({journey.toUpperCase()})
+                  Page Builder & Order Engine ({journey.toUpperCase()})
                 </span>
-                <h3 className="text-lg sm:text-xl font-black mt-0.5">
-                  🔀 Ordenador de Navegação, Seções & Paletas Compatíveis
+                <h3 className="text-base sm:text-lg font-black mt-0.5">
+                  🔀 Ordenador & Personalização
                 </h3>
-                <p style={{ color: 'var(--text-muted-foreground)' }} className="text-xs mt-0.5">
-                  Defina qual página/aba vem primeiro, reordene os blocos internos e combine com qualquer paleta de cores sem perda de contraste.
+                <p style={{ color: 'var(--text-muted-foreground)' }} className="text-xs mt-0.5 leading-snug">
+                  Reordene menus, blocos de conteúdo e selecione paletas de cores.
                 </p>
               </div>
               <button
@@ -932,85 +944,184 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
                   backgroundColor: 'var(--bg-surface-2)',
                   color: 'var(--text-foreground)'
                 }}
-                className="px-3 py-1.5 rounded-xl text-xs font-black"
+                className="px-3 py-2 rounded-xl text-xs font-black min-h-[40px] flex items-center justify-center shrink-0 hover:opacity-80 transition cursor-pointer"
               >
                 ✕ Fechar
               </button>
             </div>
 
-            {/* SELETOR RÁPIDO DE PALETAS PARA VERIFICAR POLIMORFISMO */}
-            <div
-              style={{
-                backgroundColor: 'var(--bg-surface-muted)',
-                borderColor: 'var(--border-subtle)'
-              }}
-              className="p-3.5 rounded-xl border space-y-2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider">
-                  🎨 Paleta de Cores Ativa ({THEMES_LIST.length} Paletas Semânticas Disponíveis)
-                </span>
-                <span style={{ color: 'var(--color-primary)' }} className="text-[11px] font-bold">
-                  100% Zero-Hardcode (Dark & Light)
-                </span>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
-                {THEMES_LIST.map(t => {
-                  const isSelected = t.id === preferences.activePaletteId;
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setPalette(t.id)}
-                      style={{
-                        backgroundColor: isSelected ? 'var(--color-primary)' : 'var(--bg-surface)',
-                        color: isSelected ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
-                        borderColor: isSelected ? 'var(--color-primary)' : 'var(--border-subtle)'
-                      }}
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold border shrink-0 flex items-center gap-2 transition"
-                    >
-                      <span
-                        className="w-3 h-3 rounded-full border border-white/40"
-                        style={{ backgroundColor: t.primary }}
-                      />
-                      <span>{t.name.split(' (')[0]}</span>
-                      <span className="text-[9px] opacity-75 uppercase">({t.mode})</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* COLUNA 1: ORDEM DAS PÁGINAS / ABAS NA NAVEGAÇÃO */}
+            {/* CORPO DO DRAWER COM SCROLL INTERNO VERTICAL */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 scrollbar-thin">
+              {/* SELETOR RÁPIDO DE PALETAS PARA VERIFICAR POLIMORFISMO */}
               <div
                 style={{
                   backgroundColor: 'var(--bg-surface-muted)',
                   borderColor: 'var(--border-subtle)'
                 }}
-                className="border rounded-xl p-4 space-y-3"
+                className="p-3.5 rounded-xl border space-y-2"
               >
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-black">1. Ordem das Páginas / Abas no Menu</h4>
-                    <p style={{ color: 'var(--text-muted-foreground)' }} className="text-[11px]">
-                      O primeiro item visível pode ser definido como tela inicial padrão.
-                    </p>
+                  <span className="text-xs font-black uppercase tracking-wider">
+                    🎨 Paletas Semânticas ({THEMES_LIST.length})
+                  </span>
+                  <span style={{ color: 'var(--color-primary)' }} className="text-[10px] font-bold">
+                    Zero-Hardcode
+                  </span>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
+                  {THEMES_LIST.map(t => {
+                    const isSelected = t.id === preferences.activePaletteId;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setPalette(t.id)}
+                        style={{
+                          backgroundColor: isSelected ? 'var(--color-primary)' : 'var(--bg-surface)',
+                          color: isSelected ? 'var(--text-primary-foreground)' : 'var(--text-foreground)',
+                          borderColor: isSelected ? 'var(--color-primary)' : 'var(--border-subtle)'
+                        }}
+                        className="px-3 py-2 rounded-xl text-xs font-bold border shrink-0 flex items-center gap-2 transition min-h-[36px]"
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full border border-white/40"
+                          style={{ backgroundColor: t.primary }}
+                        />
+                        <span>{t.name.split(' (')[0]}</span>
+                        <span className="text-[9px] opacity-75 uppercase">({t.mode})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* LISTAS VERTICAIS EMPILHADAS (FLEX-COL) PARA TELAS MENORES E MOBILE */}
+              <div className="flex flex-col gap-4">
+                {/* COLUNA 1: ORDEM DAS PÁGINAS / ABAS NA NAVEGAÇÃO */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface-muted)',
+                    borderColor: 'var(--border-subtle)'
+                  }}
+                  className="border rounded-xl p-3.5 sm:p-4 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-black">1. Ordem das Páginas / Abas</h4>
+                      <p style={{ color: 'var(--text-muted-foreground)' }} className="text-[11px]">
+                        Defina qual abre primeiro no menu.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
+                    {preferences.routeOrder[journey].map((item, idx) => {
+                      const isDefault = preferences.defaultTabByJourney[journey] === item.routeOrTab || preferences.defaultTabByJourney[journey] === item.id;
+                      return (
+                        <div
+                          key={item.id}
+                          style={{
+                            backgroundColor: 'var(--bg-surface)',
+                            borderColor: isDefault ? 'var(--color-primary)' : 'var(--border-subtle)',
+                            opacity: item.visible ? 1 : 0.55
+                          }}
+                          className="p-2.5 sm:p-3 rounded-xl border flex items-center justify-between gap-2"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span
+                              style={{
+                                backgroundColor: 'var(--color-primary-light)',
+                                color: 'var(--color-primary)'
+                              }}
+                              className="w-6 h-6 rounded-lg text-[11px] font-black flex items-center justify-center shrink-0"
+                            >
+                              {idx + 1}
+                            </span>
+                            <span className="text-base">{item.icon}</span>
+                            <div className="truncate">
+                              <p className="text-xs font-bold truncate">{item.label}</p>
+                              {isDefault && (
+                                <span style={{ color: 'var(--color-primary)' }} className="text-[9px] font-black uppercase">
+                                  ★ Abre Primeiro
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setDefaultTabForJourney(journey, item.routeOrTab)}
+                              style={{
+                                backgroundColor: isDefault ? 'var(--color-primary)' : 'var(--bg-surface-2)',
+                                color: isDefault ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)'
+                              }}
+                              className="px-2 py-1.5 rounded-lg text-[10px] font-black min-h-[34px] min-w-[34px] flex items-center justify-center"
+                              title="Definir como página/aba inicial"
+                            >
+                              ★
+                            </button>
+                            <button
+                              type="button"
+                              disabled={idx === 0}
+                              onClick={() => moveRouteItem(journey, idx, 'up')}
+                              style={{ backgroundColor: 'var(--bg-surface-2)' }}
+                              className="px-2.5 py-1.5 rounded-lg text-xs font-black disabled:opacity-30 min-h-[34px] min-w-[34px] flex items-center justify-center"
+                              title="Subir posição"
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              disabled={idx === preferences.routeOrder[journey].length - 1}
+                              onClick={() => moveRouteItem(journey, idx, 'down')}
+                              style={{ backgroundColor: 'var(--bg-surface-2)' }}
+                              className="px-2.5 py-1.5 rounded-lg text-xs font-black disabled:opacity-30 min-h-[34px] min-w-[34px] flex items-center justify-center"
+                              title="Descer posição"
+                            >
+                              ↓
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleRouteVisibility(journey, item.id)}
+                              style={{ backgroundColor: 'var(--bg-surface-2)' }}
+                              className="px-2.5 py-1.5 rounded-lg text-xs font-bold min-h-[34px] min-w-[34px] flex items-center justify-center"
+                              title={item.visible ? 'Ocultar do menu' : 'Exibir no menu'}
+                            >
+                              {item.visible ? '👁️' : '🙈'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <div className="space-y-2 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
-                  {preferences.routeOrder[journey].map((item, idx) => {
-                    const isDefault = preferences.defaultTabByJourney[journey] === item.routeOrTab || preferences.defaultTabByJourney[journey] === item.id;
-                    return (
+                {/* COLUNA 2: ORDEM E VISIBILIDADE DOS BLOCOS / WIDGETS INTERNOS */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface-muted)',
+                    borderColor: 'var(--border-subtle)'
+                  }}
+                  className="border rounded-xl p-3.5 sm:p-4 space-y-3"
+                >
+                  <div>
+                    <h4 className="text-sm font-black">2. Ordem dos Blocos & Widgets</h4>
+                    <p style={{ color: 'var(--text-muted-foreground)' }} className="text-[11px]">
+                      Reordene ou oculte seções da tela.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
+                    {preferences.sectionOrder[journey].map((sec, idx) => (
                       <div
-                        key={item.id}
+                        key={sec.id}
                         style={{
                           backgroundColor: 'var(--bg-surface)',
-                          borderColor: isDefault ? 'var(--color-primary)' : 'var(--border-subtle)',
-                          opacity: item.visible ? 1 : 0.55
+                          borderColor: 'var(--border-subtle)',
+                          opacity: sec.visible ? 1 : 0.55
                         }}
-                        className="p-2.5 rounded-xl border flex items-center justify-between gap-2"
+                        className="p-2.5 sm:p-3 rounded-xl border flex items-center justify-between gap-2"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span
@@ -1022,154 +1133,60 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
                           >
                             {idx + 1}
                           </span>
-                          <span className="text-sm">{item.icon}</span>
-                          <div className="truncate">
-                            <p className="text-xs font-bold truncate">{item.label}</p>
-                            {isDefault && (
-                              <span style={{ color: 'var(--color-primary)' }} className="text-[9px] font-black uppercase">
-                                ★ Abre Primeiro (Padrão)
-                              </span>
-                            )}
+                          <span className="text-base">{sec.icon}</span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold truncate">{sec.label}</p>
+                            <p style={{ color: 'var(--text-muted-foreground)' }} className="text-[10px] truncate">
+                              {sec.description}
+                            </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
                           <button
                             type="button"
-                            onClick={() => setDefaultTabForJourney(journey, item.routeOrTab)}
-                            style={{
-                              backgroundColor: isDefault ? 'var(--color-primary)' : 'var(--bg-surface-2)',
-                              color: isDefault ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)'
-                            }}
-                            className="px-2 py-1 rounded text-[10px] font-black"
-                            title="Definir como página/aba que abre primeiro"
-                          >
-                            ★ Inicial
-                          </button>
-                          <button
-                            type="button"
                             disabled={idx === 0}
-                            onClick={() => moveRouteItem(journey, idx, 'up')}
+                            onClick={() => moveSectionItem(journey, idx, 'up')}
                             style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                            className="px-2 py-1 rounded text-xs font-black disabled:opacity-30"
-                            title="Subir posição"
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-black disabled:opacity-30 min-h-[34px] min-w-[34px] flex items-center justify-center"
+                            title="Mover bloco para cima"
                           >
                             ↑
                           </button>
                           <button
                             type="button"
-                            disabled={idx === preferences.routeOrder[journey].length - 1}
-                            onClick={() => moveRouteItem(journey, idx, 'down')}
+                            disabled={idx === preferences.sectionOrder[journey].length - 1}
+                            onClick={() => moveSectionItem(journey, idx, 'down')}
                             style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                            className="px-2 py-1 rounded text-xs font-black disabled:opacity-30"
-                            title="Descer posição"
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-black disabled:opacity-30 min-h-[34px] min-w-[34px] flex items-center justify-center"
+                            title="Mover bloco para baixo"
                           >
                             ↓
                           </button>
                           <button
                             type="button"
-                            onClick={() => toggleRouteVisibility(journey, item.id)}
+                            onClick={() => toggleSectionVisibility(journey, sec.id)}
                             style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                            className="px-2 py-1 rounded text-xs font-bold"
-                            title={item.visible ? 'Ocultar do menu' : 'Exibir no menu'}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-bold min-h-[34px] min-w-[34px] flex items-center justify-center"
+                            title={sec.visible ? 'Ocultar bloco' : 'Mostrar bloco'}
                           >
-                            {item.visible ? '👁️' : '🙈'}
+                            {sec.visible ? '👁️' : '🙈'}
                           </button>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* COLUNA 2: ORDEM E VISIBILIDADE DOS BLOCOS / WIDGETS INTERNOS */}
-              <div
-                style={{
-                  backgroundColor: 'var(--bg-surface-muted)',
-                  borderColor: 'var(--border-subtle)'
-                }}
-                className="border rounded-xl p-4 space-y-3"
-              >
-                <div>
-                  <h4 className="text-sm font-black">2. Ordem dos Blocos & Widgets da Tela</h4>
-                  <p style={{ color: 'var(--text-muted-foreground)' }} className="text-[11px]">
-                    Reordene qual seção aparece no topo ou oculte widgets que não deseja exibir.
-                  </p>
-                </div>
-
-                <div className="space-y-2 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
-                  {preferences.sectionOrder[journey].map((sec, idx) => (
-                    <div
-                      key={sec.id}
-                      style={{
-                        backgroundColor: 'var(--bg-surface)',
-                        borderColor: 'var(--border-subtle)',
-                        opacity: sec.visible ? 1 : 0.55
-                      }}
-                      className="p-2.5 rounded-xl border flex items-center justify-between gap-2"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          style={{
-                            backgroundColor: 'var(--color-primary-light)',
-                            color: 'var(--color-primary)'
-                          }}
-                          className="w-6 h-6 rounded-lg text-[11px] font-black flex items-center justify-center shrink-0"
-                        >
-                          {idx + 1}
-                        </span>
-                        <span className="text-base">{sec.icon}</span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold truncate">{sec.label}</p>
-                          <p style={{ color: 'var(--text-muted-foreground)' }} className="text-[10px] truncate">
-                            {sec.description}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          type="button"
-                          disabled={idx === 0}
-                          onClick={() => moveSectionItem(journey, idx, 'up')}
-                          style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                          className="px-2 py-1 rounded text-xs font-black disabled:opacity-30"
-                          title="Mover bloco para cima"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          disabled={idx === preferences.sectionOrder[journey].length - 1}
-                          onClick={() => moveSectionItem(journey, idx, 'down')}
-                          style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                          className="px-2 py-1 rounded text-xs font-black disabled:opacity-30"
-                          title="Mover bloco para baixo"
-                        >
-                          ↓
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => toggleSectionVisibility(journey, sec.id)}
-                          style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                          className="px-2 py-1 rounded text-xs font-bold"
-                          title={sec.visible ? 'Ocultar bloco' : 'Mostrar bloco'}
-                        >
-                          {sec.visible ? '👁️' : '🙈'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
 
+            {/* RODAPÉ DO DRAWER */}
             <div
-              style={{ borderColor: 'var(--border-subtle)' }}
-              className="pt-3 border-t flex items-center justify-between flex-wrap gap-2"
+              style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-surface)' }}
+              className="p-4 border-t shrink-0 flex items-center justify-between gap-2"
             >
-              <span style={{ color: 'var(--text-muted-foreground)' }} className="text-xs">
-                As alterações são aplicadas em tempo real e salvas automaticamente no seu perfil.
+              <span style={{ color: 'var(--text-muted-foreground)' }} className="text-[11px]">
+                Sincronização em tempo real.
               </span>
               <button
                 type="button"
@@ -1178,9 +1195,9 @@ export const JourneyLayoutToolbar: React.FC<JourneyLayoutToolbarProps> = ({
                   backgroundColor: 'var(--color-primary)',
                   color: 'var(--text-primary-foreground)'
                 }}
-                className="px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg"
+                className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:opacity-90 transition min-h-[42px] flex items-center justify-center"
               >
-                ✓ Concluir e Visualizar
+                ✓ Concluir
               </button>
             </div>
           </div>
