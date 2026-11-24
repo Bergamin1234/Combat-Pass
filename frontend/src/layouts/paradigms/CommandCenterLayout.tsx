@@ -52,6 +52,17 @@ export const CommandCenterLayout: React.FC<BaseLayoutProps> = ({
       ];
     }
     if (portal === 'admin') {
+      if (usuarioLogado?.cargo === 'ATENDENTE') {
+        return [
+          { id: 'alunos', label: 'CMD://ALUNOS_MATRICULA', icon: '👥' },
+          { id: 'agendamentos', label: 'CMD://LEADS_EXPERIMENTAIS', icon: '🎯' },
+          { id: 'chamada_diaria', label: 'CMD://CHECKIN_CHAMADA', icon: '✅' },
+          { id: 'calendario_geral', label: 'CMD://GRADE_HORARIOS', icon: '📅' },
+          { id: 'ocupacao', label: 'CMD://VAGAS_TURMAS', icon: '🔥' },
+          { id: 'resgates_loja', label: 'CMD://VOUCHERS_BALCAO', icon: '🎟️' },
+          { id: 'avisos', label: 'CMD://MURAL_AVISOS', icon: '📢' }
+        ];
+      }
       return [
         { id: 'alunos', label: 'CMD://ROSTER_360', icon: '👥' },
         { id: 'calendario_geral', label: 'CMD://GRADE_TATAMES', icon: '📅' },

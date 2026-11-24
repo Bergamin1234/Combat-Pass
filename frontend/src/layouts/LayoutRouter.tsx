@@ -82,7 +82,7 @@ export const LayoutRouter: React.FC<LayoutRouterProps> = ({
   const resolvedPortal: PortalType = portal || (() => {
     const path = location.pathname;
     const search = location.search;
-    if (path.includes('/admin')) return 'admin';
+    if (path.includes('/admin') || path.includes('/atendimento')) return 'admin';
     if (path.includes('/professor')) return 'professor';
     if (search.includes('tab=torneios')) return 'torneios';
     if (search.includes('tab=ranking')) return 'ranking';

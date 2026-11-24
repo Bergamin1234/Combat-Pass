@@ -104,8 +104,27 @@ const opcoesTempoDocencia = [
   'Mais de 10 anos como professor / Mestre'
 ];
 
-export default function AdminDashboard() {
+const ATENDENTE_ALLOWED_TABS = new Set([
+  'alunos',
+  'chamada_diaria',
+  'calendario_geral',
+  'presencas',
+  'agendamentos',
+  'ocupacao',
+  'resgates_loja',
+  'avisos',
+]);
+
+export default function AdminDashboard({
+  modoInicial = 'ADMIN',
+}: {
+  modoInicial?: 'ADMIN' | 'ATENDENTE';
+} = {}) {
   const { preferences, setJourneyPreset } = useLayoutEngine();
+  const [modoAcessoLogin, setModoAcessoLogin] = useState<'ADMIN' | 'ATENDENTE'>(modoInicial);
+  useEffect(() => {
+    setModoAcessoLogin(modoInicial);
+  }, [modoInicial]);
   const adminPreset = preferences.layoutPreset.admin;
   const adminArch =
     adminPreset === 'executive'
@@ -342,15 +361,31 @@ export default function AdminDashboard() {
     }
   };
 
-  const realizarLoginAdmin = async (usuarioParam: string, senhaParam: string) => {
+  const isAtendente = usuarioLogado?.cargo === 'ATENDENTE';
+
+  useEffect(() => {
+    if (isAtendente && !ATENDENTE_ALLOWED_TABS.has(abaAtiva)) {
+      setAbaAtiva('alunos');
+    }
+  }, [isAtendente, abaAtiva]);
+
+  const realizarLoginAdmin = async (
+    usuarioParam: string,
+    senhaParam: string,
+    portalOverride?: 'admin' | 'atendente'
+  ) => {
     setLoginLoading(true);
     try {
+      const portalAlvo = portalOverride || (modoAcessoLogin === 'ATENDENTE' ? 'atendente' : 'admin');
       const response = await adminApi.login({
         emailOuUsuario: usuarioParam,
         senha: senhaParam,
-        portal: 'admin'
+        portal: portalAlvo
       });
       setUsuarioLogado(response.data.usuario);
+      if (response.data.usuario?.cargo === 'ATENDENTE') {
+        setAbaAtiva('alunos');
+      }
       setIsLoggedIn(true);
     } catch (error: any) {
       alert(error.response?.data?.erro || 'Erro ao realizar login.');
@@ -365,9 +400,15 @@ export default function AdminDashboard() {
   };
 
   const handleDemoAdminLogin = async () => {
+    if (modoAcessoLogin === 'ATENDENTE') {
+      setLoginInput('atendente');
+      setPassword('1');
+      await realizarLoginAdmin('atendente', '1', 'atendente');
+      return;
+    }
     setLoginInput('1');
     setPassword('1');
-    await realizarLoginAdmin('1', '1');
+    await realizarLoginAdmin('1', '1', 'admin');
   };
 
   // ==========================================
@@ -375,8 +416,8 @@ export default function AdminDashboard() {
   // ==========================================
   const criarProfessor = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (novoProfessor.cargo === 'PROFESSOR' && !novoProfessor.cpf) {
-      alert('O CPF do professor é obrigatório para que ele possa acessar o sistema.');
+    if ((novoProfessor.cargo === 'PROFESSOR' || novoProfessor.cargo === 'ATENDENTE') && !novoProfessor.cpf) {
+      alert(`O CPF do ${novoProfessor.cargo === 'ATENDENTE' ? 'atendente' : 'professor'} é obrigatório para que ele possa acessar o sistema.`);
       return;
     }
     try {
@@ -1058,14 +1099,42 @@ export default function AdminDashboard() {
                 letterSpacing: '0.08em',
                 padding: '0.25rem 0.65rem',
                 borderRadius: '999px',
-                background: 'var(--color-primary-light)',
-                color: 'var(--color-primary)',
-                border: '1px solid var(--color-primary-border)'
+                background: modoAcessoLogin === 'ATENDENTE' ? 'rgba(6, 182, 212, 0.16)' : 'var(--color-primary-light)',
+                color: modoAcessoLogin === 'ATENDENTE' ? '#22d3ee' : 'var(--color-primary)',
+                border: modoAcessoLogin === 'ATENDENTE' ? '1px solid rgba(6, 182, 212, 0.45)' : '1px solid var(--color-primary-border)'
               }}
             >
-              🏛️ PAINEL ADMIN & ERP
+              {modoAcessoLogin === 'ATENDENTE' ? '🎧 ATENDIMENTO & RECEPÇÃO' : '🏛️ PAINEL ADMIN & ERP'}
             </span>
             <ThemeSwitcher compact />
+          </div>
+
+          {/* Seletor rápido de Perfil de Acesso: Admin vs Atendimento */}
+          <div className="grid grid-cols-2 gap-2 mb-4 p-1 rounded-xl" style={{ background: 'var(--bg-background)', border: '1px solid var(--border-subtle)' }}>
+            <button
+              type="button"
+              onClick={() => setModoAcessoLogin('ADMIN')}
+              className="py-2 px-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition cursor-pointer"
+              style={{
+                background: modoAcessoLogin === 'ADMIN' ? 'var(--color-primary)' : 'transparent',
+                color: modoAcessoLogin === 'ADMIN' ? 'var(--text-primary-foreground)' : 'var(--text-muted-foreground)',
+                border: 'none'
+              }}
+            >
+              👑 Admin / ERP
+            </button>
+            <button
+              type="button"
+              onClick={() => setModoAcessoLogin('ATENDENTE')}
+              className="py-2 px-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition cursor-pointer"
+              style={{
+                background: modoAcessoLogin === 'ATENDENTE' ? '#0891b2' : 'transparent',
+                color: modoAcessoLogin === 'ATENDENTE' ? '#ffffff' : 'var(--text-muted-foreground)',
+                border: 'none'
+              }}
+            >
+              🎧 Atendimento
+            </button>
           </div>
 
           <div className="text-center mb-5">
@@ -1074,36 +1143,52 @@ export default function AdminDashboard() {
               alt={ACADEMY_CONFIG.nome}
               className="w-20 h-20 rounded-full mx-auto mb-3 shadow-xl object-contain p-1.5"
               style={{
-                border: '2px solid var(--color-primary)',
+                border: modoAcessoLogin === 'ATENDENTE' ? '2px solid #06b6d4' : '2px solid var(--color-primary)',
                 background: 'var(--bg-background)'
               }}
             />
             <h1 className="text-2xl sm:text-3xl font-black tracking-widest mb-1 leading-tight" style={{ color: 'var(--text-foreground)' }}>
               {ACADEMY_CONFIG.nome}
             </h1>
-            <p className="font-extrabold text-xs uppercase tracking-widest" style={{ color: 'var(--color-primary)' }}>
-              Gestão Administrativa & Rede Combat-Pass
+            <p
+              className="font-extrabold text-xs uppercase tracking-widest"
+              style={{ color: modoAcessoLogin === 'ATENDENTE' ? '#22d3ee' : 'var(--color-primary)' }}
+            >
+              {modoAcessoLogin === 'ATENDENTE'
+                ? 'Central de Atendimento & Recepção Combat-Pass'
+                : 'Gestão Administrativa & Rede Combat-Pass'}
             </p>
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted-foreground)' }}>
-              Controle de Alunos, Financeiro, Aulas, Professores e Layouts
+              {modoAcessoLogin === 'ATENDENTE'
+                ? 'Acesso exclusivo para Matrículas, Gestão de Alunos, Leads e Check-ins'
+                : 'Controle de Alunos, Financeiro, Aulas, Professores e Layouts'}
             </p>
           </div>
 
-          {/* Card de Acesso Rápido Homologado (Login 1 / Senha 1) */}
+          {/* Card de Acesso Rápido Homologado */}
           <div
             className="mb-4 p-3.5 rounded-xl"
             style={{
-              background: 'var(--color-primary-light)',
-              border: '1px solid var(--color-primary-border)'
+              background: modoAcessoLogin === 'ATENDENTE' ? 'rgba(6, 182, 212, 0.12)' : 'var(--color-primary-light)',
+              border: modoAcessoLogin === 'ATENDENTE' ? '1px solid rgba(6, 182, 212, 0.4)' : '1px solid var(--color-primary-border)'
             }}
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
-                  ⚡ Acesso Rápido Admin Master
+                <div
+                  className="text-[11px] font-black uppercase tracking-wider"
+                  style={{ color: modoAcessoLogin === 'ATENDENTE' ? '#22d3ee' : 'var(--color-primary)' }}
+                >
+                  {modoAcessoLogin === 'ATENDENTE'
+                    ? '⚡ Acesso Rápido Atendimento'
+                    : '⚡ Acesso Rápido Admin Master'}
                 </div>
                 <div className="text-xs font-bold mt-0.5" style={{ color: 'var(--text-foreground)' }}>
-                  Login: <code className="px-1.5 py-0.5 rounded font-black" style={{ background: 'var(--bg-surface-1)' }}>1</code> · Senha:{' '}
+                  Login:{' '}
+                  <code className="px-1.5 py-0.5 rounded font-black" style={{ background: 'var(--bg-surface-1)' }}>
+                    {modoAcessoLogin === 'ATENDENTE' ? 'atendente' : '1'}
+                  </code>{' '}
+                  · Senha:{' '}
                   <code className="px-1.5 py-0.5 rounded font-black" style={{ background: 'var(--bg-surface-1)' }}>1</code>
                 </div>
               </div>
@@ -1113,12 +1198,12 @@ export default function AdminDashboard() {
                 disabled={loginLoading}
                 className="px-3.5 py-2 rounded-lg text-xs font-black uppercase tracking-wide shrink-0 transition cursor-pointer"
                 style={{
-                  background: 'var(--color-primary)',
-                  color: 'var(--text-primary-foreground)',
+                  background: modoAcessoLogin === 'ATENDENTE' ? '#0891b2' : 'var(--color-primary)',
+                  color: modoAcessoLogin === 'ATENDENTE' ? '#ffffff' : 'var(--text-primary-foreground)',
                   border: 'none'
                 }}
               >
-                ⚡ Entrar Agora (1 / 1)
+                {modoAcessoLogin === 'ATENDENTE' ? '🎧 Entrar Atendente' : '⚡ Entrar Agora (1 / 1)'}
               </button>
             </div>
           </div>
@@ -1239,24 +1324,46 @@ export default function AdminDashboard() {
         portal="admin"
         interfaceOption={adminPreset as any}
         activeTab={abaAtiva}
-        onTabChange={(t) => setAbaAtiva(t as any)}
+        onTabChange={(t) => {
+          if (isAtendente && !ATENDENTE_ALLOWED_TABS.has(t)) return;
+          setAbaAtiva(t as any);
+        }}
         usuarioLogado={usuarioLogado}
-        title="Admin ERP & Centro de Controle Combat-Pass"
-        subtitle={`Administrador: ${usuarioLogado?.nome || 'Diretoria'} · Gestão Multi-Unidades`}
+        title={
+          isAtendente
+            ? 'Central de Atendimento & Recepção Combat-Pass'
+            : 'Admin ERP & Centro de Controle Combat-Pass'
+        }
+        subtitle={
+          isAtendente
+            ? `Atendente: ${usuarioLogado?.nome || 'Recepção'} · Matrículas, Alunos & Check-ins`
+            : `Administrador: ${usuarioLogado?.nome || 'Diretoria'} · Gestão Multi-Unidades`
+        }
         headerActions={
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowLayoutCustomDrawer(!showLayoutCustomDrawer)}
-              style={{
-                backgroundColor: 'var(--color-primary)',
-                color: 'var(--text-primary-foreground)'
-              }}
-              className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <span>⚙️</span>
-              <span>Layouts & Ordem</span>
-            </button>
+            {isAtendente ? (
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-cyan-600 hover:bg-cyan-500 text-white shadow transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>➕</span>
+                <span>Nova Matrícula</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowLayoutCustomDrawer(!showLayoutCustomDrawer)}
+                style={{
+                  backgroundColor: 'var(--color-primary)',
+                  color: 'var(--text-primary-foreground)'
+                }}
+                className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>⚙️</span>
+                <span>Layouts & Ordem</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={handleAdminLogout}
@@ -1267,7 +1374,7 @@ export default function AdminDashboard() {
           </div>
         }
       >
-        {showLayoutCustomDrawer && (
+        {showLayoutCustomDrawer && !isAtendente && (
           <div className="mb-6">
             <JourneyLayoutToolbar journey="admin" />
           </div>
@@ -1276,17 +1383,28 @@ export default function AdminDashboard() {
         {/* NAVEGAÇÃO DE ABAS DO ADMIN: Omitida em Split-Screen e Command Center para não duplicar com o menu da esquerda */}
         {!['split_screen', 'command_center'].includes(adminPreset) && (
           <div className="p-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-1.5 overflow-x-auto scrollbar-thin mb-5">
-            {[
-              { id: 'alunos', label: `👥 Alunos (${alunos.length})` },
-              { id: 'calendario_geral', label: '📅 Grade & Horários' },
-              { id: 'financeiro_gestao', label: '💰 Gestão Financeira' },
-              { id: 'caixa_diario', label: '💵 Caixa PDV' },
-              { id: 'comissoes', label: '🥋 Comissões' },
-              { id: 'ocupacao', label: '🔥 Ocupação' },
-              { id: 'avisos', label: `📢 Avisos (${avisos.length})` },
-              { id: 'gamificacao', label: '🏆 Gamificação' },
-              { id: 'aparencia_layouts', label: '🎨 Estúdio & Temas' }
-            ].map(tab => (
+            {(isAtendente
+              ? [
+                  { id: 'alunos', label: `👥 Alunos & Matrícula (${alunos.length})` },
+                  { id: 'agendamentos', label: '🎯 Leads & Aulas Exp.' },
+                  { id: 'chamada_diaria', label: '✅ Check-ins & Chamada' },
+                  { id: 'calendario_geral', label: '📅 Grade & Horários' },
+                  { id: 'ocupacao', label: '🔥 Ocupação' },
+                  { id: 'resgates_loja', label: '🎟️ Vouchers & Retiradas' },
+                  { id: 'avisos', label: `📢 Avisos (${avisos.length})` }
+                ]
+              : [
+                  { id: 'alunos', label: `👥 Alunos (${alunos.length})` },
+                  { id: 'calendario_geral', label: '📅 Grade & Horários' },
+                  { id: 'financeiro_gestao', label: '💰 Gestão Financeira' },
+                  { id: 'caixa_diario', label: '💵 Caixa PDV' },
+                  { id: 'comissoes', label: '🥋 Comissões' },
+                  { id: 'ocupacao', label: '🔥 Ocupação' },
+                  { id: 'avisos', label: `📢 Avisos (${avisos.length})` },
+                  { id: 'gamificacao', label: '🏆 Gamificação' },
+                  { id: 'aparencia_layouts', label: '🎨 Estúdio & Temas' }
+                ]
+            ).map(tab => (
               <button
                 key={tab.id}
                 type="button"
@@ -1305,6 +1423,60 @@ export default function AdminDashboard() {
 
         {/* CONTEÚDO DAS ABAS */}
         <div className="space-y-6">
+          {abaAtiva === 'chamada_diaria' && (
+            <SplitRollCallTab onRefreshDashboard={carregarDashboard} />
+          )}
+
+          {abaAtiva === 'resgates_loja' && (
+            <AdminStoreRedemptionsTab usuarioLogado={usuarioLogado} />
+          )}
+
+          {abaAtiva === 'agendamentos' && (
+            <div className="bg-[#141416] border border-zinc-800 rounded-xl p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                  <h2 className="text-lg font-black text-white">🎯 Leads & Aulas Experimentais</h2>
+                  <p className="text-xs text-zinc-400">
+                    Acompanhe agendamentos experimentais e converta visitantes em alunos matriculados.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(true)}
+                  className="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-black uppercase tracking-wider transition"
+                >
+                  ➕ Nova Matrícula Direta
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[...(agendamentos.pendentes || []), ...(agendamentos.posAula || [])].length === 0 ? (
+                  <p className="text-xs text-zinc-500 col-span-2 py-6 text-center">
+                    Nenhum lead ou aula experimental pendente no momento.
+                  </p>
+                ) : (
+                  [...(agendamentos.pendentes || []), ...(agendamentos.posAula || [])].map((ag: any) => (
+                    <div key={ag.id} className="p-4 rounded-xl bg-[#1A1A1E] border border-zinc-800 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-black text-white">{ag.nome}</p>
+                        <p className="text-xs text-zinc-400">{ag.telefone} • {ag.data} às {ag.horario}</p>
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">
+                          {ag.status}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setLeadParaConverter(ag)}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition shrink-0"
+                      >
+                        ✅ Matricular
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           {abaAtiva === 'calendario_geral' && (
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
               <InteractiveCombatCalendar userRole="ADMIN" />
@@ -1340,7 +1512,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {abaAtiva === 'gamificacao' && (
+          {abaAtiva === 'gamificacao' && !isAtendente && (
             <AdminGamificationTab
               cargoUsuario={usuarioLogado?.cargo || 'ADMIN'}
               professorId={usuarioLogado?.id}
@@ -1350,7 +1522,7 @@ export default function AdminDashboard() {
             />
           )}
 
-          {abaAtiva === 'aparencia_layouts' && (
+          {abaAtiva === 'aparencia_layouts' && !isAtendente && (
             <AdminLayoutStudio
               usuarioLogado={usuarioLogado}
               alunos={alunos}
@@ -1803,45 +1975,66 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              {[
-                {
-                  group: '🎓 1. Secretaria & Alunos',
-                  items: [
-                    { id: 'alunos', icon: '👥', label: 'Todos os Alunos (Visão 360)' },
-                    { id: 'chamada_diaria', icon: '✅', label: 'Chamada & Frequência' },
-                    { id: 'avaliacoes', icon: '🏅', label: 'Avaliações & Exames' },
-                    { id: 'agendamentos', icon: '🎯', label: 'Leads & Aulas Exp.' }
+              {(isAtendente
+                ? [
+                    {
+                      group: '🎧 1. Atendimento & Matrículas',
+                      items: [
+                        { id: 'alunos', icon: '👥', label: 'Alunos & Nova Matrícula' },
+                        { id: 'agendamentos', icon: '🎯', label: 'Leads & Aulas Exp.' }
+                      ]
+                    },
+                    {
+                      group: '✅ 2. Check-ins, Vagas & Recepção',
+                      items: [
+                        { id: 'chamada_diaria', icon: '✅', label: 'Check-ins & Chamada' },
+                        { id: 'calendario_geral', icon: '📅', label: 'Grade & Horários' },
+                        { id: 'ocupacao', icon: '🔥', label: 'Ocupação de Turmas' },
+                        { id: 'resgates_loja', icon: '🎟️', label: 'Vouchers & Retiradas' },
+                        { id: 'avisos', icon: '📢', label: 'Mural de Avisos' }
+                      ]
+                    }
                   ]
-                },
-                {
-                  group: '💰 2. Financeiro & Contratos',
-                  items: [
-                    { id: 'financeiro_gestao', icon: '💰', label: 'Gestão Financeira' },
-                    { id: 'caixa_diario', icon: '💵', label: 'Caixa Diário (PDV)' },
-                    { id: 'planos_contratos', icon: '📄', label: 'Planos & Contratos' },
-                    { id: 'comissoes', icon: '🥋', label: 'Comissões Professores' }
+                : [
+                    {
+                      group: '🎓 1. Secretaria & Alunos',
+                      items: [
+                        { id: 'alunos', icon: '👥', label: 'Todos os Alunos (Visão 360)' },
+                        { id: 'chamada_diaria', icon: '✅', label: 'Chamada & Frequência' },
+                        { id: 'avaliacoes', icon: '🏅', label: 'Avaliações & Exames' },
+                        { id: 'agendamentos', icon: '🎯', label: 'Leads & Aulas Exp.' }
+                      ]
+                    },
+                    {
+                      group: '💰 2. Financeiro & Contratos',
+                      items: [
+                        { id: 'financeiro_gestao', icon: '💰', label: 'Gestão Financeira' },
+                        { id: 'caixa_diario', icon: '💵', label: 'Caixa Diário (PDV)' },
+                        { id: 'planos_contratos', icon: '📄', label: 'Planos & Contratos' },
+                        { id: 'comissoes', icon: '🥋', label: 'Comissões Professores' }
+                      ]
+                    },
+                    {
+                      group: '🏆 3. Competitivo & Loja',
+                      items: [
+                        { id: 'gamificacao', icon: '🏆', label: 'Gamificação (30 Medalhas)' },
+                        { id: 'torneios_gestao', icon: '🏅', label: 'Torneios & Brackets' },
+                        { id: 'resgates_loja', icon: '🎟️', label: 'Vouchers & Loja Points' },
+                        { id: 'ocupacao', icon: '🔥', label: 'Ocupação & Unidades' }
+                      ]
+                    },
+                    {
+                      group: '⚙️ 4. Equipe, Estoque & Layouts',
+                      items: [
+                        { id: 'professores', icon: '👑', label: 'Professores & Equipe' },
+                        { id: 'loja', icon: '🛍️', label: 'Loja Física & Estoque' },
+                        { id: 'avisos', icon: '📢', label: 'Mural de Avisos' },
+                        { id: 'aparencia_layouts', icon: '🎨', label: 'Estúdio de Layouts & Cores' },
+                        { id: 'auditoria_logs', icon: '🛡️', label: 'Logs de Auditoria' }
+                      ]
+                    }
                   ]
-                },
-                {
-                  group: '🏆 3. Competitivo & Loja',
-                  items: [
-                    { id: 'gamificacao', icon: '🏆', label: 'Gamificação (30 Medalhas)' },
-                    { id: 'torneios_gestao', icon: '🏅', label: 'Torneios & Brackets' },
-                    { id: 'resgates_loja', icon: '🎟️', label: 'Vouchers & Loja Points' },
-                    { id: 'ocupacao', icon: '🔥', label: 'Ocupação & Unidades' }
-                  ]
-                },
-                {
-                  group: '⚙️ 4. Equipe, Estoque & Layouts',
-                  items: [
-                    { id: 'professores', icon: '👑', label: 'Professores & Equipe' },
-                    { id: 'loja', icon: '🛍️', label: 'Loja Física & Estoque' },
-                    { id: 'avisos', icon: '📢', label: 'Mural de Avisos' },
-                    { id: 'aparencia_layouts', icon: '🎨', label: 'Estúdio de Layouts & Cores' },
-                    { id: 'auditoria_logs', icon: '🛡️', label: 'Logs de Auditoria' }
-                  ]
-                }
-              ].map(section => (
+              ).map(section => (
                 <div key={section.group}>
                   <div style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--text-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>
                     {section.group}
@@ -1962,7 +2155,7 @@ export default function AdminDashboard() {
           {/* COLUNA PRINCIPAL DO ERP ADMINISTRATIVO */}
           <div className="space-y-6 min-w-0">
 
-        {abaAtiva === 'aparencia_layouts' && (
+        {abaAtiva === 'aparencia_layouts' && !isAtendente && (
           <AdminLayoutStudio
             usuarioLogado={usuarioLogado}
             alunos={alunos}
@@ -2028,24 +2221,33 @@ export default function AdminDashboard() {
             }
           ];
 
-          const adminTabs = [
-            { id: 'alunos', num: '01', icon: '👥', label: `Alunos (${alunos.length})`, activeMatch: abaAtiva === 'alunos' },
-            { id: 'chamada_diaria', num: '02', icon: '✅', label: 'Chamada & Frequência', activeMatch: ['chamada_diaria', 'calendario_geral', 'presencas'].includes(abaAtiva) },
-            ...(isAdminRole ? [
-              { id: 'financeiro_gestao', num: '03', icon: '💰', label: 'Gestão Financeira & Baixa', activeMatch: abaAtiva === 'financeiro_gestao' },
-              { id: 'caixa_diario', num: '04', icon: '💵', label: 'Caixa Diário (PDV)', activeMatch: abaAtiva === 'caixa_diario' },
-              { id: 'comissoes', num: '05', icon: '🥋', label: 'Comissões Professores', activeMatch: abaAtiva === 'comissoes' }
-            ] : []),
-            { id: 'ocupacao', num: '06', icon: '🔥', label: 'Ocupação de Turmas', activeMatch: abaAtiva === 'ocupacao' },
-            { id: 'resgates_loja', num: '07', icon: '🎟️', label: 'Vouchers & Retiradas', activeMatch: abaAtiva === 'resgates_loja' },
-            { id: 'avisos', num: '08', icon: '📢', label: `Mural de Avisos (${avisos.length})`, activeMatch: abaAtiva === 'avisos' },
-            { id: 'loja', num: '09', icon: '🛍️', label: 'Loja & Mercado', activeMatch: abaAtiva === 'loja' },
-            { id: 'agendamentos', num: '10', icon: '🎯', label: 'Leads & Aulas Exp.', activeMatch: abaAtiva === 'agendamentos' },
-            { id: 'gamificacao', num: '11', icon: '🏆', label: 'Gestão de Gamificação', activeMatch: abaAtiva === 'gamificacao' },
-            { id: 'aparencia_layouts', num: '12', icon: '🎨', label: 'Estúdio & Temas', activeMatch: abaAtiva === 'aparencia_layouts' },
-            ...(isAdminRole ? [{ id: 'professores', num: '13', icon: '👑', label: 'Professores & Equipe', activeMatch: abaAtiva === 'professores' }] : []),
-            ...(isDevRole ? [{ id: 'dev_dashboard', num: '14', icon: '💻', label: 'Dev Dashboard', activeMatch: abaAtiva === 'dev_dashboard' }] : [])
-          ];
+          const adminTabs = isAtendente
+            ? [
+                { id: 'alunos', num: '01', icon: '👥', label: `Alunos & Matrícula (${alunos.length})`, activeMatch: abaAtiva === 'alunos' },
+                { id: 'agendamentos', num: '02', icon: '🎯', label: 'Leads & Aulas Exp.', activeMatch: abaAtiva === 'agendamentos' },
+                { id: 'chamada_diaria', num: '03', icon: '✅', label: 'Check-ins & Chamada', activeMatch: ['chamada_diaria', 'calendario_geral', 'presencas'].includes(abaAtiva) },
+                { id: 'ocupacao', num: '04', icon: '🔥', label: 'Ocupação de Turmas', activeMatch: abaAtiva === 'ocupacao' },
+                { id: 'resgates_loja', num: '05', icon: '🎟️', label: 'Vouchers & Retiradas', activeMatch: abaAtiva === 'resgates_loja' },
+                { id: 'avisos', num: '06', icon: '📢', label: `Mural de Avisos (${avisos.length})`, activeMatch: abaAtiva === 'avisos' }
+              ]
+            : [
+                { id: 'alunos', num: '01', icon: '👥', label: `Alunos (${alunos.length})`, activeMatch: abaAtiva === 'alunos' },
+                { id: 'chamada_diaria', num: '02', icon: '✅', label: 'Chamada & Frequência', activeMatch: ['chamada_diaria', 'calendario_geral', 'presencas'].includes(abaAtiva) },
+                ...(isAdminRole ? [
+                  { id: 'financeiro_gestao', num: '03', icon: '💰', label: 'Gestão Financeira & Baixa', activeMatch: abaAtiva === 'financeiro_gestao' },
+                  { id: 'caixa_diario', num: '04', icon: '💵', label: 'Caixa Diário (PDV)', activeMatch: abaAtiva === 'caixa_diario' },
+                  { id: 'comissoes', num: '05', icon: '🥋', label: 'Comissões Professores', activeMatch: abaAtiva === 'comissoes' }
+                ] : []),
+                { id: 'ocupacao', num: '06', icon: '🔥', label: 'Ocupação de Turmas', activeMatch: abaAtiva === 'ocupacao' },
+                { id: 'resgates_loja', num: '07', icon: '🎟️', label: 'Vouchers & Retiradas', activeMatch: abaAtiva === 'resgates_loja' },
+                { id: 'avisos', num: '08', icon: '📢', label: `Mural de Avisos (${avisos.length})`, activeMatch: abaAtiva === 'avisos' },
+                { id: 'loja', num: '09', icon: '🛍️', label: 'Loja & Mercado', activeMatch: abaAtiva === 'loja' },
+                { id: 'agendamentos', num: '10', icon: '🎯', label: 'Leads & Aulas Exp.', activeMatch: abaAtiva === 'agendamentos' },
+                { id: 'gamificacao', num: '11', icon: '🏆', label: 'Gestão de Gamificação', activeMatch: abaAtiva === 'gamificacao' },
+                { id: 'aparencia_layouts', num: '12', icon: '🎨', label: 'Estúdio & Temas', activeMatch: abaAtiva === 'aparencia_layouts' },
+                ...(isAdminRole ? [{ id: 'professores', num: '13', icon: '👑', label: 'Professores & Equipe', activeMatch: abaAtiva === 'professores' }] : []),
+                ...(isDevRole ? [{ id: 'dev_dashboard', num: '14', icon: '💻', label: 'Dev Dashboard', activeMatch: abaAtiva === 'dev_dashboard' }] : [])
+              ];
 
           const getStatusColor = (s: string) => {
             if (s === 'available') return 'var(--status-available)';
@@ -3455,7 +3657,7 @@ export default function AdminDashboard() {
         )}
 
         {/* CONTEÚDO DA ABA: GESTÃO DE GAMIFICAÇÃO & APROVAÇÃO RÁPIDA (TRILHA DO NAK MUAY) */}
-        {abaAtiva === 'gamificacao' && (
+        {abaAtiva === 'gamificacao' && !isAtendente && (
           <AdminGamificationTab
             cargoUsuario={usuarioLogado?.cargo || 'ADMIN'}
             professorId={usuarioLogado?.id}
@@ -3496,7 +3698,7 @@ export default function AdminDashboard() {
         )}
 
         {/* CONTEÚDO DA ABA: LOJA & MERCADO (BETA) */}
-        {abaAtiva === 'loja' && (
+        {abaAtiva === 'loja' && !isAtendente && (
           <div className="space-y-4">
             <div className="flex justify-between items-center flex-wrap gap-2">
               <div>
@@ -4108,8 +4310,9 @@ export default function AdminDashboard() {
               <div>
                 <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo no Sistema</label>
                 <select value={novoProfessor.cargo} onChange={(e) => setNovoProfessor({...novoProfessor, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                  <option value="PROFESSOR">Professor / Instrutor</option>
-                  <option value="ADMIN">Administrador Geral</option>
+                  <option value="PROFESSOR">🥋 Professor / Instrutor</option>
+                  <option value="ATENDENTE">🎧 Atendente / Recepção (Matrículas, Alunos & Check-ins)</option>
+                  <option value="ADMIN">👑 Administrador Geral</option>
                 </select>
               </div>
 
@@ -4302,8 +4505,9 @@ export default function AdminDashboard() {
                 <div>
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo</label>
                   <select value={professorParaEditar.cargo} onChange={(e) => setProfessorParaEditar({...professorParaEditar, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                    <option value="PROFESSOR">Professor / Instrutor</option>
-                    <option value="ADMIN">Administrador Geral</option>
+                    <option value="PROFESSOR">🥋 Professor / Instrutor</option>
+                    <option value="ATENDENTE">🎧 Atendente / Recepção (Matrículas, Alunos & Check-ins)</option>
+                    <option value="ADMIN">👑 Administrador Geral</option>
                   </select>
                 </div>
               </div>

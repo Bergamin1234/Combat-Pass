@@ -14,6 +14,7 @@ import { publicApi, studentApi } from '../services/api';
 import { ACADEMY_CONFIG } from '../config/academyConfig';
 import { CompleteSiteModules } from '../components/CompleteSiteModules';
 import { LayoutRouter } from '../layouts/LayoutRouter';
+import { useSiteBuilder } from '../config/siteBuilderConfig';
 
 const FALLBACK_ACADEMIES = [
   {
@@ -97,6 +98,7 @@ export const LandingHubPage: React.FC = () => {
     setLoadingStyle,
     triggerLoadingDemo
   } = useLayoutEngine();
+  const { config: builderConfig } = useSiteBuilder();
 
   const activePreset = preferences.layoutPreset.landing;
 
@@ -259,23 +261,31 @@ export const LandingHubPage: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-          <Link to="/portal?tab=torneios" style={{ padding: '0.36rem 0.6rem', borderRadius: '8px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
-            🏆 Torneios
+          <Link to="/montar-site" style={{ padding: '0.36rem 0.7rem', borderRadius: '8px', background: 'var(--color-primary)', color: 'var(--text-primary-foreground)', border: 'none', fontSize: '0.7rem', fontWeight: 900, textDecoration: 'none' }}>
+            ✨ Montar Meu Site
           </Link>
-          <Link to="/portal?tab=ranking" style={{ padding: '0.36rem 0.6rem', borderRadius: '8px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
-            🌍 Ranking
-          </Link>
-          <Link to="/portal?tab=desempenho" style={{ padding: '0.36rem 0.6rem', borderRadius: '8px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
-            📊 Stats
-          </Link>
-          <Link to="/portal" style={{ padding: '0.36rem 0.65rem', borderRadius: '8px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
-            🥊 Área do Aluno
-          </Link>
-          <Link to="/professor" style={{ padding: '0.36rem 0.65rem', borderRadius: '8px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
-            🥋 Professor
-          </Link>
+          {builderConfig.portals.enableGamification && (
+            <>
+              <Link to="/portal?tab=torneios" style={{ padding: '0.36rem 0.6rem', borderRadius: '8px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
+                🏆 Torneios
+              </Link>
+              <Link to="/portal?tab=ranking" style={{ padding: '0.36rem 0.6rem', borderRadius: '8px', background: 'var(--bg-background)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
+                🌍 Ranking
+              </Link>
+            </>
+          )}
+          {builderConfig.portals.enableStudentPortal && (
+            <Link to="/portal" style={{ padding: '0.36rem 0.65rem', borderRadius: '8px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
+              🥊 Área do Aluno
+            </Link>
+          )}
+          {builderConfig.portals.enableTeacherPortal && (
+            <Link to="/professor" style={{ padding: '0.36rem 0.65rem', borderRadius: '8px', background: 'var(--bg-surface-2)', color: 'var(--text-foreground)', border: '1px solid var(--border-subtle)', fontSize: '0.7rem', fontWeight: 800, textDecoration: 'none' }}>
+              🥋 Professor
+            </Link>
+          )}
           <Link to="/admin" style={{ padding: '0.36rem 0.65rem', borderRadius: '8px', background: 'var(--bg-surface-2)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', fontSize: '0.7rem', fontWeight: 900, textDecoration: 'none' }}>
-            👑 Admin
+            👑 Acesso Administrativo
           </Link>
           <button
             type="button"
@@ -990,6 +1000,7 @@ export const LandingHubPage: React.FC = () => {
                 { icon: '📊', title: 'Estatísticas & Aproveitamento', to: '/portal?tab=desempenho' },
                 { icon: '🥊', title: 'Acessar Área do Aluno', to: '/portal' },
                 { icon: '🥋', title: 'Portal do Professor / Mestre (Login: CPF 1 / Senha 1)', to: '/professor' },
+                { icon: '🎧', title: 'Painel de Atendimento / Recepção (Matrículas, Alunos & Check-ins)', to: '/atendimento' },
                 { icon: '👑', title: 'Painel do Gestor / ERP', to: '/admin' }
               ].map(item => (
                 <Link

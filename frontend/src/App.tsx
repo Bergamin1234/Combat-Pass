@@ -7,7 +7,9 @@ import AgendarAula from './pages/AgendarAula';
 import FighterProfile from './pages/FighterProfile';
 import LandingHubPage from './pages/LandingHubPage';
 import TeacherPortalPage from './pages/TeacherPortalPage';
+import SiteBuilderWizardPage from './pages/SiteBuilderWizardPage';
 import { LayoutEngineProvider, useLayoutEngine } from './config/layoutEngine';
+import { SiteBuilderProvider } from './config/siteBuilderConfig';
 import { GlobalLoadingOverlay } from './components/LoadingEngine';
 
 // Componente auxiliar para interceptar cliques nos links do index.html estático
@@ -69,9 +71,11 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={renderHomeEntry()} />
+      <Route path="/montar-site" element={<SiteBuilderWizardPage />} />
       <Route path="/portal" element={<PortalAluno />} />
       <Route path="/professor" element={<TeacherPortalPage />} />
-      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/atendimento" element={<AdminDashboard modoInicial="ATENDENTE" />} />
+      <Route path="/admin" element={<AdminDashboard modoInicial="ADMIN" />} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/agendar" element={<AgendarAula />} />
       {/* Redirecionamentos seguros: Estatísticas e Ranking exigem autenticação de CPF no Portal do Aluno */}
@@ -85,12 +89,14 @@ function AppRoutes() {
 function App() {
   return (
     <LayoutEngineProvider>
-      <Router>
-        <GlobalLinkInterceptor />
-        <BodyClassManager />
-        <GlobalLoadingOverlay />
-        <AppRoutes />
-      </Router>
+      <SiteBuilderProvider>
+        <Router>
+          <GlobalLinkInterceptor />
+          <BodyClassManager />
+          <GlobalLoadingOverlay />
+          <AppRoutes />
+        </Router>
+      </SiteBuilderProvider>
     </LayoutEngineProvider>
   );
 }

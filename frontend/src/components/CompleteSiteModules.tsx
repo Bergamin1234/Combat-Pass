@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { InteractiveCombatCalendar } from './InteractiveCombatCalendar';
 import { PublicQuickCheckinCard } from './QuickCheckinWidget';
+import { useSiteBuilder } from '../config/siteBuilderConfig';
 
 export type SiteVariant = 'school_sidebar' | 'corporate_editorial' | 'arena_hud';
 
@@ -608,7 +609,21 @@ export const CompleteSiteModules: React.FC<CompleteSiteModulesProps> = ({
   const [partnerForm, setPartnerForm] = useState({ nomeCt: '', cidade: '', responsavel: '', whatsapp: '', modalidades: '' });
   const [partnerSaved, setPartnerSaved] = useState(false);
 
-  const shouldShow = (secId: string) => activeSectionFilter === 'ALL' || activeSectionFilter === secId;
+  const { config: builderConfig } = useSiteBuilder();
+
+  const shouldShow = (secId: string) => {
+    const matchesFilter = activeSectionFilter === 'ALL' || activeSectionFilter === secId;
+    if (!matchesFilter) return false;
+    const s = builderConfig.sections;
+    if (secId === 'o_que_e_ct') return s.showHub;
+    if (secId === 'galeria' || secId === 'estrutura') return s.showGaleria;
+    if (secId === 'horarios') return s.showHorarios;
+    if (secId === 'modalidades' || secId === 'professores') return s.showModalidades;
+    if (secId === 'planos') return s.showPlanos;
+    if (secId === 'faq' || secId === 'localizacao') return s.showFaq;
+    if (secId === 'gamificacao' || secId === 'competitivo') return builderConfig.portals.enableGamification;
+    return true;
+  };
   const activeModality = FULL_MODALITIES[selectedModalityIdx] || FULL_MODALITIES[0];
   const currentEco = ECOSYSTEM_MODULES.find(m => m.id === activeEcoTab) || ECOSYSTEM_MODULES[0];
 

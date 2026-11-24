@@ -30,6 +30,17 @@ export const SplitScreenLayout: React.FC<BaseLayoutProps> = ({
     }
 
     if (portal === 'admin') {
+      if (usuarioLogado?.cargo === 'ATENDENTE') {
+        return [
+          { id: 'alunos', label: 'Alunos & Nova Matrícula', icon: '👥', badge: 'Atend.' },
+          { id: 'agendamentos', label: 'Leads & Aulas Experimentais', icon: '🎯', badge: 'Matrícula' },
+          { id: 'chamada_diaria', label: 'Check-ins & Chamada do Dia', icon: '✅', badge: 'Ao Vivo' },
+          { id: 'calendario_geral', label: 'Grade & Horários de Aulas', icon: '📅', badge: 'Horários' },
+          { id: 'ocupacao', label: 'Ocupação & Vagas das Turmas', icon: '🔥', badge: 'Vagas' },
+          { id: 'resgates_loja', label: 'Vouchers & Retiradas Recepção', icon: '🎟️', badge: 'Balcão' },
+          { id: 'avisos', label: 'Mural de Avisos da Unidade', icon: '📢', badge: 'Avisos' }
+        ];
+      }
       return [
         { id: 'alunos', label: 'Alunos Matriculados & Dossiê', icon: '👥', badge: 'Roster' },
         { id: 'calendario_geral', label: 'Grade Oficial de Tatames', icon: '📅', badge: 'Tatames' },

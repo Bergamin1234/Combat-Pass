@@ -53,8 +53,40 @@ app.post('/api/auth/login', async (req, res) => {
   const termoLower = termo.toLowerCase();
   const cpfLimpo = termo.replace(/\D/g, '');
 
-  // 0. Suporte direto a credenciais rápidas de demonstração (CPF/Login: 1 | Senha: 1) em Admin e Professor
-  if ((termo === '1' || cpfLimpo === '1' || termoLower === 'professor' || termoLower === 'admin') && senha === '1') {
+  // 0. Suporte direto a credenciais rápidas de demonstração (CPF/Login: 1 | Senha: 1) em Admin, Atendente e Professor
+  if (
+    (termo === '1' ||
+      cpfLimpo === '1' ||
+      termoLower === 'professor' ||
+      termoLower === 'admin' ||
+      termoLower === 'atendente' ||
+      termoLower === 'atendimento' ||
+      termoLower === 'recepcao') &&
+    senha === '1'
+  ) {
+    if (
+      portal === 'atendente' ||
+      termoLower === 'atendente' ||
+      termoLower === 'atendimento' ||
+      termoLower === 'recepcao'
+    ) {
+      return res.json({
+        usuario: {
+          id: 'atendente-demo-1',
+          nome: 'Recepção & Atendimento (Combat-Pass Demo)',
+          email: 'atendimento@combathub.com',
+          cpf: '1',
+          cargo: 'ATENDENTE',
+          is_dev: false,
+          role_level: 'ATENDENTE',
+          telefone: '(11) 98888-2222',
+          modalidade: 'Atendimento & Recepção',
+          graduacao: 'Equipe de Atendimento (Matrículas & Check-ins)',
+          prajied: 'Atendimento & Recepção',
+          fotoPerfilUrl: null
+        }
+      });
+    }
     if (portal === 'admin' || termoLower === 'admin') {
       return res.json({
         usuario: {
@@ -282,12 +314,21 @@ app.post('/api/admin/professores', async (req, res) => {
     return res.status(400).json({ erro: 'Nome e Senha são obrigatórios.' });
   }
 
-  const cargoFinal = cargo === 'ADMIN' ? 'ADMIN' : 'PROFESSOR';
+  const cargoFinal =
+    cargo === 'ADMIN' ? 'ADMIN' : cargo === 'ATENDENTE' ? 'ATENDENTE' : 'PROFESSOR';
   const cpfLimpo = cpf ? cpf.replace(/\D/g, '') : null;
-  const emailFinal = email ? email.trim().toLowerCase() : (cpfLimpo ? `${cpfLimpo}@boru.com` : `professor_${Date.now()}@boru.com`);
+  const emailFinal = email
+    ? email.trim().toLowerCase()
+    : cpfLimpo
+    ? `${cpfLimpo}@boru.com`
+    : `${cargoFinal.toLowerCase()}_${Date.now()}@boru.com`;
 
-  if (cargoFinal === 'PROFESSOR' && (!cpfLimpo || cpfLimpo.length < 11)) {
-    return res.status(400).json({ erro: 'CPF válido (11 dígitos) é obrigatório para cadastrar o professor. O professor usará este CPF para fazer login no sistema.' });
+  if ((cargoFinal === 'PROFESSOR' || cargoFinal === 'ATENDENTE') && (!cpfLimpo || cpfLimpo.length < 11)) {
+    return res.status(400).json({
+      erro: `CPF válido (11 dígitos) é obrigatório para cadastrar o ${
+        cargoFinal === 'ATENDENTE' ? 'atendente' : 'professor'
+      }. Ele usará este CPF para fazer login no sistema.`
+    });
   }
 
   try {
